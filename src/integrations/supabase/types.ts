@@ -14,16 +14,261 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activity_log: {
+        Row: {
+          applicant_id: string | null
+          application_number: string | null
+          created_at: string
+          detail: string | null
+          email_masked: string | null
+          event_type: string
+          id: number
+          phone_masked: string | null
+        }
+        Insert: {
+          applicant_id?: string | null
+          application_number?: string | null
+          created_at?: string
+          detail?: string | null
+          email_masked?: string | null
+          event_type: string
+          id?: number
+          phone_masked?: string | null
+        }
+        Update: {
+          applicant_id?: string | null
+          application_number?: string | null
+          created_at?: string
+          detail?: string | null
+          email_masked?: string | null
+          event_type?: string
+          id?: number
+          phone_masked?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "applicants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      applicant_documents: {
+        Row: {
+          applicant_id: string
+          bucket: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["document_kind"]
+          mime_type: string
+          size_bytes: number
+          storage_path: string
+        }
+        Insert: {
+          applicant_id: string
+          bucket?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["document_kind"]
+          mime_type: string
+          size_bytes: number
+          storage_path: string
+        }
+        Update: {
+          applicant_id?: string
+          bucket?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["document_kind"]
+          mime_type?: string
+          size_bytes?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applicant_documents_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "applicants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      applicants: {
+        Row: {
+          access_token: string
+          address: string
+          admin_notes: string | null
+          application_number: string
+          created_at: string
+          date_of_birth: string
+          email: string
+          first_name: string
+          gender: string
+          id: string
+          last_name: string
+          local_government: string
+          middle_name: string | null
+          nationality: string
+          phone: string
+          state: string
+          status: Database["public"]["Enums"]["application_status"]
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string
+          address: string
+          admin_notes?: string | null
+          application_number?: string
+          created_at?: string
+          date_of_birth: string
+          email: string
+          first_name: string
+          gender: string
+          id?: string
+          last_name: string
+          local_government: string
+          middle_name?: string | null
+          nationality?: string
+          phone: string
+          state: string
+          status?: Database["public"]["Enums"]["application_status"]
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          address?: string
+          admin_notes?: string | null
+          application_number?: string
+          created_at?: string
+          date_of_birth?: string
+          email?: string
+          first_name?: string
+          gender?: string
+          id?: string
+          last_name?: string
+          local_government?: string
+          middle_name?: string | null
+          nationality?: string
+          phone?: string
+          state?: string
+          status?: Database["public"]["Enums"]["application_status"]
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applicants_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          careers: string[]
+          created_at: string
+          description: string
+          duration: string | null
+          icon: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          requirements: string[]
+          skills: string[]
+          slug: string
+          sort_order: number
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          careers?: string[]
+          created_at?: string
+          description?: string
+          duration?: string | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          requirements?: string[]
+          skills?: string[]
+          slug: string
+          sort_order?: number
+          summary?: string
+          updated_at?: string
+        }
+        Update: {
+          careers?: string[]
+          created_at?: string
+          description?: string
+          duration?: string | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          requirements?: string[]
+          skills?: string[]
+          slug?: string
+          sort_order?: number
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      next_application_number: { Args: never; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "staff"
+      application_status:
+        | "submitted"
+        | "under_review"
+        | "shortlisted"
+        | "admitted"
+        | "rejected"
+        | "withdrawn"
+      document_kind: "photograph"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +395,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "staff"],
+      application_status: [
+        "submitted",
+        "under_review",
+        "shortlisted",
+        "admitted",
+        "rejected",
+        "withdrawn",
+      ],
+      document_kind: ["photograph"],
+    },
   },
 } as const
