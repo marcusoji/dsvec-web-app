@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdmissionsRouteImport } from './routes/admissions'
+import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as UnitsIndexRouteImport } from './routes/units/index'
 import { Route as UnitsSlugRouteImport } from './routes/units/$slug'
@@ -29,6 +30,11 @@ const AboutRoute = AboutRouteImport.update({
 const AdmissionsRoute = AdmissionsRouteImport.update({
   id: '/admissions',
   path: '/admissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyRoute = ApplyRouteImport.update({
+  id: '/apply',
+  path: '/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admissions': typeof AdmissionsRoute
+  '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units/': typeof UnitsIndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admissions': typeof AdmissionsRoute
+  '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units': typeof UnitsIndexRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admissions': typeof AdmissionsRoute
+  '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units/': typeof UnitsIndexRoute
@@ -75,14 +84,28 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/about' | '/admissions' | '/contact' | '/units/$slug' | '/units/'
+    | '/'
+    | '/about'
+    | '/admissions'
+    | '/apply'
+    | '/contact'
+    | '/units/$slug'
+    | '/units/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/admissions' | '/contact' | '/units/$slug' | '/units'
+  to:
+    | '/'
+    | '/about'
+    | '/admissions'
+    | '/apply'
+    | '/contact'
+    | '/units/$slug'
+    | '/units'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/admissions'
+    | '/apply'
     | '/contact'
     | '/units/$slug'
     | '/units/'
@@ -92,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdmissionsRoute: typeof AdmissionsRoute
+  ApplyRoute: typeof ApplyRoute
   ContactRoute: typeof ContactRoute
   UnitsSlugRoute: typeof UnitsSlugRoute
   UnitsIndexRoute: typeof UnitsIndexRoute
@@ -118,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/admissions'
       fullPath: '/admissions'
       preLoaderRoute: typeof AdmissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply': {
+      id: '/apply'
+      path: '/apply'
+      fullPath: '/apply'
+      preLoaderRoute: typeof ApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -148,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdmissionsRoute: AdmissionsRoute,
+  ApplyRoute: ApplyRoute,
   ContactRoute: ContactRoute,
   UnitsSlugRoute: UnitsSlugRoute,
   UnitsIndexRoute: UnitsIndexRoute,
