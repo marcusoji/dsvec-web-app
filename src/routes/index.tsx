@@ -25,7 +25,7 @@ const STATS = [
   { icon: Wrench, value: "10+", label: "Trade units" },
   { icon: Users, value: "1,200+", label: "Trainees supported" },
   { icon: BadgeCheck, value: "100%", label: "Practical assessment" },
-  { icon: CalendarDays, value: "9–18", label: "Months per programme" },
+  { icon: CalendarDays, value: "6", label: "Months per programme" },
 ];
 
 const STEPS = [

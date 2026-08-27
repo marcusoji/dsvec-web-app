@@ -28,7 +28,7 @@ const PILLARS = [
   {
     icon: Eye,
     title: "Vision",
-    body: "To be the reference centre for trade training and enterprise development in Ndokwa West and the wider Delta State region.",
+    body: "To be the reference centre for trade training and enterprise development in Ukwuani and the wider Delta State region.",
   },
   {
     icon: HeartHandshake,
@@ -65,7 +65,7 @@ function About() {
     <SiteShell>
       <PageHero
         eyebrow="About us"
-        title="A trade-first campus serving Ndokwa West and Delta State"
+        title="A trade-first campus serving Ukwuani and Delta State"
         lead={`${SITE.name}, ${SITE.branch}, trains school leavers, artisans and career changers in the trades that local industry and communities actually need.`}
       />
 

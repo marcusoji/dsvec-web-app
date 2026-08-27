@@ -42,7 +42,7 @@ function SiteHeader() {
       <div className="bg-ink text-ink-muted">
         <div className="container-page flex flex-wrap items-center justify-between gap-2 py-1.5 text-[0.72rem]">
           <span className="flex items-center gap-1.5">
-            <MapPin className="size-3" aria-hidden="true" /> Umutu, Ndokwa West LGA, Delta State
+            <MapPin className="size-3" aria-hidden="true" /> Umutu, Ukwuani LGA, Delta State
           </span>
           <span className="flex items-center gap-1.5">
             <Phone className="size-3" aria-hidden="true" /> {SITE.phone}

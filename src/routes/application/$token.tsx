@@ -142,25 +142,30 @@ function ApplicationForm() {
                   </dd>
                 </div>
               </dl>
-              <div className="grid h-40 w-32 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-secondary">
-                {application.photo_url ? (
-                  <img
-                    src={application.photo_url}
-                    alt="Applicant photograph"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="px-2 text-center text-[0.65rem] text-muted-foreground">
-                    Photograph (to be provided at screening)
-                  </span>
-                )}
+              <div className="shrink-0 text-center">
+                <div className="grid h-40 w-32 place-items-center overflow-hidden rounded-md border border-border bg-secondary">
+                  {application.photo_url ? (
+                    <img
+                      src={application.photo_url}
+                      alt="Applicant passport photograph"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="px-2 text-center text-[0.65rem] text-muted-foreground">
+                      Passport photograph (to be provided at screening)
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-[0.6rem] uppercase tracking-wide text-muted-foreground">
+                  Passport photograph
+                </p>
               </div>
             </div>
           </div>
 
           <section className="px-8 py-6">
             <h2 className="border-b border-border pb-2 font-display text-sm font-bold uppercase tracking-wide">
-              Applicant particulars
+              Section A — Applicant particulars
             </h2>
             <dl className="mt-5 grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
               {[
@@ -168,12 +173,11 @@ function ApplicationForm() {
                 ["Gender", application.gender],
                 ["Date of birth", formatDate(application.date_of_birth)],
                 ["Nationality", application.nationality],
-                ["Email address", application.email],
-                ["Phone number", application.phone],
-                ["Residential address", application.address],
                 ["State of origin", application.state],
                 ["Local government area", application.local_government],
-                ["Selected unit", application.unit_name],
+                ["Residential address", application.address],
+                ["Email address", application.email],
+                ["Phone number", application.phone],
               ].map(([k, v]) => (
                 <div key={k} className="print-avoid-break">
                   <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
@@ -185,18 +189,118 @@ function ApplicationForm() {
             </dl>
           </section>
 
-          <section className="px-8 py-6 print-avoid-break">
-            <h2 className="border-b border-border pb-2 font-display text-sm font-semibold uppercase tracking-wide">
-              Declaration
+          <section className="border-t border-border px-8 py-6 print-avoid-break">
+            <h2 className="border-b border-border pb-2 font-display text-sm font-bold uppercase tracking-wide">
+              Section B — Programme of study
             </h2>
-            <p className="mt-4 text-sm leading-relaxed text-foreground">
-              I hereby declare that the information provided in this application form is true and
-              correct to the best of my knowledge. I understand that any false information may lead
-              to the cancellation of my application or admission.
-            </p>
-            <div className="mt-12 grid gap-10 text-sm sm:grid-cols-2 print-avoid-break">
+            <div className="mt-5 grid gap-x-8 gap-y-4 text-sm sm:grid-cols-3">
               <div>
-                <p className="font-medium">Signature</p>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Trade unit applied for
+                </dt>
+                <dd className="mt-0.5 font-medium">{application.unit_name}</dd>
+              </div>
+              <div>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Programme
+                </dt>
+                <dd className="mt-0.5 font-medium">Vocational Certificate</dd>
+              </div>
+              <div>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Duration
+                </dt>
+                <dd className="mt-0.5 font-medium">6 months</dd>
+              </div>
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              Intake and commencement dates are confirmed by the admissions office. Candidates must
+              complete the full six-month practical programme and a final trade assessment to be
+              certified.
+            </p>
+          </section>
+
+          <section className="border-t border-border px-8 py-6 print-avoid-break">
+            <h2 className="border-b border-border pb-2 font-display text-sm font-bold uppercase tracking-wide">
+              Section C — Parent / guardian &amp; emergency contact
+            </h2>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Complete for all applicants. Mandatory for applicants under 18 years of age.
+            </p>
+            <div className="mt-5 grid gap-x-10 gap-y-6 text-sm sm:grid-cols-2">
+              {[
+                "Parent / guardian full name",
+                "Relationship to applicant",
+                "Parent / guardian phone number",
+                "Emergency contact name &amp; number",
+              ].map((label) => (
+                <div key={label}>
+                  <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                    {label}
+                  </dt>
+                  <dd className="mt-4 border-b border-dashed border-border print:border-ink" />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="border-t border-border px-8 py-6 print-avoid-break">
+            <h2 className="border-b border-border pb-2 font-display text-sm font-bold uppercase tracking-wide">
+              Section D — Educational background
+            </h2>
+            <p className="mt-3 text-xs text-muted-foreground">
+              State your highest level of education completed and any prior vocational training.
+            </p>
+            <div className="mt-5 grid gap-x-10 gap-y-6 text-sm sm:grid-cols-2">
+              {[
+                "Most recent school / institution",
+                "Qualification obtained",
+                "Year last attended / completed",
+                "Any prior vocational training",
+              ].map((label) => (
+                <div key={label}>
+                  <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                    {label}
+                  </dt>
+                  <dd className="mt-4 border-b border-dashed border-border print:border-ink" />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="px-8 py-6 print-avoid-break">
+            <h2 className="border-b border-border pb-2 font-display text-sm font-bold uppercase tracking-wide">
+              Section E — Declaration
+            </h2>
+            <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-foreground">
+              <li>
+                I declare that all the information provided in this application form is true and
+                correct to the best of my knowledge.
+              </li>
+              <li>
+                I understand that providing false information or forged documents will lead to the
+                automatic cancellation of my application or admission.
+              </li>
+              <li>
+                I agree to abide by the rules, regulations and code of conduct of the{" "}
+                {SITE.campusName}.
+              </li>
+              <li>
+                I confirm that I will personally attend the programme, and my admission is not
+                transferable.
+              </li>
+            </ol>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Where the applicant is under 18 years of age, the form must also be signed by a parent
+              or legal guardian.
+            </p>
+            <div className="mt-12 grid gap-10 text-sm sm:grid-cols-3 print-avoid-break">
+              <div>
+                <p className="font-medium">Applicant's signature</p>
+                <div className="mt-10 border-b border-ink print:border-ink" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="font-medium">Parent / guardian (if under 18)</p>
                 <div className="mt-10 border-b border-ink print:border-ink" aria-hidden="true" />
               </div>
               <div>
@@ -206,15 +310,26 @@ function ApplicationForm() {
             </div>
           </section>
 
-          <footer className="border-t border-border bg-secondary/40 px-8 py-6 print-avoid-break">
+          <footer className="border-t border-ink bg-secondary/40 px-8 py-6 print-avoid-break">
             <h3 className="text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">
-              For office use only
+              Section F — For office use only
             </h3>
-            <div className="mt-3 grid gap-6 text-xs text-muted-foreground sm:grid-cols-3">
-              <span>Preliminary verification:&nbsp;____________</span>
-              <span>Photograph verified:&nbsp;____________</span>
-              <span>Admissions officer:&nbsp;____________</span>
+            <div className="mt-3 grid gap-x-8 gap-y-4 text-xs text-muted-foreground">
+              <div className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
+                <span>Photograph verified:&nbsp;____________</span>
+                <span>Original documents sighted:&nbsp;____________</span>
+                <span>Date received:&nbsp;____________</span>
+              </div>
+              <div className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
+                <span>Preliminary verification:&nbsp;____________</span>
+                <span>Fee/registration confirmed:&nbsp;____________</span>
+                <span>Admissions officer:&nbsp;____________</span>
+              </div>
             </div>
+            <p className="mt-4 text-[0.68rem] text-muted-foreground">
+              {SITE.name} — {SITE.branch}. This form is a valid application record for the{" "}
+              {SITE.campusName}.
+            </p>
           </footer>
         </article>
 

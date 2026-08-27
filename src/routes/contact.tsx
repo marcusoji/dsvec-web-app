@@ -5,7 +5,7 @@ import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { SITE } from "@/lib/site";
 
 const DESCRIPTION =
-  "Contact the DSTVEB Umutu Branch admissions office — campus address in Ndokwa West, phone number, email address and office opening hours.";
+  "Contact the DSTVEB Umutu Branch admissions office — campus address in Ukwuani, phone number, email address and office opening hours.";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
