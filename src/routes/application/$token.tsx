@@ -91,7 +91,7 @@ function ApplicationForm() {
 
         {/* A4 printable sheet */}
         <article className="print-sheet surface-card overflow-hidden bg-paper">
-          <header className="flex items-start justify-between gap-4 border-b border-border px-8 py-6 print-avoid-break">
+          <header className="flex items-start justify-between gap-4 border-b border-border px-6 py-4 print-avoid-break">
             <div className="flex items-center gap-4">
               <div className="grid size-14 shrink-0 place-items-center rounded-md bg-ink text-ink-foreground">
                 <span className="font-display text-sm font-black tracking-tight">DSTVEB</span>
@@ -110,7 +110,7 @@ function ApplicationForm() {
             </div>
           </header>
 
-          <div className="border-b border-border px-8 py-6 print-avoid-break">
+          <div className="border-b border-border px-6 py-4 print-avoid-break">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <dl className="grid flex-1 gap-x-10 gap-y-3 text-sm sm:grid-cols-2">
                 <div>
@@ -163,11 +163,11 @@ function ApplicationForm() {
             </div>
           </div>
 
-          <section className="px-8 py-6">
-            <h2 className="border-b border-border pb-2 font-display text-sm font-bold uppercase tracking-wide">
+          <section className="px-6 py-4">
+            <h2 className="border-b border-border pb-1.5 font-display text-sm font-bold uppercase tracking-wide">
               Section A — Applicant particulars
             </h2>
-            <dl className="mt-5 grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
+            <dl className="mt-4 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
               {[
                 ["Full name", fullName],
                 ["Gender", application.gender],
@@ -189,11 +189,11 @@ function ApplicationForm() {
             </dl>
           </section>
 
-          <section className="border-t border-border px-8 py-6 print-avoid-break">
-            <h2 className="border-b border-border pb-2 font-display text-sm font-bold uppercase tracking-wide">
+          <section className="border-t border-border px-6 py-4 print-avoid-break">
+            <h2 className="border-b border-border pb-1.5 font-display text-sm font-bold uppercase tracking-wide">
               Section B — Programme of study
             </h2>
-            <div className="mt-5 grid gap-x-8 gap-y-4 text-sm sm:grid-cols-3">
+            <div className="mt-4 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-3">
               <div>
                 <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
                   Trade unit applied for
@@ -220,56 +220,68 @@ function ApplicationForm() {
             </p>
           </section>
 
-          <section className="border-t border-border px-8 py-6 print-avoid-break">
-            <h2 className="border-b border-border pb-2 font-display text-sm font-bold uppercase tracking-wide">
-              Section C — Parent / guardian &amp; emergency contact
+          <section className="border-t border-border px-6 py-4 print-avoid-break">
+            <h2 className="border-b border-border pb-1.5 font-display text-sm font-bold uppercase tracking-wide">
+              Section C — Parent / guardian contact
             </h2>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Complete for all applicants. Mandatory for applicants under 18 years of age.
-            </p>
-            <div className="mt-5 grid gap-x-10 gap-y-6 text-sm sm:grid-cols-2">
-              {[
-                "Parent / guardian full name",
-                "Relationship to applicant",
-                "Parent / guardian phone number",
-                "Emergency contact name &amp; number",
-              ].map((label) => (
-                <div key={label}>
-                  <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
-                    {label}
-                  </dt>
-                  <dd className="mt-4 border-b border-dashed border-border print:border-ink" />
-                </div>
-              ))}
-            </div>
+            <dl className="mt-4 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Parent / guardian or next of kin
+                </dt>
+                <dd className="mt-0.5 font-medium">{application.next_of_kin_name || "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Relationship to applicant
+                </dt>
+                <dd className="mt-0.5 font-medium">
+                  {application.next_of_kin_relationship || "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Next of kin phone number
+                </dt>
+                <dd className="mt-0.5 font-medium">{application.next_of_kin_phone || "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Emergency contact
+                </dt>
+                <dd className="mt-0.5 font-medium">{application.next_of_kin_name || "—"}</dd>
+              </div>
+            </dl>
           </section>
 
-          <section className="border-t border-border px-8 py-6 print-avoid-break">
-            <h2 className="border-b border-border pb-2 font-display text-sm font-bold uppercase tracking-wide">
+          <section className="border-t border-border px-6 py-4 print-avoid-break">
+            <h2 className="border-b border-border pb-1.5 font-display text-sm font-bold uppercase tracking-wide">
               Section D — Educational background
             </h2>
-            <p className="mt-3 text-xs text-muted-foreground">
-              State your highest level of education completed and any prior vocational training.
-            </p>
-            <div className="mt-5 grid gap-x-10 gap-y-6 text-sm sm:grid-cols-2">
-              {[
-                "Most recent school / institution",
-                "Qualification obtained",
-                "Year last attended / completed",
-                "Any prior vocational training",
-              ].map((label) => (
-                <div key={label}>
-                  <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
-                    {label}
-                  </dt>
-                  <dd className="mt-4 border-b border-dashed border-border print:border-ink" />
-                </div>
-              ))}
-            </div>
+            <dl className="mt-4 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Most recent school / institution
+                </dt>
+                <dd className="mt-0.5 font-medium">{application.school || "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Qualification obtained
+                </dt>
+                <dd className="mt-0.5 font-medium">{application.qualification || "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Year last attended / completed
+                </dt>
+                <dd className="mt-0.5 font-medium">{application.school_year || "—"}</dd>
+              </div>
+            </dl>
           </section>
 
-          <section className="px-8 py-6 print-avoid-break">
-            <h2 className="border-b border-border pb-2 font-display text-sm font-bold uppercase tracking-wide">
+          <section className="px-6 py-4 print-avoid-break">
+            <h2 className="border-b border-border pb-1.5 font-display text-sm font-bold uppercase tracking-wide">
               Section E — Declaration
             </h2>
             <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-foreground">
@@ -294,23 +306,23 @@ function ApplicationForm() {
               Where the applicant is under 18 years of age, the form must also be signed by a parent
               or legal guardian.
             </p>
-            <div className="mt-12 grid gap-10 text-sm sm:grid-cols-3 print-avoid-break">
+            <div className="mt-8 grid gap-8 text-sm sm:grid-cols-3 print-avoid-break">
               <div>
                 <p className="font-medium">Applicant's signature</p>
-                <div className="mt-10 border-b border-ink print:border-ink" aria-hidden="true" />
+                <div className="mt-8 border-b border-ink print:border-ink" aria-hidden="true" />
               </div>
               <div>
                 <p className="font-medium">Parent / guardian (if under 18)</p>
-                <div className="mt-10 border-b border-ink print:border-ink" aria-hidden="true" />
+                <div className="mt-8 border-b border-ink print:border-ink" aria-hidden="true" />
               </div>
               <div>
                 <p className="font-medium">Date</p>
-                <div className="mt-10 border-b border-ink print:border-ink" aria-hidden="true" />
+                <div className="mt-8 border-b border-ink print:border-ink" aria-hidden="true" />
               </div>
             </div>
           </section>
 
-          <footer className="border-t border-ink bg-secondary/40 px-8 py-6 print-avoid-break">
+          <footer className="border-t border-ink bg-secondary/40 px-6 py-4 print-avoid-break">
             <h3 className="text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">
               Section F — For office use only
             </h3>

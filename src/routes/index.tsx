@@ -23,7 +23,7 @@ export const Route = createFileRoute("/")({
 
 const STATS = [
   { icon: Wrench, value: "10+", label: "Trade units" },
-  { icon: Users, value: "1,200+", label: "Trainees supported" },
+  { icon: Users, value: "500+", label: "Trainees supported" },
   { icon: BadgeCheck, value: "100%", label: "Practical assessment" },
   { icon: CalendarDays, value: "6", label: "Months per programme" },
 ];

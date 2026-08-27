@@ -4,10 +4,12 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { GraduationCap, LoaderCircle } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { SITE } from "../lib/site";
@@ -125,11 +127,75 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const LOADING_MIN_MS = 3000;
+const LOADING_MESSAGES = [
+  "Preparing your trade unit…",
+  "Sharpening the tools…",
+  "Warming up the workshop…",
+  "Firing up the generator…",
+];
+
+function RouteLoadingOverlay() {
+  const isLoading = useRouterState({
+    select: (s) => s.status === "pending" || s.isLoading,
+  });
+  const [visible, setVisible] = useState(false);
+  const [message, setMessage] = useState(LOADING_MESSAGES[0]);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startedAt = useRef<number>(0);
+
+  useEffect(() => {
+    if (isLoading) {
+      startedAt.current = Date.now();
+      setMessage(LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)]);
+      setVisible(true);
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+      return;
+    }
+    if (!visible) return;
+    const elapsed = Date.now() - startedAt.current;
+    const remaining = Math.max(0, LOADING_MIN_MS - elapsed);
+    hideTimer.current = setTimeout(() => setVisible(false), remaining);
+    return () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-ink px-6 text-center"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="grid size-20 place-items-center rounded-2xl bg-primary text-primary-foreground">
+        <GraduationCap className="size-10" aria-hidden="true" />
+      </div>
+      <div>
+        <p className="font-display text-2xl font-black tracking-tight text-ink-foreground">
+          {SITE.shortName}
+        </p>
+        <p className="mt-1 text-sm text-ink-muted">{SITE.campusName}</p>
+      </div>
+      <div className="flex items-center gap-2 text-sm text-ink-muted">
+        <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+        <span>{message}</span>
+      </div>
+      <p className="text-xs uppercase tracking-[0.3em] text-ink-muted/70">
+        Practical skills · Certified trades
+      </p>
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
+      <RouteLoadingOverlay />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>

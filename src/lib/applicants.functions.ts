@@ -20,6 +20,12 @@ export type ApplicationView = {
   address: string;
   state: string;
   local_government: string;
+  next_of_kin_name: string | null;
+  next_of_kin_relationship: string | null;
+  next_of_kin_phone: string | null;
+  school: string | null;
+  qualification: string | null;
+  school_year: string | null;
   status: string;
   created_at: string;
   unit_name: string;
@@ -119,6 +125,12 @@ export const submitApplication = createServerFn({ method: "POST" })
         address: data.address.trim(),
         state: data.state,
         local_government: data.local_government.trim(),
+        next_of_kin_name: data.next_of_kin_name?.trim() || null,
+        next_of_kin_relationship: data.next_of_kin_relationship?.trim() || null,
+        next_of_kin_phone: data.next_of_kin_phone?.trim() || null,
+        school: data.school?.trim() || null,
+        qualification: data.qualification?.trim() || null,
+        school_year: data.school_year?.trim() || null,
         unit_id: data.unit_id,
       })
       .select("id, application_number, access_token")
@@ -180,7 +192,7 @@ export const getApplicationByToken = createServerFn({ method: "GET" })
     const { data: row, error } = await supabaseAdmin
       .from("applicants")
       .select(
-        "id, application_number, first_name, middle_name, last_name, gender, date_of_birth, nationality, email, phone, address, state, local_government, status, created_at, units(name)",
+        "id, application_number, first_name, middle_name, last_name, gender, date_of_birth, nationality, email, phone, address, state, local_government, next_of_kin_name, next_of_kin_relationship, next_of_kin_phone, school, qualification, school_year, status, created_at, units(name)",
       )
       .eq("access_token", data.token)
       .maybeSingle();
@@ -217,6 +229,12 @@ export const getApplicationByToken = createServerFn({ method: "GET" })
       address: row.address,
       state: row.state,
       local_government: row.local_government,
+      next_of_kin_name: row.next_of_kin_name,
+      next_of_kin_relationship: row.next_of_kin_relationship,
+      next_of_kin_phone: row.next_of_kin_phone,
+      school: row.school,
+      qualification: row.qualification,
+      school_year: row.school_year,
       status: row.status,
       created_at: row.created_at,
       unit_name: unit?.name ?? "—",

@@ -93,6 +93,35 @@ export const unitSchema = z.object({
   unit_id: z.string().uuid("Select a trade unit"),
 });
 
+const optionalName = (label: string) =>
+  z
+    .string()
+    .trim()
+    .max(80, `${label} is too long`)
+    .regex(/^[A-Za-z][A-Za-z'\-\s]*$/, `${label} may only contain letters, spaces, hyphens`)
+    .optional()
+    .or(z.literal(""));
+
+export const guardianEducationSchema = z.object({
+  next_of_kin_name: optionalName("Next of kin name"),
+  next_of_kin_relationship: optionalName("Relationship"),
+  next_of_kin_phone: z
+    .string()
+    .trim()
+    .regex(/^(\+?234|0)[7-9][01]\d{8}$/, "Enter a valid Nigerian phone number")
+    .optional()
+    .or(z.literal("")),
+  school: optionalName("School / institution"),
+  qualification: optionalName("Qualification"),
+  school_year: z
+    .string()
+    .trim()
+    .max(12)
+    .regex(/^[0-9]{4}(-[0-9]{4})?$/, "Enter a year, e.g. 2024 or 2023–2024")
+    .optional()
+    .or(z.literal("")),
+});
+
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
 export const photoSchema = z.object({
@@ -108,6 +137,7 @@ export const photoSchema = z.object({
 export const applicationSchema = personalSchema
   .merge(contactSchema)
   .merge(unitSchema)
+  .merge(guardianEducationSchema)
   .merge(photoSchema);
 
 export type ApplicationInput = z.infer<typeof applicationSchema>;

@@ -26,6 +26,7 @@ import {
   MAX_PHOTO_BYTES,
   NIGERIAN_STATES,
   contactSchema,
+  guardianEducationSchema,
   personalSchema,
   photoSchema,
   unitSchema,
@@ -52,7 +53,14 @@ export const Route = createFileRoute("/apply")({
   component: ApplyPage,
 });
 
-const STEPS = ["Personal", "Contact", "Trade unit", "Photograph", "Review"] as const;
+const STEPS = [
+  "Personal",
+  "Contact",
+  "Guardian & education",
+  "Trade unit",
+  "Photograph",
+  "Review",
+] as const;
 
 type FormState = {
   first_name: string;
@@ -66,6 +74,12 @@ type FormState = {
   address: string;
   state: string;
   local_government: string;
+  next_of_kin_name: string;
+  next_of_kin_relationship: string;
+  next_of_kin_phone: string;
+  school: string;
+  qualification: string;
+  school_year: string;
   unit_id: string;
   photo_data_url: string;
 };
@@ -82,6 +96,12 @@ const EMPTY: FormState = {
   address: "",
   state: "Delta",
   local_government: "",
+  next_of_kin_name: "",
+  next_of_kin_relationship: "",
+  next_of_kin_phone: "",
+  school: "",
+  qualification: "",
+  school_year: "",
   unit_id: "",
   photo_data_url: "",
 };
@@ -146,7 +166,13 @@ function ApplyPage() {
   );
 
   async function validateStep(index: number) {
-    const schema = [personalSchema, contactSchema, unitSchema, photoSchema][index];
+    const schema = [
+      personalSchema,
+      contactSchema,
+      guardianEducationSchema,
+      unitSchema,
+      photoSchema,
+    ][index];
     if (!schema) return true;
     const result = schema.safeParse(form);
     if (!result.success) {
@@ -422,6 +448,100 @@ function ApplyPage() {
             ) : null}
 
             {step === 2 ? (
+              <div className="grid gap-5">
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field
+                    label="Parent / guardian or next of kin name"
+                    htmlFor="next_of_kin_name"
+                    error={errors["next_of_kin_name"]}
+                    hint="Mandatory for applicants under 18."
+                  >
+                    <input
+                      id="next_of_kin_name"
+                      className={inputClass}
+                      value={form.next_of_kin_name}
+                      onChange={(e) => set("next_of_kin_name", e.target.value)}
+                    />
+                  </Field>
+                  <Field
+                    label="Relationship to applicant"
+                    htmlFor="next_of_kin_relationship"
+                    error={errors["next_of_kin_relationship"]}
+                  >
+                    <input
+                      id="next_of_kin_relationship"
+                      className={inputClass}
+                      value={form.next_of_kin_relationship}
+                      onChange={(e) => set("next_of_kin_relationship", e.target.value)}
+                      placeholder="e.g. Father, Mother, Guardian"
+                    />
+                  </Field>
+                  <Field
+                    label="Next of kin phone number"
+                    htmlFor="next_of_kin_phone"
+                    error={errors["next_of_kin_phone"]}
+                  >
+                    <input
+                      id="next_of_kin_phone"
+                      type="tel"
+                      inputMode="tel"
+                      className={inputClass}
+                      value={form.next_of_kin_phone}
+                      onChange={(e) => set("next_of_kin_phone", e.target.value)}
+                      placeholder="08031234567"
+                    />
+                  </Field>
+                </div>
+                <div className="border-t border-border" />
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field
+                    label="Most recent school / institution"
+                    htmlFor="school"
+                    error={errors["school"]}
+                  >
+                    <input
+                      id="school"
+                      className={inputClass}
+                      value={form.school}
+                      onChange={(e) => set("school", e.target.value)}
+                      placeholder="Name of school or training centre"
+                    />
+                  </Field>
+                  <Field
+                    label="Highest qualification obtained"
+                    htmlFor="qualification"
+                    error={errors["qualification"]}
+                  >
+                    <input
+                      id="qualification"
+                      className={inputClass}
+                      value={form.qualification}
+                      onChange={(e) => set("qualification", e.target.value)}
+                      placeholder="e.g. SSCE, NCE, OND"
+                    />
+                  </Field>
+                  <Field
+                    label="Year last attended / completed"
+                    htmlFor="school_year"
+                    error={errors["school_year"]}
+                    hint="e.g. 2024 or 2023–2024"
+                  >
+                    <input
+                      id="school_year"
+                      className={inputClass}
+                      value={form.school_year}
+                      onChange={(e) => set("school_year", e.target.value)}
+                    />
+                  </Field>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  These details are pre-printed on your application form. Leave blank if not
+                  applicable.
+                </p>
+              </div>
+            ) : null}
+
+            {step === 3 ? (
               <fieldset>
                 <legend className="text-sm font-medium">Choose one trade unit</legend>
                 {errors["unit_id"] ? (
@@ -457,7 +577,7 @@ function ApplyPage() {
               </fieldset>
             ) : null}
 
-            {step === 3 ? (
+            {step === 4 ? (
               <div>
                 <h2 className="font-display text-lg">Passport photograph</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -512,7 +632,7 @@ function ApplyPage() {
               </div>
             ) : null}
 
-            {step === 4 ? (
+            {step === 5 ? (
               <div>
                 <h2 className="font-display text-lg">Review your details</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -532,6 +652,12 @@ function ApplyPage() {
                     ["Address", form.address],
                     ["State / LGA", `${form.state} / ${form.local_government}`],
                     ["Trade unit", selectedUnit?.name ?? "—"],
+                    ["Next of kin", form.next_of_kin_name || "—"],
+                    ["Relationship", form.next_of_kin_relationship || "—"],
+                    ["Next of kin phone", form.next_of_kin_phone || "—"],
+                    ["School / institution", form.school || "—"],
+                    ["Qualification", form.qualification || "—"],
+                    ["Year completed", form.school_year || "—"],
                   ].map(([k, v]) => (
                     <div key={k as string} className="border-b border-border pb-2">
                       <dt className="text-xs uppercase tracking-wide text-muted-foreground">{k}</dt>
