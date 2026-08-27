@@ -28,7 +28,7 @@ export type ApplicationView = {
 
 function maskEmail(email: string) {
   const [user, domain] = email.split("@");
-  return `${user.slice(0, 2)}***@${domain ?? ""}`;
+  return `${(user ?? "").slice(0, 2)}***@${domain ?? ""}`;
 }
 
 function maskPhone(phone: string) {
@@ -137,8 +137,8 @@ export const submitApplication = createServerFn({ method: "POST" })
 
     const match = /^data:(image\/[a-z]+);base64,(.+)$/.exec(data.photo_data_url);
     if (match) {
-      const mime = match[1];
-      const binary = Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0));
+      const mime = match[1] as string;
+      const binary = Uint8Array.from(atob(match[2] as string), (c) => c.charCodeAt(0));
       const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
       const path = `${inserted.id}/photograph.${ext}`;
       const { error: uploadError } = await supabaseAdmin.storage

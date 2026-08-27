@@ -2,12 +2,26 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, FileDown, Loader2, Upload, X } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  FileDown,
+  Loader2,
+  Upload,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHero, SiteShell } from "@/components/site/site-shell";
+import { SITE } from "@/lib/site";
 import { listUnits } from "@/lib/units.functions";
-import { checkExistingApplication, lookupApplication, submitApplication } from "@/lib/applicants.functions";
+import {
+  checkExistingApplication,
+  lookupApplication,
+  submitApplication,
+} from "@/lib/applicants.functions";
 import {
   MAX_PHOTO_BYTES,
   NIGERIAN_STATES,
@@ -19,16 +33,16 @@ import {
 import { cn } from "@/lib/utils";
 
 const DESCRIPTION =
-  "Apply online for admission into a trade unit at the DSTVTE Umutu Branch. Complete the guided form, upload a passport photograph and download your printable application form.";
+  "Apply online for admission into a trade unit at the DSTVEB Umutu Branch. Complete the guided form, upload a passport photograph and download your printable application form.";
 
 const unitsQuery = queryOptions({ queryKey: ["units"], queryFn: () => listUnits() });
 
 export const Route = createFileRoute("/apply")({
   head: () => ({
     meta: [
-      { title: "Apply for Admission | DSTVTE Umutu Branch" },
+      { title: "Apply for Admission | DSTVEB Umutu Branch" },
       { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: "Apply for Admission | DSTVTE Umutu Branch" },
+      { property: "og:title", content: "Apply for Admission | DSTVEB Umutu Branch" },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -81,7 +95,7 @@ function Field({
 }: {
   label: string;
   htmlFor: string;
-  error?: string;
+  error?: string | null | undefined;
   hint?: string;
   children: React.ReactNode;
 }) {
@@ -116,7 +130,9 @@ function ApplyPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null);
-  const [done, setDone] = useState<{ application_number: string; access_token: string } | null>(null);
+  const [done, setDone] = useState<{ application_number: string; access_token: string } | null>(
+    null,
+  );
   const fileRef = useRef<HTMLInputElement>(null);
 
   const set = (key: keyof FormState, value: string) => {
@@ -124,7 +140,10 @@ function ApplyPage() {
     setErrors((e) => ({ ...e, [key]: "" }));
   };
 
-  const selectedUnit = useMemo(() => units.find((u) => u.id === form.unit_id), [units, form.unit_id]);
+  const selectedUnit = useMemo(
+    () => units.find((u) => u.id === form.unit_id),
+    [units, form.unit_id],
+  );
 
   async function validateStep(index: number) {
     const schema = [personalSchema, contactSchema, unitSchema, photoSchema][index];
@@ -167,7 +186,9 @@ function ApplyPage() {
   async function onSubmit() {
     setSubmitting(true);
     try {
-      const result = await submit({ data: { ...form, middle_name: form.middle_name || undefined } });
+      const result = await submit({
+        data: { ...form, middle_name: form.middle_name || undefined },
+      });
       if (!result.ok) {
         setBlocked(result.error);
         toast.error(result.error);
@@ -191,8 +212,8 @@ function ApplyPage() {
             </span>
             <h1 className="mt-6 text-3xl md:text-4xl">Application submitted</h1>
             <p className="mt-3 text-muted-foreground">
-              Your registration has been received. Keep your application number safe — it is required
-              for all correspondence and screening.
+              Your registration has been received. Keep your application number safe — it is
+              required for all correspondence and screening.
             </p>
             <p className="mt-6 font-display text-2xl tracking-tight">{done.application_number}</p>
             <div className="mt-8 flex flex-col items-center gap-3">
@@ -242,7 +263,9 @@ function ApplyPage() {
                 >
                   {i < step ? <Check className="size-3" aria-hidden="true" /> : i + 1}
                 </span>
-                <span className={cn(i === step ? "font-semibold" : "text-muted-foreground")}>{label}</span>
+                <span className={cn(i === step ? "font-semibold" : "text-muted-foreground")}>
+                  {label}
+                </span>
                 {i < STEPS.length - 1 ? <span className="text-border">—</span> : null}
               </li>
             ))}
@@ -253,7 +276,10 @@ function ApplyPage() {
               role="alert"
               className="mb-6 flex gap-3 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm"
             >
-              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
+              <AlertTriangle
+                className="mt-0.5 size-4 shrink-0 text-destructive"
+                aria-hidden="true"
+              />
               <p>{blocked}</p>
             </div>
           ) : null}
@@ -261,53 +287,136 @@ function ApplyPage() {
           <div className="surface-card p-6 md:p-8">
             {step === 0 ? (
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="First name" htmlFor="first_name" error={errors.first_name}>
-                  <input id="first_name" className={inputClass} value={form.first_name} onChange={(e) => set("first_name", e.target.value)} />
+                <Field label="First name" htmlFor="first_name" error={errors["first_name"]}>
+                  <input
+                    id="first_name"
+                    className={inputClass}
+                    value={form.first_name}
+                    onChange={(e) => set("first_name", e.target.value)}
+                  />
                 </Field>
-                <Field label="Middle name (optional)" htmlFor="middle_name" error={errors.middle_name}>
-                  <input id="middle_name" className={inputClass} value={form.middle_name} onChange={(e) => set("middle_name", e.target.value)} />
+                <Field
+                  label="Middle name (optional)"
+                  htmlFor="middle_name"
+                  error={errors["middle_name"]}
+                >
+                  <input
+                    id="middle_name"
+                    className={inputClass}
+                    value={form.middle_name}
+                    onChange={(e) => set("middle_name", e.target.value)}
+                  />
                 </Field>
-                <Field label="Surname" htmlFor="last_name" error={errors.last_name}>
-                  <input id="last_name" className={inputClass} value={form.last_name} onChange={(e) => set("last_name", e.target.value)} />
+                <Field label="Surname" htmlFor="last_name" error={errors["last_name"]}>
+                  <input
+                    id="last_name"
+                    className={inputClass}
+                    value={form.last_name}
+                    onChange={(e) => set("last_name", e.target.value)}
+                  />
                 </Field>
-                <Field label="Gender" htmlFor="gender" error={errors.gender}>
-                  <select id="gender" className={inputClass} value={form.gender} onChange={(e) => set("gender", e.target.value)}>
+                <Field label="Gender" htmlFor="gender" error={errors["gender"]}>
+                  <select
+                    id="gender"
+                    className={inputClass}
+                    value={form.gender}
+                    onChange={(e) => set("gender", e.target.value)}
+                  >
                     <option value="">Select…</option>
                     <option>Male</option>
                     <option>Female</option>
                   </select>
                 </Field>
-                <Field label="Date of birth" htmlFor="date_of_birth" error={errors.date_of_birth}>
-                  <input id="date_of_birth" type="date" className={inputClass} value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} />
+                <Field
+                  label="Date of birth"
+                  htmlFor="date_of_birth"
+                  error={errors["date_of_birth"]}
+                >
+                  <input
+                    id="date_of_birth"
+                    type="date"
+                    className={inputClass}
+                    value={form.date_of_birth}
+                    onChange={(e) => set("date_of_birth", e.target.value)}
+                  />
                 </Field>
-                <Field label="Nationality" htmlFor="nationality" error={errors.nationality}>
-                  <input id="nationality" className={inputClass} value={form.nationality} onChange={(e) => set("nationality", e.target.value)} />
+                <Field label="Nationality" htmlFor="nationality" error={errors["nationality"]}>
+                  <input
+                    id="nationality"
+                    className={inputClass}
+                    value={form.nationality}
+                    onChange={(e) => set("nationality", e.target.value)}
+                  />
                 </Field>
               </div>
             ) : null}
 
             {step === 1 ? (
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Email address" htmlFor="email" error={errors.email} hint="Used for admission notices.">
-                  <input id="email" type="email" inputMode="email" className={inputClass} value={form.email} onChange={(e) => set("email", e.target.value)} />
+                <Field
+                  label="Email address"
+                  htmlFor="email"
+                  error={errors["email"]}
+                  hint="Used for admission notices."
+                >
+                  <input
+                    id="email"
+                    type="email"
+                    inputMode="email"
+                    className={inputClass}
+                    value={form.email}
+                    onChange={(e) => set("email", e.target.value)}
+                  />
                 </Field>
-                <Field label="Phone number" htmlFor="phone" error={errors.phone} hint="e.g. 08031234567">
-                  <input id="phone" type="tel" inputMode="tel" className={inputClass} value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+                <Field
+                  label="Phone number"
+                  htmlFor="phone"
+                  error={errors["phone"]}
+                  hint="e.g. 08031234567"
+                >
+                  <input
+                    id="phone"
+                    type="tel"
+                    inputMode="tel"
+                    className={inputClass}
+                    value={form.phone}
+                    onChange={(e) => set("phone", e.target.value)}
+                  />
                 </Field>
                 <div className="sm:col-span-2">
-                  <Field label="Residential address" htmlFor="address" error={errors.address}>
-                    <textarea id="address" rows={3} className="w-full rounded-md border border-input bg-background p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" value={form.address} onChange={(e) => set("address", e.target.value)} />
+                  <Field label="Residential address" htmlFor="address" error={errors["address"]}>
+                    <textarea
+                      id="address"
+                      rows={3}
+                      className="w-full rounded-md border border-input bg-background p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      value={form.address}
+                      onChange={(e) => set("address", e.target.value)}
+                    />
                   </Field>
                 </div>
-                <Field label="State of origin" htmlFor="state" error={errors.state}>
-                  <select id="state" className={inputClass} value={form.state} onChange={(e) => set("state", e.target.value)}>
+                <Field label="State of origin" htmlFor="state" error={errors["state"]}>
+                  <select
+                    id="state"
+                    className={inputClass}
+                    value={form.state}
+                    onChange={(e) => set("state", e.target.value)}
+                  >
                     {NIGERIAN_STATES.map((s) => (
                       <option key={s}>{s}</option>
                     ))}
                   </select>
                 </Field>
-                <Field label="Local government area" htmlFor="local_government" error={errors.local_government}>
-                  <input id="local_government" className={inputClass} value={form.local_government} onChange={(e) => set("local_government", e.target.value)} />
+                <Field
+                  label="Local government area"
+                  htmlFor="local_government"
+                  error={errors["local_government"]}
+                >
+                  <input
+                    id="local_government"
+                    className={inputClass}
+                    value={form.local_government}
+                    onChange={(e) => set("local_government", e.target.value)}
+                  />
                 </Field>
               </div>
             ) : null}
@@ -315,9 +424,9 @@ function ApplyPage() {
             {step === 2 ? (
               <fieldset>
                 <legend className="text-sm font-medium">Choose one trade unit</legend>
-                {errors.unit_id ? (
+                {errors["unit_id"] ? (
                   <p role="alert" className="mt-1 text-xs font-medium text-destructive">
-                    {errors.unit_id}
+                    {errors["unit_id"]}
                   </p>
                 ) : null}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -357,9 +466,15 @@ function ApplyPage() {
                 <div className="mt-5 flex flex-wrap items-start gap-6">
                   <div className="grid h-40 w-32 place-items-center overflow-hidden rounded-md border border-dashed border-border bg-secondary">
                     {form.photo_data_url ? (
-                      <img src={form.photo_data_url} alt="Uploaded passport photograph preview" className="h-full w-full object-cover" />
+                      <img
+                        src={form.photo_data_url}
+                        alt="Uploaded passport photograph preview"
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
-                      <span className="px-2 text-center text-xs text-muted-foreground">No photo yet</span>
+                      <span className="px-2 text-center text-xs text-muted-foreground">
+                        No photo yet
+                      </span>
                     )}
                   </div>
                   <div className="flex flex-col gap-3">
@@ -387,9 +502,9 @@ function ApplyPage() {
                         <X className="size-3.5" aria-hidden="true" /> Remove photograph
                       </button>
                     ) : null}
-                    {errors.photo_data_url ? (
+                    {errors["photo_data_url"] ? (
                       <p role="alert" className="text-xs font-medium text-destructive">
-                        {errors.photo_data_url}
+                        {errors["photo_data_url"]}
                       </p>
                     ) : null}
                   </div>
@@ -405,7 +520,10 @@ function ApplyPage() {
                 </p>
                 <dl className="mt-5 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
                   {[
-                    ["Full name", [form.first_name, form.middle_name, form.last_name].filter(Boolean).join(" ")],
+                    [
+                      "Full name",
+                      [form.first_name, form.middle_name, form.last_name].filter(Boolean).join(" "),
+                    ],
                     ["Gender", form.gender],
                     ["Date of birth", form.date_of_birth],
                     ["Nationality", form.nationality],
@@ -448,7 +566,9 @@ function ApplyPage() {
                   disabled={submitting}
                   className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground disabled:opacity-60"
                 >
-                  {submitting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+                  {submitting ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  ) : null}
                   Submit application
                 </button>
               )}
@@ -468,7 +588,13 @@ function ApplyPage() {
   );
 }
 
-function LookupForm({ lookup }: { lookup: (opts: { data: { application_number: string; email: string } }) => Promise<{ found: boolean; access_token?: string }> }) {
+function LookupForm({
+  lookup,
+}: {
+  lookup: (opts: {
+    data: { application_number: string; email: string };
+  }) => Promise<{ found: boolean; access_token?: string }>;
+}) {
   const navigate = useNavigate();
   const [number, setNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -493,10 +619,24 @@ function LookupForm({ lookup }: { lookup: (opts: { data: { application_number: s
       }}
     >
       <Field label="Application number" htmlFor="lookup_number">
-        <input id="lookup_number" className={inputClass} placeholder="DSTVTE-UMU-2026-00001" value={number} onChange={(e) => setNumber(e.target.value)} required />
+        <input
+          id="lookup_number"
+          className={inputClass}
+          placeholder={`${SITE.applicationPrefix}-2026-00001`}
+          value={number}
+          onChange={(e) => setNumber(e.target.value)}
+          required
+        />
       </Field>
       <Field label="Email address" htmlFor="lookup_email">
-        <input id="lookup_email" type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input
+          id="lookup_email"
+          type="email"
+          className={inputClass}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
       </Field>
       <button
         type="submit"

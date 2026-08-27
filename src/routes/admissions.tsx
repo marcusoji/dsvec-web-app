@@ -4,14 +4,14 @@ import { CalendarDays, FileCheck2, HelpCircle } from "lucide-react";
 import { PageHero, SiteShell } from "@/components/site/site-shell";
 
 const DESCRIPTION =
-  "Admission requirements, application steps, key dates and frequently asked questions for the DSTVTE Umutu Branch technical and vocational programmes.";
+  "Admission requirements, application steps, key dates and frequently asked questions for the DSTVEB Umutu Branch technical and vocational programmes.";
 
 export const Route = createFileRoute("/admissions")({
   head: () => ({
     meta: [
-      { title: "Admissions & Requirements | DSTVTE Umutu Branch" },
+      { title: "Admissions & Requirements | DSTVEB Umutu Branch" },
       { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: "Admissions & Requirements | DSTVTE Umutu" },
+      { property: "og:title", content: "Admissions & Requirements | DSTVEB Umutu" },
       { property: "og:description", content: DESCRIPTION },
     ],
   }),
@@ -69,7 +69,10 @@ function Admissions() {
           <ul className="mt-5 space-y-3">
             {REQUIREMENTS.map((item) => (
               <li key={item} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
-                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                <span
+                  className="mt-2 size-1.5 shrink-0 rounded-full bg-primary"
+                  aria-hidden="true"
+                />
                 {item}
               </li>
             ))}

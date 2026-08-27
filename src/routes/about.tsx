@@ -5,14 +5,14 @@ import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { SITE } from "@/lib/site";
 
 const DESCRIPTION =
-  "About the DSTVTE Umutu Branch: mission, vision, campus facilities and the leadership team behind Delta State's technical and vocational training annex at Umutu.";
+  "About the DSTVEB Umutu Branch: mission, vision, campus facilities and the leadership team behind Delta State's technical and vocational training annex at Umutu.";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About DSTVTE Umutu Branch | Mission, Vision & Campus" },
+      { title: "About DSTVEB Umutu Branch | Mission, Vision & Campus" },
       { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: "About DSTVTE Umutu Branch" },
+      { property: "og:title", content: "About DSTVEB Umutu Branch" },
       { property: "og:description", content: DESCRIPTION },
     ],
   }),

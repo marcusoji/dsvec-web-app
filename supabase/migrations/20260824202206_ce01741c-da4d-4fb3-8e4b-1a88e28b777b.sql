@@ -66,7 +66,7 @@ CREATE TRIGGER units_updated_at BEFORE UPDATE ON public.units
 CREATE SEQUENCE public.application_number_seq START 1;
 CREATE OR REPLACE FUNCTION public.next_application_number()
 RETURNS text LANGUAGE sql VOLATILE SET search_path = public AS $$
-  SELECT 'DSTVTE-UMU-' || to_char(now() AT TIME ZONE 'Africa/Lagos', 'YYYY') || '-'
+  SELECT 'DSTVEB-UMU-' || to_char(now() AT TIME ZONE 'Africa/Lagos', 'YYYY') || '-'
        || lpad(nextval('public.application_number_seq')::text, 5, '0');
 $$;
 

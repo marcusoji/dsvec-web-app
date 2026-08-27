@@ -36,18 +36,20 @@ function publicClient() {
   });
 }
 
-export const listUnits = createServerFn({ method: "GET" }).handler(async (): Promise<PublicUnit[]> => {
-  const { data, error } = await publicClient()
-    .from("units")
-    .select(UNIT_COLUMNS)
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
-  if (error) {
-    console.error("[units] list failed", error.message);
-    return [];
-  }
-  return (data ?? []) as PublicUnit[];
-});
+export const listUnits = createServerFn({ method: "GET" }).handler(
+  async (): Promise<PublicUnit[]> => {
+    const { data, error } = await publicClient()
+      .from("units")
+      .select(UNIT_COLUMNS)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    if (error) {
+      console.error("[units] list failed", error.message);
+      return [];
+    }
+    return (data ?? []) as PublicUnit[];
+  },
+);
 
 export const getUnitBySlug = createServerFn({ method: "GET" })
   .inputValidator((data: { slug: string }) => ({ slug: String(data.slug).slice(0, 120) }))

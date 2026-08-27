@@ -18,15 +18,15 @@ function Brand({ tone = "ink" }: { tone?: "ink" | "paper" }) {
             tone === "ink" ? "text-foreground" : "text-ink-foreground",
           )}
         >
-          DSTVTE
+          {SITE.shortName}
         </span>
         <span
           className={cn(
-            "block text-[0.7rem]",
+            "block max-w-[16rem] truncate text-[0.7rem]",
             tone === "ink" ? "text-muted-foreground" : "text-ink-muted",
           )}
         >
-          {SITE.branch}
+          {SITE.campusName}
         </span>
       </span>
     </Link>
@@ -121,8 +121,8 @@ function SiteFooter() {
         <div className="md:col-span-2">
           <Brand tone="paper" />
           <p className="mt-4 max-w-sm text-sm leading-relaxed">
-            {SITE.name}, {SITE.branch}. Practical, trade-focused vocational training for
-            school leavers, artisans and career changers in Delta State.
+            {SITE.name}, {SITE.branch}. Practical, trade-focused vocational training for school
+            leavers, artisans and career changers in Delta State.
           </p>
         </div>
         <div>

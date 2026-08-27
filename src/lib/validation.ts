@@ -1,10 +1,43 @@
 import { z } from "zod";
 
 export const NIGERIAN_STATES = [
-  "Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno","Cross River",
-  "Delta","Ebonyi","Edo","Ekiti","Enugu","FCT - Abuja","Gombe","Imo","Jigawa","Kaduna","Kano",
-  "Katsina","Kebbi","Kogi","Kwara","Lagos","Nasarawa","Niger","Ogun","Ondo","Osun","Oyo",
-  "Plateau","Rivers","Sokoto","Taraba","Yobe","Zamfara",
+  "Abia",
+  "Adamawa",
+  "Akwa Ibom",
+  "Anambra",
+  "Bauchi",
+  "Bayelsa",
+  "Benue",
+  "Borno",
+  "Cross River",
+  "Delta",
+  "Ebonyi",
+  "Edo",
+  "Ekiti",
+  "Enugu",
+  "FCT - Abuja",
+  "Gombe",
+  "Imo",
+  "Jigawa",
+  "Kaduna",
+  "Kano",
+  "Katsina",
+  "Kebbi",
+  "Kogi",
+  "Kwara",
+  "Lagos",
+  "Nasarawa",
+  "Niger",
+  "Ogun",
+  "Ondo",
+  "Osun",
+  "Oyo",
+  "Plateau",
+  "Rivers",
+  "Sokoto",
+  "Taraba",
+  "Yobe",
+  "Zamfara",
 ] as const;
 
 const name = (label: string) =>
@@ -65,7 +98,10 @@ export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 export const photoSchema = z.object({
   photo_data_url: z
     .string()
-    .regex(/^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/, "Upload a JPG, PNG or WebP photograph")
+    .regex(
+      /^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/,
+      "Upload a JPG, PNG or WebP photograph",
+    )
     .refine((v) => v.length * 0.75 <= MAX_PHOTO_BYTES + 1024, "Photograph must be 2MB or smaller"),
 });
 

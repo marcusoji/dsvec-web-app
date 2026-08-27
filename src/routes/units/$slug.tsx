@@ -18,9 +18,10 @@ export const Route = createFileRoute("/units/$slug")({
     return unit;
   },
   head: ({ loaderData }) => {
-    const title = loaderData ? `${loaderData.name} | DSTVTE Umutu Branch` : "Trade unit | DSTVTE Umutu";
-    const description =
-      loaderData?.summary ?? "Trade unit details at the DSTVTE Umutu Branch.";
+    const title = loaderData
+      ? `${loaderData.name} | DSTVEB Umutu Branch`
+      : "Trade unit | DSTVEB Umutu";
+    const description = loaderData?.summary ?? "Trade unit details at the DSTVEB Umutu Branch.";
     return {
       meta: [
         { title },
@@ -33,7 +34,11 @@ export const Route = createFileRoute("/units/$slug")({
   component: UnitDetail,
   errorComponent: () => (
     <SiteShell>
-      <PageHero eyebrow="Units" title="This unit could not be loaded" lead="Please try again later." />
+      <PageHero
+        eyebrow="Units"
+        title="This unit could not be loaded"
+        lead="Please try again later."
+      />
     </SiteShell>
   ),
   notFoundComponent: () => (

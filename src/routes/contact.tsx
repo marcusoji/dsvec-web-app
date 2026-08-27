@@ -5,14 +5,14 @@ import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { SITE } from "@/lib/site";
 
 const DESCRIPTION =
-  "Contact the DSTVTE Umutu Branch admissions office — campus address in Ndokwa West, phone number, email address and office opening hours.";
+  "Contact the DSTVEB Umutu Branch admissions office — campus address in Ndokwa West, phone number, email address and office opening hours.";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact the Admissions Office | DSTVTE Umutu Branch" },
+      { title: "Contact the Admissions Office | DSTVEB Umutu Branch" },
       { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: "Contact | DSTVTE Umutu Branch" },
+      { property: "og:title", content: "Contact | DSTVEB Umutu Branch" },
       { property: "og:description", content: DESCRIPTION },
     ],
   }),
@@ -22,7 +22,12 @@ export const Route = createFileRoute("/contact")({
 function Contact() {
   const items = [
     { icon: MapPin, label: "Campus address", value: SITE.address },
-    { icon: Phone, label: "Phone", value: SITE.phone, href: `tel:${SITE.phone.replace(/\s/g, "")}` },
+    {
+      icon: Phone,
+      label: "Phone",
+      value: SITE.phone,
+      href: `tel:${SITE.phone.replace(/\s/g, "")}`,
+    },
     { icon: Mail, label: "Email", value: SITE.email, href: `mailto:${SITE.email}` },
     { icon: Clock, label: "Office hours", value: SITE.officeHours },
   ];
@@ -40,7 +45,10 @@ function Contact() {
             <Icon className="size-5 text-primary" aria-hidden="true" />
             <h2 className="mt-4 font-display text-base">{label}</h2>
             {href ? (
-              <a href={href} className="mt-1 block text-sm text-muted-foreground underline underline-offset-4">
+              <a
+                href={href}
+                className="mt-1 block text-sm text-muted-foreground underline underline-offset-4"
+              >
                 {value}
               </a>
             ) : (

@@ -11,9 +11,9 @@ const unitsQuery = queryOptions({ queryKey: ["units"], queryFn: () => listUnits(
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "DSTVTE Umutu Branch — Technical & Vocational Training, Delta State" },
+      { title: "DSTVEB Umutu Branch — Technical & Vocational Training, Delta State" },
       { name: "description", content: SITE.description },
-      { property: "og:title", content: "DSTVTE Umutu Branch — Technical & Vocational Training" },
+      { property: "og:title", content: "DSTVEB Umutu Branch — Technical & Vocational Training" },
       { property: "og:description", content: SITE.description },
     ],
   }),
@@ -30,12 +30,18 @@ const STATS = [
 
 const STEPS = [
   { title: "Choose a unit", body: "Browse the trade units and confirm the entry requirements." },
-  { title: "Complete the form", body: "Fill your details online and upload a passport photograph." },
+  {
+    title: "Complete the form",
+    body: "Fill your details online and upload a passport photograph.",
+  },
   {
     title: "Get your number",
     body: "An application number is generated instantly and shown on screen.",
   },
-  { title: "Download your form", body: "Print the generated application form and submit at the campus." },
+  {
+    title: "Download your form",
+    body: "Print the generated application form and submit at the campus.",
+  },
 ];
 
 function Home() {
@@ -123,7 +129,9 @@ function Home() {
         <div className="container-page py-16 md:py-20">
           <div className="rule-accent">
             <p className="eyebrow">How it works</p>
-            <h2 className="mt-2 text-2xl md:text-3xl">Four steps from interest to admission form</h2>
+            <h2 className="mt-2 text-2xl md:text-3xl">
+              Four steps from interest to admission form
+            </h2>
           </div>
           <ol className="mt-8 grid gap-4 md:grid-cols-4">
             {STEPS.map((step, i) => (

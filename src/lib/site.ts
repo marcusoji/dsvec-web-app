@@ -1,14 +1,20 @@
 export const SITE = {
-  shortName: "DSTVTE Umutu",
-  name: "Delta State Technical and Vocational Education",
-  branch: "Umutu Branch / Annex",
+  /** Acronym — Delta State Technical and Vocational Education Board. */
+  shortName: "DSTVEB",
+  /** Full governing body name (the acronym short name). */
+  name: "Delta State Technical and Vocational Education Board",
+  /** The specific campus / branch name. */
+  campusName: "Delta State Vocational Center, Umutu",
+  branch: "Umutu Branch",
   tagline: "Practical skills. Certified trades. Real livelihoods.",
   description:
-    "Delta State Technical and Vocational Education, Umutu Branch — hands-on trade training, certified vocational units and online admission application.",
-  address: "DSTVTE Umutu Branch / Annex, Umutu, Ndokwa West LGA, Delta State, Nigeria",
-  email: "admissions@dstvte-umutu.example.ng",
+    "Delta State Technical and Vocational Education Board (DSTVEB), Umutu Branch — hands-on trade training, certified vocational units and online admission application.",
+  address: "Delta State Vocational Center, Umutu, Ndokwa West LGA, Delta State, Nigeria",
+  email: "admissions@dstveb-umutu.example.ng",
   phone: "+234 800 000 0000",
   officeHours: "Monday – Friday, 8:00am – 4:00pm (WAT)",
+  /** Application-number prefix used on the downloadable form. */
+  applicationPrefix: "DSTVEB-UMU",
 } as const;
 
 export const NAV_LINKS = [

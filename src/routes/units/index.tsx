@@ -6,16 +6,16 @@ import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { listUnits } from "@/lib/units.functions";
 
 const DESCRIPTION =
-  "Browse every technical and vocational trade unit offered at the DSTVTE Umutu Branch, with skills covered, career paths, duration and entry requirements.";
+  "Browse every technical and vocational trade unit offered at the DSTVEB Umutu Branch, with skills covered, career paths, duration and entry requirements.";
 
 const unitsQuery = queryOptions({ queryKey: ["units"], queryFn: () => listUnits() });
 
 export const Route = createFileRoute("/units/")({
   head: () => ({
     meta: [
-      { title: "Trade Units & Programmes | DSTVTE Umutu Branch" },
+      { title: "Trade Units & Programmes | DSTVEB Umutu Branch" },
       { name: "description", content: DESCRIPTION },
-      { property: "og:title", content: "Trade Units & Programmes | DSTVTE Umutu" },
+      { property: "og:title", content: "Trade Units & Programmes | DSTVEB Umutu" },
       { property: "og:description", content: DESCRIPTION },
     ],
   }),

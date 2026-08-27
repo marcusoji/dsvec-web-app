@@ -10,16 +10,27 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdmissionsRouteImport } from './routes/admissions'
 import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ApplicationTokenRouteImport } from './routes/application/$token'
 import { Route as UnitsIndexRouteImport } from './routes/units/index'
 import { Route as UnitsSlugRouteImport } from './routes/units/$slug'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminDuplicatesRouteImport } from './routes/_authenticated/admin/duplicates'
+import { Route as AuthenticatedAdminApplicantsIndexRouteImport } from './routes/_authenticated/admin/applicants/index'
+import { Route as AuthenticatedAdminApplicantsIdRouteImport } from './routes/_authenticated/admin/applicants/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -42,6 +53,16 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplicationTokenRoute = ApplicationTokenRouteImport.update({
+  id: '/application/$token',
+  path: '/application/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UnitsIndexRoute = UnitsIndexRouteImport.update({
   id: '/units/',
   path: '/units/',
@@ -52,6 +73,29 @@ const UnitsSlugRoute = UnitsSlugRouteImport.update({
   path: '/units/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminDuplicatesRoute =
+  AuthenticatedAdminDuplicatesRouteImport.update({
+    id: '/admin/duplicates',
+    path: '/admin/duplicates',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminApplicantsIndexRoute =
+  AuthenticatedAdminApplicantsIndexRouteImport.update({
+    id: '/admin/applicants/',
+    path: '/admin/applicants/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminApplicantsIdRoute =
+  AuthenticatedAdminApplicantsIdRouteImport.update({
+    id: '/admin/applicants/$id',
+    path: '/admin/applicants/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,8 +103,14 @@ export interface FileRoutesByFullPath {
   '/admissions': typeof AdmissionsRoute
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
+  '/login': typeof LoginRoute
+  '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units/': typeof UnitsIndexRoute
+  '/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/applicants/$id': typeof AuthenticatedAdminApplicantsIdRoute
+  '/admin/applicants/': typeof AuthenticatedAdminApplicantsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,18 +118,31 @@ export interface FileRoutesByTo {
   '/admissions': typeof AdmissionsRoute
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
+  '/login': typeof LoginRoute
+  '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units': typeof UnitsIndexRoute
+  '/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/applicants/$id': typeof AuthenticatedAdminApplicantsIdRoute
+  '/admin/applicants': typeof AuthenticatedAdminApplicantsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/admissions': typeof AdmissionsRoute
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
+  '/login': typeof LoginRoute
+  '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units/': typeof UnitsIndexRoute
+  '/_authenticated/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/applicants/$id': typeof AuthenticatedAdminApplicantsIdRoute
+  '/_authenticated/admin/applicants/': typeof AuthenticatedAdminApplicantsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -89,8 +152,14 @@ export interface FileRouteTypes {
     | '/admissions'
     | '/apply'
     | '/contact'
+    | '/login'
+    | '/application/$token'
     | '/units/$slug'
     | '/units/'
+    | '/admin/duplicates'
+    | '/admin/'
+    | '/admin/applicants/$id'
+    | '/admin/applicants/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -98,25 +167,41 @@ export interface FileRouteTypes {
     | '/admissions'
     | '/apply'
     | '/contact'
+    | '/login'
+    | '/application/$token'
     | '/units/$slug'
     | '/units'
+    | '/admin/duplicates'
+    | '/admin'
+    | '/admin/applicants/$id'
+    | '/admin/applicants'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/about'
     | '/admissions'
     | '/apply'
     | '/contact'
+    | '/login'
+    | '/application/$token'
     | '/units/$slug'
     | '/units/'
+    | '/_authenticated/admin/duplicates'
+    | '/_authenticated/admin/'
+    | '/_authenticated/admin/applicants/$id'
+    | '/_authenticated/admin/applicants/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AdmissionsRoute: typeof AdmissionsRoute
   ApplyRoute: typeof ApplyRoute
   ContactRoute: typeof ContactRoute
+  LoginRoute: typeof LoginRoute
+  ApplicationTokenRoute: typeof ApplicationTokenRoute
   UnitsSlugRoute: typeof UnitsSlugRoute
   UnitsIndexRoute: typeof UnitsIndexRoute
 }
@@ -128,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -158,6 +250,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/application/$token': {
+      id: '/application/$token'
+      path: '/application/$token'
+      fullPath: '/application/$token'
+      preLoaderRoute: typeof ApplicationTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/units/': {
       id: '/units/'
       path: '/units'
@@ -172,15 +278,64 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnitsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/duplicates': {
+      id: '/_authenticated/admin/duplicates'
+      path: '/admin/duplicates'
+      fullPath: '/admin/duplicates'
+      preLoaderRoute: typeof AuthenticatedAdminDuplicatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/applicants/': {
+      id: '/_authenticated/admin/applicants/'
+      path: '/admin/applicants'
+      fullPath: '/admin/applicants/'
+      preLoaderRoute: typeof AuthenticatedAdminApplicantsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/applicants/$id': {
+      id: '/_authenticated/admin/applicants/$id'
+      path: '/admin/applicants/$id'
+      fullPath: '/admin/applicants/$id'
+      preLoaderRoute: typeof AuthenticatedAdminApplicantsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminDuplicatesRoute: typeof AuthenticatedAdminDuplicatesRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminApplicantsIdRoute: typeof AuthenticatedAdminApplicantsIdRoute
+  AuthenticatedAdminApplicantsIndexRoute: typeof AuthenticatedAdminApplicantsIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminDuplicatesRoute: AuthenticatedAdminDuplicatesRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminApplicantsIdRoute: AuthenticatedAdminApplicantsIdRoute,
+  AuthenticatedAdminApplicantsIndexRoute:
+    AuthenticatedAdminApplicantsIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AdmissionsRoute: AdmissionsRoute,
   ApplyRoute: ApplyRoute,
   ContactRoute: ContactRoute,
+  LoginRoute: LoginRoute,
+  ApplicationTokenRoute: ApplicationTokenRoute,
   UnitsSlugRoute: UnitsSlugRoute,
   UnitsIndexRoute: UnitsIndexRoute,
 }
