@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       activity_log: {
         Row: {
+          actor_email: string | null
+          actor_user_id: string | null
           applicant_id: string | null
           application_number: string | null
           created_at: string
@@ -26,6 +28,8 @@ export type Database = {
           phone_masked: string | null
         }
         Insert: {
+          actor_email?: string | null
+          actor_user_id?: string | null
           applicant_id?: string | null
           application_number?: string | null
           created_at?: string
@@ -36,6 +40,8 @@ export type Database = {
           phone_masked?: string | null
         }
         Update: {
+          actor_email?: string | null
+          actor_user_id?: string | null
           applicant_id?: string | null
           application_number?: string | null
           created_at?: string
@@ -188,6 +194,33 @@ export type Database = {
           },
         ]
       }
+      staff_profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          must_change_password: boolean
+          password_changed_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          must_change_password?: boolean
+          password_changed_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          must_change_password?: boolean
+          password_changed_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       units: {
         Row: {
           careers: string[]
@@ -278,7 +311,7 @@ export type Database = {
       next_application_number: { Args: never; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "staff"
+      app_role: "admin" | "staff" | "reviewer" | "registrar"
       application_status:
         | "submitted"
         | "under_review"
@@ -414,7 +447,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff"],
+      app_role: ["admin", "staff", "reviewer", "registrar"],
       application_status: [
         "submitted",
         "under_review",

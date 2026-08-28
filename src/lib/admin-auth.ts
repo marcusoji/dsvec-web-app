@@ -3,6 +3,8 @@ import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
+import { highestRole, permissionsFor, type Permission, type StaffRole } from "./permissions";
+
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -31,15 +33,16 @@ export type AdminAuthContext = {
   admin: {
     userId: string;
     email: string | null;
-    role: "admin" | "staff";
+    role: StaffRole;
+    permissions: readonly Permission[];
   };
 };
 
 /**
  * Function middleware that verifies a Supabase bearer token from the request
- * and confirms the user holds an `admin` or `staff` role. Server functions that
- * expose applicant data compose this middleware so they can never be invoked by
- * unauthenticated or non-admin callers.
+ * and resolves the caller's staff role. Server functions that expose applicant
+ * data compose this middleware so they can never be invoked by unauthenticated
+ * or non-staff callers.
  */
 export const requireAdmin = createMiddleware({ type: "function" }).server(async ({ next }) => {
   const SUPABASE_URL = process.env["SUPABASE_URL"];
@@ -72,12 +75,7 @@ export const requireAdmin = createMiddleware({ type: "function" }).server(async 
   // Resolve the administrative role for this authenticated user.
   const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
 
-  const roleList = (roles ?? []).map((r) => r.role);
-  const role: "admin" | "staff" | null = roleList.includes("admin")
-    ? "admin"
-    : roleList.includes("staff")
-      ? "staff"
-      : null;
+  const role = highestRole((roles ?? []).map((r) => r.role as string));
   if (!role) {
     throw new Error("Forbidden");
   }
@@ -85,6 +83,25 @@ export const requireAdmin = createMiddleware({ type: "function" }).server(async 
   const email = typeof data.claims.email === "string" ? data.claims.email : null;
 
   return next({
-    context: { admin: { userId, email, role } } satisfies AdminAuthContext,
+    context: {
+      admin: { userId, email, role, permissions: permissionsFor(role) },
+    } satisfies AdminAuthContext,
   });
 });
+
+/**
+ * Composable middleware factory enforcing a single permission on top of
+ * `requireAdmin`. Least-privilege by default: anything not granted is denied.
+ */
+export function requirePermission(permission: Permission) {
+  return createMiddleware({ type: "function" })
+    .middleware([requireAdmin])
+    .server(async ({ next, context }) => {
+      const admin = (context as AdminAuthContext).admin;
+      if (!admin.permissions.includes(permission)) {
+        throw new Error("Forbidden");
+      }
+      return next();
+    });
+}
+
