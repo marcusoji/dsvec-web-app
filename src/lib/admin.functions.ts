@@ -2,9 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireAdmin, type AdminAuthContext } from "./admin-auth";
+import { requireAdmin, requirePermission, type AdminAuthContext } from "./admin-auth";
+import type { Permission, StaffRole } from "./permissions";
 
-export type AdminRole = "admin" | "staff";
+export type AdminRole = StaffRole;
 export const STATUSES = [
   "submitted",
   "under_review",
@@ -19,10 +20,33 @@ export type AdminUser = {
   userId: string;
   email: string | null;
   role: AdminRole;
+  permissions: readonly Permission[];
+  mustChangePassword: boolean;
 };
 
 function adminOf(context: unknown): AdminAuthContext["admin"] {
   return (context as { admin: AdminAuthContext["admin"] }).admin;
+}
+
+/** Append an attributable entry to the audit trail. Never throws. */
+async function audit(
+  admin: AdminAuthContext["admin"],
+  event_type: string,
+  detail: string,
+  applicant?: { id?: string; application_number?: string | null },
+) {
+  try {
+    await supabaseAdmin.from("activity_log").insert({
+      event_type,
+      detail,
+      actor_user_id: admin.userId,
+      actor_email: admin.email,
+      applicant_id: applicant?.id ?? null,
+      application_number: applicant?.application_number ?? null,
+    });
+  } catch {
+    /* auditing must never break the operation it records */
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -33,8 +57,44 @@ export const getUser = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async ({ context }): Promise<AdminUser> => {
     const admin = adminOf(context);
-    return { userId: admin.userId, email: admin.email, role: admin.role };
+    const { data: profile } = await supabaseAdmin
+      .from("staff_profiles")
+      .select("must_change_password")
+      .eq("user_id", admin.userId)
+      .maybeSingle();
+
+    if (!profile) {
+      await supabaseAdmin
+        .from("staff_profiles")
+        .insert({ user_id: admin.userId, must_change_password: true });
+    }
+
+    return {
+      userId: admin.userId,
+      email: admin.email,
+      role: admin.role,
+      permissions: admin.permissions,
+      mustChangePassword: profile ? profile.must_change_password : true,
+    };
   });
+
+/** Called after the user successfully changes their password client-side. */
+export const confirmPasswordChanged = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .handler(async ({ context }) => {
+    const admin = adminOf(context);
+    await supabaseAdmin.from("staff_profiles").upsert(
+      {
+        user_id: admin.userId,
+        must_change_password: false,
+        password_changed_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" },
+    );
+    await audit(admin, "password_changed", `Password changed by ${admin.email ?? admin.userId}`);
+    return { ok: true as const };
+  });
+
 
 // ---------------------------------------------------------------------------
 // Statistics
