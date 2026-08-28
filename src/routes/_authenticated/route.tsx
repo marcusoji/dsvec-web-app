@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { GraduationCap, Loader2, LogOut } from "lucide-react";
@@ -7,6 +7,15 @@ const DESCRIPTION =
   "Secure staff portal for the DSTVEB Umutu Branch — application management, statistics and audit.";
 
 export const Route = createFileRoute("/_authenticated")({
+  // Supabase keeps the session in localStorage, so the server cannot read it.
+  // Rendering this subtree client-only guarantees loaders/queries run with a
+  // bearer token attached instead of failing with "Unauthorized" during SSR.
+  ssr: false,
+  beforeLoad: async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) throw redirect({ to: "/login" });
+    return { user: data.user };
+  },
   head: () => ({
     meta: [
       { title: "Staff Portal | DSTVEB Umutu Branch" },
