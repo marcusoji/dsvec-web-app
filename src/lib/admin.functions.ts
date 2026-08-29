@@ -450,67 +450,53 @@ const csvInputSchema = z.object({
 });
 
 export const exportApplicantsCsv = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requirePermission("applicants.export")])
   .validator(csvInputSchema)
-  .handler(async ({ data }): Promise<string> => {
+  .handler(async ({ data, context }): Promise<string> => {
+    const admin = adminOf(context);
+
     let query = supabaseAdmin
       .from("applicants")
       .select(
         "application_number, first_name, middle_name, last_name, email, phone, gender, date_of_birth, nationality, state, local_government, address, status, created_at, units(name)",
       )
-      .order("created_at", { ascending: false });
+      // Stable, deterministic ordering: newest first, then by the immutable
+      // application number so repeat exports produce identical files.
+      .order("created_at", { ascending: false })
+      .order("application_number", { ascending: true });
+
     if (data.unit_id) query = query.eq("unit_id", data.unit_id);
     if (data.status) query = query.eq("status", data.status);
 
-    const { data: rows } = await query;
+    const { data: rows, error } = await query;
+    if (error) throw new Error("Could not export applicants");
 
-    const headers = [
-      "Application Number",
-      "Full Name",
-      "Email",
-      "Phone",
-      "Gender",
-      "Date of Birth",
-      "Nationality",
-      "State",
-      "LGA",
-      "Address",
-      "Selected Unit",
-      "Status",
-      "Applied Date",
-    ];
-
-    const esc = (value: unknown): string => {
-      const s = value == null ? "" : String(value);
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-
-    const lines = [headers.map(esc).join(",")];
-    for (const r of rows ?? []) {
+    const body = (rows ?? []).map((r) => {
       const unit = r.units as unknown as { name?: string } | null;
-      lines.push(
-        [
-          r.application_number,
-          r.first_name,
-          r.middle_name,
-          r.last_name,
-          r.email,
-          r.phone,
-          r.gender,
-          r.date_of_birth,
-          r.nationality,
-          r.state,
-          r.local_government,
-          r.address,
-          unit?.name,
-          r.status,
-          r.created_at,
-        ]
-          .map(esc)
-          .join(","),
-      );
-    }
-    return lines.join("\n");
+      return [
+        r.application_number,
+        fullName(r.first_name, r.middle_name, r.last_name),
+        r.email,
+        r.phone,
+        titleCase(r.gender),
+        formatDate(r.date_of_birth),
+        r.nationality,
+        r.state,
+        r.local_government,
+        r.address,
+        unit?.name ?? "",
+        titleCase(r.status),
+        formatDateTime(r.created_at),
+      ];
+    });
+
+    await audit(
+      admin,
+      "applicants_exported",
+      `Exported ${body.length} applicant record(s) to CSV`,
+    );
+
+    return toCsv(APPLICANT_CSV_COLUMNS, body);
   });
 
 // ---------------------------------------------------------------------------
@@ -527,13 +513,56 @@ export type DuplicateRow = {
 };
 
 export const listDuplicateAttempts = createServerFn({ method: "GET" })
-  .middleware([requireAdmin])
-  .handler(async (): Promise<DuplicateRow[]> => {
+  .middleware([requirePermission("audit.read")])
+  .handler(async ({ context }): Promise<DuplicateRow[]> => {
     const { data } = await supabaseAdmin
       .from("activity_log")
       .select("id, application_number, email_masked, phone_masked, detail, created_at")
       .eq("event_type", "duplicate_attempt")
       .order("created_at", { ascending: false })
       .limit(200);
+
+    await audit(adminOf(context), "duplicates_viewed", "Viewed the duplicate-attempt audit");
     return (data ?? []) as DuplicateRow[];
   });
+
+// ---------------------------------------------------------------------------
+// Audit trail
+// ---------------------------------------------------------------------------
+
+export type AuditRow = {
+  id: number;
+  event_type: string;
+  detail: string | null;
+  actor_email: string | null;
+  actor_user_id: string | null;
+  applicant_id: string | null;
+  application_number: string | null;
+  created_at: string;
+};
+
+export const listAuditLog = createServerFn({ method: "POST" })
+  .middleware([requirePermission("audit.read")])
+  .validator(
+    z.object({
+      event_type: z.string().trim().max(60).optional(),
+      limit: z.number().int().min(10).max(500).default(200),
+    }),
+  )
+  .handler(async ({ data }): Promise<AuditRow[]> => {
+    let query = supabaseAdmin
+      .from("activity_log")
+      .select(
+        "id, event_type, detail, actor_email, actor_user_id, applicant_id, application_number, created_at",
+      )
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(data.limit);
+
+    if (data.event_type) query = query.eq("event_type", data.event_type);
+
+    const { data: rows, error } = await query;
+    if (error) throw new Error("Could not load the audit log");
+    return (rows ?? []) as AuditRow[];
+  });
+
