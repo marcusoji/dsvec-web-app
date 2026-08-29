@@ -165,14 +165,20 @@ function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="container-page flex flex-wrap items-center justify-between gap-2 py-5 text-xs">
+        <div className="container-page flex flex-wrap items-center justify-between gap-3 py-5 text-xs">
           <p>
             © {new Date().getFullYear()} {SITE.name} — {SITE.branch}. All rights reserved.
           </p>
-          <Link to="/admin" className="hover:text-primary">
-            Staff portal
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-2 rounded-md border border-white/15 px-3 py-1.5 font-medium text-ink-muted transition-colors hover:border-primary hover:text-primary"
+            title="Sign in to the staff portal — authorized personnel only"
+          >
+            <Lock className="size-3" aria-hidden="true" />
+            Staff portal — authorized personnel only
           </Link>
         </div>
+
       </div>
     </footer>
   );
