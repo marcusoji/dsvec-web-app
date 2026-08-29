@@ -401,7 +401,7 @@ export const getApplicantDetail = createServerFn({ method: "GET" })
 // ---------------------------------------------------------------------------
 
 export const updateApplicationStatus = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requirePermission("applicants.status.update")])
   .validator(
     z.object({
       id: z.string().uuid(),
