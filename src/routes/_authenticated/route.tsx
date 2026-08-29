@@ -1,7 +1,17 @@
-import { createFileRoute, Link, Outlet, redirect, useRouter } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+  useRouter,
+  useRouterState,
+} from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap, Loader2, LogOut } from "lucide-react";
+import { GraduationCap, Loader2, LogOut, UserCog } from "lucide-react";
+
+import { useAdminUser } from "@/lib/use-admin-user";
+import type { Permission } from "@/lib/permissions";
 
 const DESCRIPTION =
   "Secure staff portal for the DSTVEB Umutu Branch — application management, statistics and audit.";
@@ -30,6 +40,26 @@ function AuthenticatedLayout() {
   const [checking, setChecking] = useState(true);
   const [authed, setAuthed] = useState(false);
   const router = useRouter();
+  const { user, hasPermission } = useAdminUser();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // First-login guard: the seeded credential must be replaced before the
+  // portal can be used.
+  useEffect(() => {
+    if (user?.mustChangePassword && pathname !== "/admin/account") {
+      router.navigate({ to: "/admin/account" });
+    }
+  }, [user, pathname, router]);
+
+  // Least-privilege navigation: only surface what the role may open.
+  const navItems = (
+    [
+      { to: "/admin", label: "Dashboard", permission: "applicants.read" },
+      { to: "/admin/applicants", label: "Applicants", permission: "applicants.read" },
+      { to: "/admin/duplicates", label: "Duplicate audit", permission: "audit.read" },
+      { to: "/admin/audit", label: "Audit log", permission: "audit.read" },
+    ] satisfies Array<{ to: string; label: string; permission: Permission }>
+  ).filter((item) => hasPermission(item.permission));
 
   useEffect(() => {
     let active = true;
@@ -101,26 +131,24 @@ function AuthenticatedLayout() {
             </span>
           </Link>
           <nav aria-label="Admin" className="ml-auto hidden items-center gap-1 md:flex">
+            {navItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="rounded-md px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink-foreground"
+                activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
+                activeOptions={{ exact: item.to === "/admin" }}
+              >
+                {item.label}
+              </Link>
+            ))}
             <Link
-              to="/admin"
-              className="rounded-md px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink-foreground"
+              to="/admin/account"
+              className="ml-1 inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink-foreground"
               activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
             >
-              Dashboard
-            </Link>
-            <Link
-              to="/admin/applicants"
-              className="rounded-md px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink-foreground"
-              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
-            >
-              Applicants
-            </Link>
-            <Link
-              to="/admin/duplicates"
-              className="rounded-md px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink-foreground"
-              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
-            >
-              Duplicate audit
+              <UserCog className="size-4" aria-hidden="true" />
+              <span className="hidden lg:inline">{user?.email ?? "Account"}</span>
             </Link>
           </nav>
           <button
@@ -134,16 +162,13 @@ function AuthenticatedLayout() {
         </div>
         {/* Mobile nav */}
         <nav aria-label="Admin (mobile)" className="flex border-t border-sidebar-border md:hidden">
-          {[
-            { to: "/admin", label: "Dashboard" },
-            { to: "/admin/applicants", label: "Applicants" },
-            { to: "/admin/duplicates", label: "Duplicate audit" },
-          ].map((l) => (
+          {[...navItems, { to: "/admin/account", label: "Account" }].map((l) => (
             <Link
               key={l.to}
               to={l.to}
               className="flex-1 px-3 py-3 text-center text-sm font-medium text-ink-muted"
               activeProps={{ className: "text-primary" }}
+              activeOptions={{ exact: l.to === "/admin" }}
             >
               {l.label}
             </Link>

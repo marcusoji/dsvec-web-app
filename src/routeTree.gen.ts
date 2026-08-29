@@ -20,6 +20,7 @@ import { Route as ApplicationTokenRouteImport } from './routes/application/$toke
 import { Route as UnitsIndexRouteImport } from './routes/units/index'
 import { Route as UnitsSlugRouteImport } from './routes/units/$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminAccountRouteImport } from './routes/_authenticated/admin/account'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin/audit'
 import { Route as AuthenticatedAdminDuplicatesRouteImport } from './routes/_authenticated/admin/duplicates'
 import { Route as AuthenticatedAdminApplicantsIndexRouteImport } from './routes/_authenticated/admin/applicants/index'
@@ -79,6 +80,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminAccountRoute =
+  AuthenticatedAdminAccountRouteImport.update({
+    id: '/admin/account',
+    path: '/admin/account',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
   id: '/admin/audit',
   path: '/admin/audit',
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units/': typeof UnitsIndexRoute
+  '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -129,6 +137,7 @@ export interface FileRoutesByTo {
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units': typeof UnitsIndexRoute
+  '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -147,6 +156,7 @@ export interface FileRoutesById {
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units/': typeof UnitsIndexRoute
+  '/_authenticated/admin/account': typeof AuthenticatedAdminAccountRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/application/$token'
     | '/units/$slug'
     | '/units/'
+    | '/admin/account'
     | '/admin/audit'
     | '/admin/duplicates'
     | '/admin/'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/application/$token'
     | '/units/$slug'
     | '/units'
+    | '/admin/account'
     | '/admin/audit'
     | '/admin/duplicates'
     | '/admin'
@@ -198,6 +210,7 @@ export interface FileRouteTypes {
     | '/application/$token'
     | '/units/$slug'
     | '/units/'
+    | '/_authenticated/admin/account'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/duplicates'
     | '/_authenticated/admin/'
@@ -297,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/account': {
+      id: '/_authenticated/admin/account'
+      path: '/admin/account'
+      fullPath: '/admin/account'
+      preLoaderRoute: typeof AuthenticatedAdminAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/audit': {
       id: '/_authenticated/admin/audit'
       path: '/admin/audit'
@@ -329,6 +349,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminAccountRoute: typeof AuthenticatedAdminAccountRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminDuplicatesRoute: typeof AuthenticatedAdminDuplicatesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -337,6 +358,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminAccountRoute: AuthenticatedAdminAccountRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminDuplicatesRoute: AuthenticatedAdminDuplicatesRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
