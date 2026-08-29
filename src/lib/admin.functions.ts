@@ -430,12 +430,12 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("applicants").update(changes).eq("id", data.id);
     if (error) throw new Error("Could not update the application");
 
-    await supabaseAdmin.from("activity_log").insert({
-      event_type: "status_updated",
-      applicant_id: data.id,
-      application_number: existing.application_number,
-      detail: `Status changed from ${existing.status} to ${data.status} by ${admin.email ?? admin.userId}`,
-    });
+    await audit(
+      admin,
+      "status_updated",
+      `Status changed from ${existing.status} to ${data.status}`,
+      { id: data.id, application_number: existing.application_number },
+    );
 
     return { ok: true as const, status: data.status };
   });
