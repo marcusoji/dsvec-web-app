@@ -3,6 +3,14 @@ import { z } from "zod";
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireAdmin, requirePermission, type AdminAuthContext } from "./admin-auth";
+import {
+  APPLICANT_CSV_COLUMNS,
+  formatDate,
+  formatDateTime,
+  fullName,
+  titleCase,
+  toCsv,
+} from "./admin-csv";
 import type { Permission, StaffRole } from "./permissions";
 
 export type AdminRole = StaffRole;
@@ -138,7 +146,7 @@ function startOfMonth(): string {
 }
 
 export const getAdminStats = createServerFn({ method: "GET" })
-  .middleware([requireAdmin])
+  .middleware([requirePermission("applicants.read")])
   .handler(async (): Promise<AdminStats> => {
     const [total, today, week, month, unitsRows, recentRows] = await Promise.all([
       supabaseAdmin.from("applicants").select("id", { count: "exact", head: true }),
@@ -248,7 +256,7 @@ export type ApplicantListResult = {
 };
 
 export const listApplicants = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requirePermission("applicants.read")])
   .validator(listInputSchema)
   .handler(async ({ data }): Promise<ApplicantListResult> => {
     const { page, per_page, search, unit_id, status } = data;
@@ -347,7 +355,7 @@ export type ApplicantDetail = {
 };
 
 export const getApplicantDetail = createServerFn({ method: "GET" })
-  .middleware([requireAdmin])
+  .middleware([requirePermission("applicants.read")])
   .inputValidator((data: { id: string }) => ({ id: String(data.id).slice(0, 40) }))
   .handler(async ({ data }): Promise<ApplicantDetail | null> => {
     const { data: row } = await supabaseAdmin
