@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Menu, X, GraduationCap, Mail, Phone, MapPin } from "lucide-react";
+import { Menu, X, GraduationCap, Mail, Phone, MapPin, Lock } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { NAV_LINKS, SITE } from "@/lib/site";
