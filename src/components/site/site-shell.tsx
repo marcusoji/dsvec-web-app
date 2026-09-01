@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 function Brand({ tone = "ink" }: { tone?: "ink" | "paper" }) {
   return (
-    <Link to="/" className="flex items-center gap-3" aria-label={`${SITE.shortName} home`}>
+    <Link to="/umutu" className="flex items-center gap-3" aria-label={`${SITE.shortName} home`}>
       <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
         <GraduationCap className="size-5" aria-hidden="true" />
       </span>
@@ -70,6 +70,13 @@ function SiteHeader() {
             );
           })}
           <Link
+            to="/"
+            className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            activeOptions={{ exact: true }}
+          >
+            All branches
+          </Link>
+          <Link
             to="/apply"
             className="ml-2 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
@@ -100,6 +107,13 @@ function SiteHeader() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              to="/"
+              onClick={() => setOpen(false)}
+              className="rounded-md px-2 py-3 text-sm font-medium text-foreground"
+            >
+              All branches
+            </Link>
             <Link
               to="/apply"
               onClick={() => setOpen(false)}
@@ -135,6 +149,11 @@ function SiteFooter() {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link to="/" className="hover:text-primary">
+                All branches
+              </Link>
+            </li>
             <li>
               <Link to="/apply" className="hover:text-primary">
                 Apply / Check application

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, ImageIcon, Loader2, Save } from "lucide-react";
+import { ArrowLeft, FileText, ImageIcon, Loader2, Save } from "lucide-react";
 
 import { getApplicantDetail, STATUSES, updateApplicationStatus } from "@/lib/admin.functions";
 
@@ -103,9 +103,20 @@ function ApplicantDetail() {
             </p>
           </div>
         </div>
-        <span className="inline-flex rounded-full border border-border bg-accent/40 px-3 py-1 text-sm capitalize">
-          {detail.status.replace(/_/g, " ")}
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span className="inline-flex rounded-full border border-border bg-accent/40 px-3 py-1 text-sm capitalize">
+            {detail.status.replace(/_/g, " ")}
+          </span>
+          {detail.access_token ? (
+            <Link
+              to="/application/$token"
+              params={{ token: detail.access_token }}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold underline underline-offset-4"
+            >
+              <FileText className="size-4" aria-hidden="true" /> View printable form
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">

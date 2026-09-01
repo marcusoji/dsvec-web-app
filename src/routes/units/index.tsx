@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, Clock } from "lucide-react";
+import { ArrowRight, Clock, Phone } from "lucide-react";
 
 import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { listUnits } from "@/lib/units.functions";
@@ -34,6 +34,17 @@ function Units() {
         lead="Each unit combines workshop practicals, safety training and continuous assessment. Choose a unit to see the full curriculum outline and entry requirements."
       />
       <section className="container-page py-14">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            {units.length} active trade units at the Umutu branch.
+          </p>
+          <Link
+            to="/units/contacts"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold underline underline-offset-4"
+          >
+            <Phone className="size-4" aria-hidden="true" /> Unit contacts directory
+          </Link>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {units.map((unit) => (
             <article key={unit.id} className="surface-card flex flex-col p-6">

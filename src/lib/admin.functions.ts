@@ -113,8 +113,10 @@ export type AdminStats = {
   today: number;
   this_week: number;
   this_month: number;
+  this_year: number;
   pending: number;
   completed: number;
+  per_year: Array<{ year: number; count: number }>;
   per_unit: Array<{ unit_name: string; count: number }>;
   by_status: Array<{ status: ApplicationStatus; count: number }>;
   recent: Array<{
@@ -126,6 +128,23 @@ export type AdminStats = {
     status: ApplicationStatus;
   }>;
 };
+
+/** `2026` → `[2026-01-01T00:00:00+01:00, 2027-01-01T00:00:00+01:00)` in Lagos time. */
+export function yearBounds(year: number): [string, string] {
+  return [
+    `${year}-01-01T00:00:00+01:00`,
+    `${year + 1}-01-01T00:00:00+01:00`,
+  ];
+}
+
+/** Calendar year (Lagos time) of an ISO timestamp. */
+function yearForDate(iso: string): number {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return new Date().getFullYear();
+  return Number(
+    new Intl.DateTimeFormat("en-GB", { year: "numeric", timeZone: "Africa/Lagos" }).format(d),
+  );
+}
 
 function startOfDay(): string {
   const d = new Date();
@@ -208,13 +227,33 @@ export const getAdminStats = createServerFn({ method: "GET" })
     const pending = (statusCounts.get("submitted") ?? 0) + (statusCounts.get("under_review") ?? 0);
     const completed = (statusCounts.get("admitted") ?? 0) + (statusCounts.get("shortlisted") ?? 0);
 
+    // Per-year counts (Lagos calendar years).
+    const yearCounts = new Map<number, number>();
+    const { data: yearRows } = await supabaseAdmin.from("applicants").select("created_at");
+    for (const row of yearRows ?? []) {
+      const year = yearForDate(row.created_at);
+      yearCounts.set(year, (yearCounts.get(year) ?? 0) + 1);
+    }
+
+    const now = new Date();
+    const [thisYearStart, thisYearEnd] = yearBounds(now.getFullYear());
+    const { count: thisYearCount } = await supabaseAdmin
+      .from("applicants")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", thisYearStart)
+      .lt("created_at", thisYearEnd);
+
     return {
       total: total.count ?? 0,
       today: today.count ?? 0,
       this_week: week.count ?? 0,
       this_month: month.count ?? 0,
+      this_year: thisYearCount ?? 0,
       pending,
       completed,
+      per_year: [...yearCounts.entries()]
+        .map(([year, count]) => ({ year, count }))
+        .sort((a, b) => b.year - a.year),
       per_unit,
       by_status,
       recent,
@@ -243,6 +282,7 @@ const listInputSchema = z.object({
   search: z.string().trim().max(120).optional(),
   unit_id: z.string().uuid().optional(),
   status: z.enum(STATUSES).optional(),
+  year: z.number().int().min(2000).max(2100).optional(),
 });
 type ListInput = z.infer<typeof listInputSchema>;
 
@@ -253,13 +293,14 @@ export type ApplicantListResult = {
   per_page: number;
   pages: number;
   units: Array<{ id: string; name: string }>;
+  years: number[];
 };
 
 export const listApplicants = createServerFn({ method: "POST" })
   .middleware([requirePermission("applicants.read")])
   .validator(listInputSchema)
   .handler(async ({ data }): Promise<ApplicantListResult> => {
-    const { page, per_page, search, unit_id, status } = data;
+    const { page, per_page, search, unit_id, status, year } = data;
     const fromRow = (page - 1) * per_page;
 
     let query = supabaseAdmin
@@ -277,6 +318,10 @@ export const listApplicants = createServerFn({ method: "POST" })
     }
     if (unit_id) query = query.eq("unit_id", unit_id);
     if (status) query = query.eq("status", status);
+    if (year) {
+      const [start, end] = yearBounds(year);
+      query = query.gte("created_at", start).lt("created_at", end);
+    }
 
     const {
       data: rows,
@@ -292,6 +337,11 @@ export const listApplicants = createServerFn({ method: "POST" })
       .select("id, name")
       .eq("is_active", true)
       .order("name", { ascending: true });
+
+    const { data: yearRows } = await supabaseAdmin.from("applicants").select("created_at");
+    const yearSet = new Set<number>();
+    for (const r of yearRows ?? []) yearSet.add(yearForDate(r.created_at));
+    const years = [...yearSet].sort((a, b) => b - a);
 
     type RawRow = {
       id: string;
@@ -328,6 +378,7 @@ export const listApplicants = createServerFn({ method: "POST" })
       per_page,
       pages: Math.max(1, Math.ceil((count ?? 0) / per_page)),
       units: (units ?? []).map((u) => ({ id: u.id, name: u.name })),
+      years,
     };
   });
 
@@ -352,6 +403,7 @@ export type ApplicantDetail = {
   created_at: string;
   unit_name: string;
   photo_url: string | null;
+  access_token: string | null;
 };
 
 export const getApplicantDetail = createServerFn({ method: "GET" })
@@ -361,7 +413,7 @@ export const getApplicantDetail = createServerFn({ method: "GET" })
     const { data: row } = await supabaseAdmin
       .from("applicants")
       .select(
-        "id, application_number, first_name, middle_name, last_name, email, phone, date_of_birth, gender, nationality, state, local_government, address, status, admin_notes, created_at, units(name)",
+        "id, application_number, first_name, middle_name, last_name, email, phone, date_of_birth, gender, nationality, state, local_government, address, status, admin_notes, created_at, access_token, units(name)",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -401,6 +453,7 @@ export const getApplicantDetail = createServerFn({ method: "GET" })
       created_at: row.created_at,
       unit_name: unit?.name ?? "—",
       photo_url,
+      access_token: row.access_token ?? null,
     };
   });
 
@@ -455,6 +508,7 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
 const csvInputSchema = z.object({
   unit_id: z.string().uuid().optional(),
   status: z.enum(STATUSES).optional(),
+  year: z.number().int().min(2000).max(2100).optional(),
 });
 
 export const exportApplicantsCsv = createServerFn({ method: "POST" })
@@ -475,6 +529,10 @@ export const exportApplicantsCsv = createServerFn({ method: "POST" })
 
     if (data.unit_id) query = query.eq("unit_id", data.unit_id);
     if (data.status) query = query.eq("status", data.status);
+    if (data.year) {
+      const [start, end] = yearBounds(data.year);
+      query = query.gte("created_at", start).lt("created_at", end);
+    }
 
     const { data: rows, error } = await query;
     if (error) throw new Error("Could not export applicants");

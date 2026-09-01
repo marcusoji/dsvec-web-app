@@ -56,6 +56,7 @@ function AuthenticatedLayout() {
     [
       { to: "/admin", label: "Dashboard", permission: "applicants.read" },
       { to: "/admin/applicants", label: "Applicants", permission: "applicants.read" },
+      { to: "/admin/portal", label: "Unit directory", permission: "applicants.read" },
       { to: "/admin/duplicates", label: "Duplicate audit", permission: "audit.read" },
       { to: "/admin/audit", label: "Audit log", permission: "audit.read" },
     ] satisfies Array<{ to: string; label: string; permission: Permission }>

@@ -35,6 +35,7 @@ function Applicants() {
   const [searchInput, setSearchInput] = useState("");
   const [unitId, setUnitId] = useState("");
   const [status, setStatus] = useState<ApplicationStatus | "">("");
+  const [year, setYear] = useState<number | "">("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<Awaited<ReturnType<typeof listApplicants>> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -56,6 +57,7 @@ function Applicants() {
           search: search || undefined,
           unit_id: unitId || undefined,
           status: status || undefined,
+          year: year === "" ? undefined : year,
         },
       });
       setData(res);
@@ -70,9 +72,10 @@ function Applicants() {
     void run({ page: 1 });
   }
 
-  function changeFilter(kind: "unit" | "status", value: string) {
+  function changeFilter(kind: "unit" | "status" | "year", value: string) {
     if (kind === "unit") setUnitId(value);
-    else setStatus(value as ApplicationStatus | "");
+    else if (kind === "status") setStatus(value as ApplicationStatus | "");
+    else setYear(value === "" ? "" : Number(value));
     void run({ page: 1 });
   }
 
@@ -80,9 +83,14 @@ function Applicants() {
     setExporting(true);
     try {
       const csv = await exportApplicantsCsv({
-        data: { unit_id: unitId || undefined, status: status || undefined },
+        data: {
+          unit_id: unitId || undefined,
+          status: status || undefined,
+          year: year === "" ? undefined : year,
+        },
       });
-      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      // The server already writes a UTF-8 BOM; do not add a second one.
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -115,7 +123,7 @@ function Applicants() {
       </div>
 
       <div className="surface-card mt-6 p-4">
-        <div className="grid gap-3 lg:grid-cols-[1fr_12rem_12rem_auto]">
+        <div className="grid gap-3 lg:grid-cols-[1fr_12rem_12rem_8rem_auto]">
           <label className="flex items-center gap-2 rounded-md border border-input bg-background px-3 focus-within:ring-2 focus-within:ring-ring">
             <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             <span className="sr-only">Search applicants</span>
@@ -156,6 +164,19 @@ function Applicants() {
             {STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Filter by year"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={year === "" ? "" : String(year)}
+            onChange={(e) => changeFilter("year", e.target.value)}
+          >
+            <option value="">All years</option>
+            {(data?.years ?? []).map((y) => (
+              <option key={y} value={y}>
+                {y}
               </option>
             ))}
           </select>

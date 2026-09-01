@@ -95,12 +95,39 @@ function Dashboard() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={Users} label="Total applications" value={stats.total} />
-        <StatCard icon={CalendarDays} label="Today" value={stats.today} />
+        <StatCard icon={CalendarDays} label="This year" value={stats.this_year} />
         <StatCard icon={Hourglass} label="Pending review" value={stats.pending} />
         <StatCard icon={CheckCircle2} label="Completed" value={stats.completed} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <section className="surface-card p-6">
+          <h2 className="flex items-center gap-2 font-display text-base">
+            <CalendarDays className="size-4 text-primary" aria-hidden="true" /> Applications per year
+          </h2>
+          {stats.per_year.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">No applications yet.</p>
+          ) : (
+            <ul className="mt-5 space-y-3">
+              {stats.per_year.map((y) => {
+                const max = Math.max(...stats.per_year.map((x) => x.count), 1);
+                return (
+                  <li key={y.year} className="flex items-center gap-3">
+                    <span className="w-16 text-sm font-medium">{y.year}</span>
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: `${Math.max(4, (y.count / max) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-8 text-right text-sm font-semibold">{y.count}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
         <section className="surface-card p-6">
           <h2 className="flex items-center gap-2 font-display text-base">
             <PieChart className="size-4 text-primary" aria-hidden="true" /> Applications per unit
