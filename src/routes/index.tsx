@@ -1,170 +1,211 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, BadgeCheck, CalendarDays, FileText, Users, Wrench } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  GraduationCap,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Wrench,
+} from "lucide-react";
 
-import { SiteShell } from "@/components/site/site-shell";
-import { listUnits } from "@/lib/units.functions";
-import { SITE } from "@/lib/site";
-
-const unitsQuery = queryOptions({ queryKey: ["units"], queryFn: () => listUnits() });
+import { BOARD, BRANCHES } from "@/lib/branches";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "DSTVEB Umutu Branch — Technical & Vocational Training, Delta State" },
-      { name: "description", content: SITE.description },
-      { property: "og:title", content: "DSTVEB Umutu Branch — Technical & Vocational Training" },
-      { property: "og:description", content: SITE.description },
+      { title: "DSTVEB — Delta State Technical & Vocational Education Board" },
+      { name: "description", content: BOARD.description },
+      { property: "og:title", content: "DSTVEB — Technical & Vocational Education, Delta State" },
+      { property: "og:description", content: BOARD.description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(unitsQuery),
-  component: Home,
+  component: BoardHome,
 });
 
-const STATS = [
-  { icon: Wrench, value: "10+", label: "Trade units" },
-  { icon: Users, value: "500+", label: "Trainees supported" },
-  { icon: BadgeCheck, value: "100%", label: "Practical assessment" },
-  { icon: CalendarDays, value: "6", label: "Months per programme" },
-];
-
-const STEPS = [
-  { title: "Choose a unit", body: "Browse the trade units and confirm the entry requirements." },
+const PILLARS = [
   {
-    title: "Complete the form",
-    body: "Fill your details online and upload a passport photograph.",
+    icon: Wrench,
+    title: "Trade-first training",
+    body: "Workshop-based instruction in engineering, building, ICT, garment, catering and agro trades.",
   },
   {
-    title: "Get your number",
-    body: "An application number is generated instantly and shown on screen.",
+    icon: ShieldCheck,
+    title: "Certified assessment",
+    body: "Every trainee is assessed practically and certified to a recognised state trade standard.",
   },
   {
-    title: "Download your form",
-    body: "Print the generated application form and submit at the campus.",
+    icon: Building2,
+    title: "Centres statewide",
+    body: `${BRANCHES.length} technical colleges and vocational centres across Delta North, Central and South.`,
   },
 ];
 
-function Home() {
-  const { data: units } = useSuspenseQuery(unitsQuery);
+const ZONES = ["Delta North", "Delta Central", "Delta South"] as const;
 
+function BoardHome() {
   return (
-    <SiteShell>
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-ink text-ink-foreground">
+        <div className="container-page flex h-16 items-center justify-between gap-4">
+          <span className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-md bg-primary text-primary-foreground">
+              <GraduationCap className="size-5" aria-hidden="true" />
+            </span>
+            <span className="leading-tight">
+              <span className="block font-display text-sm font-bold">{BOARD.shortName}</span>
+              <span className="block text-[0.7rem] text-ink-muted">Delta State, Nigeria</span>
+            </span>
+          </span>
+          <a
+            href="#branches"
+            className="rounded-md border border-ink-muted/40 px-4 py-2 text-sm font-semibold"
+          >
+            Find a branch
+          </a>
+        </div>
+      </header>
+
       <section className="border-b border-border bg-secondary/50 grid-paper">
-        <div className="container-page grid gap-10 py-16 md:grid-cols-[1.15fr_0.85fr] md:items-center md:py-24">
+        <div className="container-page grid gap-10 py-16 md:grid-cols-[1.1fr_0.9fr] md:items-center md:py-24">
           <div>
-            <p className="eyebrow">{SITE.branch}</p>
-            <h1 className="mt-3 text-4xl leading-[1.05] md:text-6xl">
-              Delta State Technical and&nbsp;Vocational Education,&nbsp;Umutu
-            </h1>
+            <p className="eyebrow">Delta State Government</p>
+            <h1 className="mt-3 text-4xl leading-[1.05] md:text-6xl">{BOARD.name}</h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              {SITE.tagline} Register online, generate your application number instantly and
-              download a printable application form.
+              {BOARD.tagline} Select your branch below to see its trade units, admission
+              requirements and application portal.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/apply"
+                to="/umutu"
                 className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
               >
-                Start your application <ArrowRight className="size-4" aria-hidden="true" />
+                Umutu Branch <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
-              <Link
-                to="/units"
-                className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+              <a
+                href="#branches"
+                className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-6 py-3 text-sm font-semibold"
               >
-                Explore trade units
-              </Link>
+                All branches
+              </a>
             </div>
           </div>
           <div className="surface-card p-6">
-            <p className="eyebrow">Admission at a glance</p>
-            <dl className="mt-4 grid grid-cols-2 gap-4">
-              {STATS.map(({ icon: Icon, value, label }) => (
-                <div key={label} className="rounded-md border border-border bg-background p-4">
-                  <Icon className="size-5 text-primary" aria-hidden="true" />
-                  <dt className="mt-3 font-display text-2xl font-bold">{value}</dt>
-                  <dd className="text-xs text-muted-foreground">{label}</dd>
-                </div>
+            <p className="eyebrow">The board at a glance</p>
+            <ul className="mt-4 space-y-4">
+              {PILLARS.map(({ icon: Icon, title, body }) => (
+                <li key={title} className="flex gap-3">
+                  <Icon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+                  <span>
+                    <span className="block font-display text-base">{title}</span>
+                    <span className="block text-sm text-muted-foreground">{body}</span>
+                  </span>
+                </li>
               ))}
-            </dl>
+            </ul>
           </div>
         </div>
       </section>
 
-      <section className="container-page py-16 md:py-20">
+      <section id="branches" className="container-page py-16 md:py-20">
         <div className="rule-accent">
-          <p className="eyebrow">Trade units</p>
-          <h2 className="mt-2 text-2xl md:text-3xl">Programmes you can apply for</h2>
+          <p className="eyebrow">Branches</p>
+          <h2 className="mt-2 text-2xl md:text-3xl">Technical & vocational centres statewide</h2>
+          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+            Click a branch to open its portal. Online admissions are currently live for the Umutu
+            branch; other centres accept applications at the campus office.
+          </p>
         </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {units.slice(0, 6).map((unit) => (
-            <Link
-              key={unit.id}
-              to="/units/$slug"
-              params={{ slug: unit.slug }}
-              className="surface-card group flex flex-col p-5 transition-shadow hover:shadow-raised"
-            >
-              <h3 className="font-display text-lg">{unit.name}</h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
-                {unit.summary}
-              </p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                View unit
-                <ArrowRight
-                  className="size-4 transition-transform group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </span>
-            </Link>
-          ))}
-        </div>
-        <Link
-          to="/units"
-          className="mt-8 inline-flex items-center gap-2 text-sm font-semibold underline underline-offset-4"
-        >
-          See all {units.length} units
-        </Link>
+
+        {ZONES.map((zone) => {
+          const branches = BRANCHES.filter((b) => b.zone === zone);
+          if (branches.length === 0) return null;
+          return (
+            <div key={zone} className="mt-10">
+              <h3 className="font-display text-lg">{zone}</h3>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {branches.map((branch) =>
+                  branch.online ? (
+                    <Link
+                      key={branch.slug}
+                      to="/umutu"
+                      className="surface-card group flex flex-col border-primary/40 p-5 transition-shadow hover:shadow-raised"
+                    >
+                      <span className="inline-flex w-fit rounded-full bg-primary px-2.5 py-0.5 text-[0.7rem] font-semibold text-primary-foreground">
+                        Online applications open
+                      </span>
+                      <h4 className="mt-3 font-display text-lg">{branch.name}</h4>
+                      <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <MapPin className="size-3.5" aria-hidden="true" /> {branch.lga}
+                      </p>
+                      <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+                        {branch.focus}
+                      </p>
+                      <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold">
+                        Open branch site
+                        <ArrowRight
+                          className="size-4 transition-transform group-hover:translate-x-0.5"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </Link>
+                  ) : (
+                    <article key={branch.slug} className="surface-card flex flex-col p-5">
+                      <span className="inline-flex w-fit rounded-full border border-border px-2.5 py-0.5 text-[0.7rem] text-muted-foreground">
+                        Campus applications
+                      </span>
+                      <h4 className="mt-3 font-display text-lg">{branch.name}</h4>
+                      <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <MapPin className="size-3.5" aria-hidden="true" /> {branch.lga}
+                      </p>
+                      <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+                        {branch.focus}
+                      </p>
+                      <div className="mt-4 space-y-1 text-sm">
+                        <a
+                          href={`tel:${branch.phone.replace(/\s/g, "")}`}
+                          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                        >
+                          <Phone className="size-3.5" aria-hidden="true" /> {branch.phone}
+                        </a>
+                        <a
+                          href={`mailto:${branch.email}`}
+                          className="flex items-center gap-1.5 break-all text-muted-foreground hover:text-foreground"
+                        >
+                          <Mail className="size-3.5 shrink-0" aria-hidden="true" /> {branch.email}
+                        </a>
+                      </div>
+                    </article>
+                  ),
+                )}
+              </div>
+            </div>
+          );
+        })}
       </section>
 
-      <section className="border-y border-border bg-secondary/50">
-        <div className="container-page py-16 md:py-20">
-          <div className="rule-accent">
-            <p className="eyebrow">How it works</p>
-            <h2 className="mt-2 text-2xl md:text-3xl">
-              Four steps from interest to admission form
-            </h2>
-          </div>
-          <ol className="mt-8 grid gap-4 md:grid-cols-4">
-            {STEPS.map((step, i) => (
-              <li key={step.title} className="surface-card p-5">
-                <span className="grid size-8 place-items-center rounded-md bg-primary font-display text-sm font-bold text-primary-foreground">
-                  {i + 1}
-                </span>
-                <h3 className="mt-4 font-display text-base">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="container-page py-16 md:py-20">
-        <div className="surface-card flex flex-col items-start gap-6 p-8 md:flex-row md:items-center md:justify-between">
+      <footer className="border-t border-border bg-ink text-ink-muted">
+        <div className="container-page flex flex-wrap items-center justify-between gap-4 py-8 text-sm">
           <div>
-            <FileText className="size-6 text-primary" aria-hidden="true" />
-            <h2 className="mt-3 text-2xl">Already applied?</h2>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Retrieve your existing application with the email and phone number you registered
-              with, then download your application form again.
-            </p>
+            <p className="font-display text-ink-foreground">{BOARD.name}</p>
+            <p className="mt-1">{BOARD.headquarters}</p>
           </div>
-          <Link
-            to="/apply"
-            className="inline-flex shrink-0 items-center gap-2 rounded-md border border-border-strong px-6 py-3 text-sm font-semibold hover:bg-accent"
-          >
-            Check my application
-          </Link>
+          <div className="text-right">
+            <a href={`mailto:${BOARD.email}`} className="block hover:text-ink-foreground">
+              {BOARD.email}
+            </a>
+            <a
+              href={`tel:${BOARD.phone.replace(/\s/g, "")}`}
+              className="block hover:text-ink-foreground"
+            >
+              {BOARD.phone}
+            </a>
+          </div>
         </div>
-      </section>
-    </SiteShell>
+      </footer>
+    </div>
   );
 }

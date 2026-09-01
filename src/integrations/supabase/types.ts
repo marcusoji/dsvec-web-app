@@ -224,6 +224,9 @@ export type Database = {
       units: {
         Row: {
           careers: string[]
+          contact_email: string | null
+          contact_phone: string | null
+          coordinator_name: string | null
           created_at: string
           description: string
           duration: string | null
@@ -232,6 +235,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           name: string
+          office_location: string | null
           requirements: string[]
           skills: string[]
           slug: string
@@ -241,6 +245,9 @@ export type Database = {
         }
         Insert: {
           careers?: string[]
+          contact_email?: string | null
+          contact_phone?: string | null
+          coordinator_name?: string | null
           created_at?: string
           description?: string
           duration?: string | null
@@ -249,6 +256,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name: string
+          office_location?: string | null
           requirements?: string[]
           skills?: string[]
           slug: string
@@ -258,6 +266,9 @@ export type Database = {
         }
         Update: {
           careers?: string[]
+          contact_email?: string | null
+          contact_phone?: string | null
+          coordinator_name?: string | null
           created_at?: string
           description?: string
           duration?: string | null
@@ -266,6 +277,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name?: string
+          office_location?: string | null
           requirements?: string[]
           skills?: string[]
           slug?: string

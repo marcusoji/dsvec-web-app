@@ -16,6 +16,7 @@ import { Route as AdmissionsRouteImport } from './routes/admissions'
 import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as UmutuRouteImport } from './routes/umutu'
 import { Route as ApplicationTokenRouteImport } from './routes/application/$token'
 import { Route as UnitsIndexRouteImport } from './routes/units/index'
 import { Route as UnitsSlugRouteImport } from './routes/units/$slug'
@@ -58,6 +59,11 @@ const ContactRoute = ContactRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UmutuRoute = UmutuRouteImport.update({
+  id: '/umutu',
+  path: '/umutu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplicationTokenRoute = ApplicationTokenRouteImport.update({
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
+  '/umutu': typeof UmutuRoute
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units/': typeof UnitsIndexRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
+  '/umutu': typeof UmutuRoute
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units': typeof UnitsIndexRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
+  '/umutu': typeof UmutuRoute
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
   '/units/': typeof UnitsIndexRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/apply'
     | '/contact'
     | '/login'
+    | '/umutu'
     | '/application/$token'
     | '/units/$slug'
     | '/units/'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/apply'
     | '/contact'
     | '/login'
+    | '/umutu'
     | '/application/$token'
     | '/units/$slug'
     | '/units'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/apply'
     | '/contact'
     | '/login'
+    | '/umutu'
     | '/application/$token'
     | '/units/$slug'
     | '/units/'
@@ -226,6 +238,7 @@ export interface RootRouteChildren {
   ApplyRoute: typeof ApplyRoute
   ContactRoute: typeof ContactRoute
   LoginRoute: typeof LoginRoute
+  UmutuRoute: typeof UmutuRoute
   ApplicationTokenRoute: typeof ApplicationTokenRoute
   UnitsSlugRoute: typeof UnitsSlugRoute
   UnitsIndexRoute: typeof UnitsIndexRoute
@@ -280,6 +293,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/umutu': {
+      id: '/umutu'
+      path: '/umutu'
+      fullPath: '/umutu'
+      preLoaderRoute: typeof UmutuRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/application/$token': {
@@ -378,6 +398,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApplyRoute: ApplyRoute,
   ContactRoute: ContactRoute,
   LoginRoute: LoginRoute,
+  UmutuRoute: UmutuRoute,
   ApplicationTokenRoute: ApplicationTokenRoute,
   UnitsSlugRoute: UnitsSlugRoute,
   UnitsIndexRoute: UnitsIndexRoute,

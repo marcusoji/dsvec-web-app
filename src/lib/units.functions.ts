@@ -14,10 +14,15 @@ export type PublicUnit = {
   duration: string | null;
   image_url: string | null;
   icon: string | null;
+  coordinator_name: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
+  office_location: string | null;
 };
 
 const UNIT_COLUMNS =
-  "id, slug, name, summary, description, skills, careers, requirements, duration, image_url, icon";
+  "id, slug, name, summary, description, skills, careers, requirements, duration, image_url, icon, coordinator_name, contact_phone, contact_email, office_location";
+
 
 function publicClient() {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
