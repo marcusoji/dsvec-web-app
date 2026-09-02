@@ -242,6 +242,13 @@ function ApplyPage() {
               Your registration has been received. Keep your application number safe — it is
               required for all correspondence and screening.
             </p>
+            <p className="mt-4 rounded-md border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
+              A registration fee is payable before screening.{' '}
+              <Link to="/contact" className="font-semibold underline underline-offset-4">
+                Contact the Admissions Office
+              </Link>{' '}
+              by call, WhatsApp or email for the amount and payment details.
+            </p>
             <p className="mt-6 font-display text-2xl tracking-tight">{done.application_number}</p>
             <div className="mt-8 flex flex-col items-center gap-3">
               <Link
