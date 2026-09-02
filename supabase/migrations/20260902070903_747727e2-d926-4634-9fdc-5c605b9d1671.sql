@@ -1,0 +1,1 @@
+UPDATE public.units SET duration = '6 months' WHERE duration IS NOT NULL OR duration IS NULL;
