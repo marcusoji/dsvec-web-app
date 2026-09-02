@@ -3,9 +3,7 @@ import {
   ArrowRight,
   Building2,
   GraduationCap,
-  Mail,
   MapPin,
-  Phone,
   ShieldCheck,
   Wrench,
 } from "lucide-react";
@@ -136,23 +134,6 @@ function BoardHome() {
                     <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                       <MapPin className="size-3.5" aria-hidden="true" /> {branch.lga}
                     </p>
-                    <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                      {branch.focus}
-                    </p>
-                    <div className="mt-4 space-y-1 text-sm">
-                      <a
-                        href={`tel:${branch.phone.replace(/\s/g, "")}`}
-                        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
-                      >
-                        <Phone className="size-3.5" aria-hidden="true" /> {branch.phone}
-                      </a>
-                      <a
-                        href={`mailto:${branch.email}`}
-                        className="flex items-center gap-1.5 break-all text-muted-foreground hover:text-foreground"
-                      >
-                        <Mail className="size-3.5 shrink-0" aria-hidden="true" /> {branch.email}
-                      </a>
-                    </div>
                     {branch.online ? (
                       <Link
                         to="/umutu"
