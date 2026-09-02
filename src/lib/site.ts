@@ -12,7 +12,7 @@ export const SITE = {
   address: "Delta State Vocational Center, Umutu, Ukwuani LGA, Delta State, Nigeria",
   email: "dsvecumutu@gmail.com",
   phone: "+2347062140688",
-  officeHours: "Monday – Friday, 8:00am – 4:00pm (WAT)",
+  officeHours: "Monday – Friday, 8:00am – 3:00pm (WAT)",
   /** Application-number prefix used on the downloadable form. */
   applicationPrefix: "DSTVEB-UMU",
 } as const;
