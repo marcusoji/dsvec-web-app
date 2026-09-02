@@ -79,17 +79,11 @@ function BoardHome() {
               requirements and application portal.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                to="/umutu"
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-              >
-                Umutu Branch <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
               <a
                 href="#branches"
-                className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-6 py-3 text-sm font-semibold"
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
               >
-                All branches
+                Find your branch <ArrowRight className="size-4" aria-hidden="true" />
               </a>
             </div>
           </div>
