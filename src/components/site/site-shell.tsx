@@ -53,7 +53,7 @@ function SiteHeader() {
         <Brand />
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map((link) => {
-            const active = link.to === "/" ? pathname === "/" : pathname.startsWith(link.to);
+            const active = pathname.startsWith(link.to);
             return (
               <Link
                 key={link.to}
