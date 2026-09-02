@@ -3,9 +3,7 @@ import {
   ArrowRight,
   Building2,
   GraduationCap,
-  Mail,
   MapPin,
-  Phone,
   ShieldCheck,
   Wrench,
 } from "lucide-react";
