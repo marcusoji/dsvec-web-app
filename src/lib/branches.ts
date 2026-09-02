@@ -36,8 +36,8 @@ export const BRANCHES: readonly Branch[] = [
     lga: "Ukwuani LGA",
     zone: "Delta North",
     focus: "Vocational centre — 10 trade units, online admissions open",
-    phone: "+234 800 000 0000",
-    email: "admissions@dstveb-umutu.example.ng",
+    phone: "+2347062140688",
+    email: "dsvecumutu@gmail.com",
     online: true,
   },
   {
