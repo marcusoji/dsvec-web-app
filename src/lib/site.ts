@@ -10,8 +10,8 @@ export const SITE = {
   description:
     "Delta State Technical and Vocational Education Board (DSTVEB), Umutu Branch — hands-on trade training, certified vocational units and online admission application.",
   address: "Delta State Vocational Center, Umutu, Ukwuani LGA, Delta State, Nigeria",
-  email: "admissions@dstveb-umutu.example.ng",
-  phone: "+234 800 000 0000",
+  email: "dsvecumutu@gmail.com",
+  phone: "+2347062140688",
   officeHours: "Monday – Friday, 8:00am – 4:00pm (WAT)",
   /** Application-number prefix used on the downloadable form. */
   applicationPrefix: "DSTVEB-UMU",
