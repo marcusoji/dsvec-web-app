@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Check,
   FileDown,
+  Info,
   Loader2,
   Upload,
   X,
@@ -241,6 +242,13 @@ function ApplyPage() {
               Your registration has been received. Keep your application number safe — it is
               required for all correspondence and screening.
             </p>
+            <p className="mt-4 rounded-md border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
+              A registration fee is payable before screening.{' '}
+              <Link to="/contact" className="font-semibold underline underline-offset-4">
+                Contact the Admissions Office
+              </Link>{' '}
+              by call, WhatsApp or email for the amount and payment details.
+            </p>
             <p className="mt-6 font-display text-2xl tracking-tight">{done.application_number}</p>
             <div className="mt-8 flex flex-col items-center gap-3">
               <Link
@@ -271,6 +279,21 @@ function ApplyPage() {
         title="Online application & registration"
         lead="Complete all five steps. Each applicant may register once only — duplicate email addresses or phone numbers are rejected automatically."
       />
+      <div className="container-page -mt-4 mb-8">
+        <div className="flex items-start gap-3 rounded-md border border-primary/30 bg-primary/10 p-4 text-sm">
+          <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+          <p>
+            A registration fee is payable after your application is submitted.{' '}
+            <Link
+              to="/contact"
+              className="font-semibold underline underline-offset-4 hover:text-primary"
+            >
+              Click here for pricing and payment information
+            </Link>
+            {' '}— you can call, WhatsApp or email the Admissions Office before you apply.
+          </p>
+        </div>
+      </div>
       <section className="container-page grid gap-10 py-12 lg:grid-cols-[1fr_20rem]">
         <div>
           <ol className="mb-8 flex flex-wrap gap-x-2 gap-y-2 text-xs" aria-label="Progress">
