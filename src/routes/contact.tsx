@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 
 import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { SITE } from "@/lib/site";
 
 const DESCRIPTION =
-  "Contact the DSTVEB Umutu Branch admissions office — campus address in Ukwuani, phone number, email address and office opening hours.";
+  "Contact the DSTVEB Umutu Branch admissions office — campus address in Ukwuani, phone number, WhatsApp, email address and office opening hours.";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -27,6 +27,12 @@ function Contact() {
       label: "Phone",
       value: SITE.phone,
       href: `tel:${SITE.phone.replace(/\s/g, "")}`,
+    },
+    {
+      icon: MessageCircle,
+      label: "WhatsApp",
+      value: SITE.whatsapp,
+      href: `https://wa.me/${SITE.whatsapp.replace(/\+|\s/g, "")}`,
     },
     { icon: Mail, label: "Email", value: SITE.email, href: `mailto:${SITE.email}` },
     { icon: Clock, label: "Office hours", value: SITE.officeHours },

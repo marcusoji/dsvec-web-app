@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Check,
   FileDown,
+  Info,
   Loader2,
   Upload,
   X,
