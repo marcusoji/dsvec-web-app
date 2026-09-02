@@ -121,60 +121,57 @@ function BoardHome() {
             <div key={zone} className="mt-10">
               <h3 className="font-display text-lg">{zone}</h3>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {branches.map((branch) =>
-                  branch.online ? (
-                    <Link
-                      key={branch.slug}
-                      to="/umutu"
-                      className="surface-card group flex flex-col border-primary/40 p-5 transition-shadow hover:shadow-raised"
-                    >
+                {branches.map((branch) => (
+                  <article key={branch.slug} className="surface-card flex flex-col p-5">
+                    {branch.online ? (
                       <span className="inline-flex w-fit rounded-full bg-primary px-2.5 py-0.5 text-[0.7rem] font-semibold text-primary-foreground">
                         Online applications open
                       </span>
-                      <h4 className="mt-3 font-display text-lg">{branch.name}</h4>
-                      <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <MapPin className="size-3.5" aria-hidden="true" /> {branch.lga}
-                      </p>
-                      <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                        {branch.focus}
-                      </p>
-                      <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold">
-                        Open branch site
-                        <ArrowRight
-                          className="size-4 transition-transform group-hover:translate-x-0.5"
-                          aria-hidden="true"
-                        />
-                      </span>
-                    </Link>
-                  ) : (
-                    <article key={branch.slug} className="surface-card flex flex-col p-5">
+                    ) : (
                       <span className="inline-flex w-fit rounded-full border border-border px-2.5 py-0.5 text-[0.7rem] text-muted-foreground">
                         Campus applications
                       </span>
-                      <h4 className="mt-3 font-display text-lg">{branch.name}</h4>
-                      <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <MapPin className="size-3.5" aria-hidden="true" /> {branch.lga}
-                      </p>
-                      <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                        {branch.focus}
-                      </p>
-                      <div className="mt-4 space-y-1 text-sm">
-                        <a
-                          href={`tel:${branch.phone.replace(/\s/g, "")}`}
-                          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
-                        >
-                          <Phone className="size-3.5" aria-hidden="true" /> {branch.phone}
-                        </a>
-                        <a
-                          href={`mailto:${branch.email}`}
-                          className="flex items-center gap-1.5 break-all text-muted-foreground hover:text-foreground"
-                        >
-                          <Mail className="size-3.5 shrink-0" aria-hidden="true" /> {branch.email}
-                        </a>
-                      </div>
-                    </article>
-                  ),
-                )}
+                    )}
+                    <h4 className="mt-3 font-display text-lg">{branch.name}</h4>
+                    <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <MapPin className="size-3.5" aria-hidden="true" /> {branch.lga}
+                    </p>
+                    <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+                      {branch.focus}
+                    </p>
+                    <div className="mt-4 space-y-1 text-sm">
+                      <a
+                        href={`tel:${branch.phone.replace(/\s/g, "")}`}
+                        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                      >
+                        <Phone className="size-3.5" aria-hidden="true" /> {branch.phone}
+                      </a>
+                      <a
+                        href={`mailto:${branch.email}`}
+                        className="flex items-center gap-1.5 break-all text-muted-foreground hover:text-foreground"
+                      >
+                        <Mail className="size-3.5 shrink-0" aria-hidden="true" /> {branch.email}
+                      </a>
+                    </div>
+                    {branch.online ? (
+                      <Link
+                        to="/umutu"
+                        className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                      >
+                        Visit website
+                        <ArrowRight className="size-4" aria-hidden="true" />
+                      </Link>
+                    ) : (
+                      <span
+                        aria-disabled="true"
+                        className="mt-4 inline-flex w-fit cursor-not-allowed items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground"
+                        title="This branch has no website yet"
+                      >
+                        Website coming soon
+                      </span>
+                    )}
+                  </article>
+                ))}
               </div>
             </div>
           );
