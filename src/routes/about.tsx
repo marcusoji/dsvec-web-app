@@ -110,25 +110,26 @@ function About() {
 
       <section className="container-page py-16">
         <div className="rule-accent">
-          <p className="eyebrow">Leadership</p>
-          <h2 className="mt-2 text-2xl">Branch management</h2>
+          <p className="eyebrow">Workshops</p>
+          <h2 className="mt-2 text-2xl">Inside our trade units</h2>
         </div>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {LEADERSHIP.map((person) => (
-            <article key={person.name} className="surface-card p-5">
-              <div className="grid size-12 place-items-center rounded-full bg-accent font-display text-sm font-bold text-accent-foreground">
-                {person.name
-                  .split(" ")
-                  .map((w) => w[0])
-                  .slice(0, 2)
-                  .join("")}
-              </div>
-              <h3 className="mt-4 font-display text-base">{person.name}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{person.role}</p>
-            </article>
+          {UNIT_IMAGES.map((image) => (
+            <figure key={image.caption} className="surface-card overflow-hidden">
+              <img
+                src={image.src}
+                alt={image.alt}
+                loading="lazy"
+                width={1024}
+                height={768}
+                className="aspect-[4/3] w-full object-cover"
+              />
+              <figcaption className="px-4 py-3 font-display text-sm">{image.caption}</figcaption>
+            </figure>
           ))}
         </div>
       </section>
+
     </SiteShell>
   );
 }
