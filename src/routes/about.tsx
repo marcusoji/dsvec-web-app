@@ -53,12 +53,13 @@ const FACILITIES = [
   "Cosmetology practice salon",
 ];
 
-const LEADERSHIP = [
-  { name: "Branch Coordinator", role: "Head of the Umutu Branch / Annex" },
-  { name: "Head, Academic Affairs", role: "Curriculum, assessment and instructor supervision" },
-  { name: "Head, Admissions & Records", role: "Applications, registration and student records" },
-  { name: "Workshop Superintendent", role: "Equipment, safety and practical training" },
+const UNIT_IMAGES = [
+  { src: weldingImg, alt: "Trainee welding metal in the fabrication workshop", caption: "Welding & fabrication" },
+  { src: ictImg, alt: "Trainees at computers in the ICT training room", caption: "ICT & computer studies" },
+  { src: tailoringImg, alt: "Trainees sewing garments on machines", caption: "Tailoring & garment making" },
+  { src: carpentryImg, alt: "Trainee planing timber at a workbench", caption: "Carpentry & woodwork" },
 ];
+
 
 function About() {
   return (
