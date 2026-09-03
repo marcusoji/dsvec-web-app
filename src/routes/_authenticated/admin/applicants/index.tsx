@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Download, FileDown, Search, Users } from "lucide-react";
+import { Download, FileDown, FileText, Search, Users } from "lucide-react";
 
 import {
   exportApplicantsCsv,
@@ -231,13 +231,24 @@ function Applicants() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{dateLabel(r.created_at)}</td>
                     <td className="px-4 py-3 text-right">
-                      <Link
-                        to="/admin/applicants/$id"
-                        params={{ id: r.id }}
-                        className="inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-4"
-                      >
-                        <FileDown className="size-3.5" aria-hidden="true" /> View
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        <Link
+                          to="/admin/applicants/$id"
+                          params={{ id: r.id }}
+                          className="inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-4"
+                        >
+                          <FileDown className="size-3.5" aria-hidden="true" /> View
+                        </Link>
+                        {r.access_token ? (
+                          <Link
+                            to="/application/$token"
+                            params={{ token: r.access_token }}
+                            className="inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-4"
+                          >
+                            <FileText className="size-3.5" aria-hidden="true" /> Form
+                          </Link>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}

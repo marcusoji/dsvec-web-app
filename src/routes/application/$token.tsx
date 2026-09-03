@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { getApplicationByToken } from "@/lib/applicants.functions";
 import { SITE } from "@/lib/site";
 
@@ -55,6 +56,12 @@ function ApplicationForm() {
     .filter(Boolean)
     .join(" ")
     .trim();
+
+  // Keep the official form clean: hide any editor/platform badge overlay.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-hide-badge", "");
+    return () => document.documentElement.removeAttribute("data-hide-badge");
+  }, []);
 
   const print = () => window.print();
 
