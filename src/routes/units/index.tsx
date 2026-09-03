@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, Clock, Phone } from "lucide-react";
+import { ArrowRight, Clock } from "lucide-react";
 
 import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { listUnits } from "@/lib/units.functions";
