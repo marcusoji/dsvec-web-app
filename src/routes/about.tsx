@@ -3,6 +3,11 @@ import { Compass, Eye, HeartHandshake, Target } from "lucide-react";
 
 import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { SITE } from "@/lib/site";
+import weldingImg from "@/assets/unit-welding.jpg";
+import ictImg from "@/assets/unit-ict.jpg";
+import tailoringImg from "@/assets/unit-tailoring.jpg";
+import carpentryImg from "@/assets/unit-carpentry.jpg";
+
 
 const DESCRIPTION =
   "About the DSTVEB Umutu Branch: mission, vision, campus facilities and the leadership team behind Delta State's technical and vocational training annex at Umutu.";
