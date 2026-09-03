@@ -20,12 +20,10 @@ import { Route as UmutuRouteImport } from './routes/umutu'
 import { Route as ApplicationTokenRouteImport } from './routes/application/$token'
 import { Route as UnitsIndexRouteImport } from './routes/units/index'
 import { Route as UnitsSlugRouteImport } from './routes/units/$slug'
-import { Route as UnitsContactsRouteImport } from './routes/units/contacts'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminAccountRouteImport } from './routes/_authenticated/admin/account'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin/audit'
 import { Route as AuthenticatedAdminDuplicatesRouteImport } from './routes/_authenticated/admin/duplicates'
-import { Route as AuthenticatedAdminPortalRouteImport } from './routes/_authenticated/admin/portal'
 import { Route as AuthenticatedAdminApplicantsIndexRouteImport } from './routes/_authenticated/admin/applicants/index'
 import { Route as AuthenticatedAdminApplicantsIdRouteImport } from './routes/_authenticated/admin/applicants/$id'
 
@@ -83,11 +81,6 @@ const UnitsSlugRoute = UnitsSlugRouteImport.update({
   path: '/units/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UnitsContactsRoute = UnitsContactsRouteImport.update({
-  id: '/units/contacts',
-  path: '/units/contacts',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -108,12 +101,6 @@ const AuthenticatedAdminDuplicatesRoute =
   AuthenticatedAdminDuplicatesRouteImport.update({
     id: '/admin/duplicates',
     path: '/admin/duplicates',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminPortalRoute =
-  AuthenticatedAdminPortalRouteImport.update({
-    id: '/admin/portal',
-    path: '/admin/portal',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminApplicantsIndexRoute =
@@ -139,12 +126,10 @@ export interface FileRoutesByFullPath {
   '/umutu': typeof UmutuRoute
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
-  '/units/contacts': typeof UnitsContactsRoute
   '/units/': typeof UnitsIndexRoute
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
-  '/admin/portal': typeof AuthenticatedAdminPortalRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/applicants/$id': typeof AuthenticatedAdminApplicantsIdRoute
   '/admin/applicants/': typeof AuthenticatedAdminApplicantsIndexRoute
@@ -159,12 +144,10 @@ export interface FileRoutesByTo {
   '/umutu': typeof UmutuRoute
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
-  '/units/contacts': typeof UnitsContactsRoute
   '/units': typeof UnitsIndexRoute
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
-  '/admin/portal': typeof AuthenticatedAdminPortalRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/applicants/$id': typeof AuthenticatedAdminApplicantsIdRoute
   '/admin/applicants': typeof AuthenticatedAdminApplicantsIndexRoute
@@ -181,12 +164,10 @@ export interface FileRoutesById {
   '/umutu': typeof UmutuRoute
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
-  '/units/contacts': typeof UnitsContactsRoute
   '/units/': typeof UnitsIndexRoute
   '/_authenticated/admin/account': typeof AuthenticatedAdminAccountRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
-  '/_authenticated/admin/portal': typeof AuthenticatedAdminPortalRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/applicants/$id': typeof AuthenticatedAdminApplicantsIdRoute
   '/_authenticated/admin/applicants/': typeof AuthenticatedAdminApplicantsIndexRoute
@@ -203,12 +184,10 @@ export interface FileRouteTypes {
     | '/umutu'
     | '/application/$token'
     | '/units/$slug'
-    | '/units/contacts'
     | '/units/'
     | '/admin/account'
     | '/admin/audit'
     | '/admin/duplicates'
-    | '/admin/portal'
     | '/admin/'
     | '/admin/applicants/$id'
     | '/admin/applicants/'
@@ -223,12 +202,10 @@ export interface FileRouteTypes {
     | '/umutu'
     | '/application/$token'
     | '/units/$slug'
-    | '/units/contacts'
     | '/units'
     | '/admin/account'
     | '/admin/audit'
     | '/admin/duplicates'
-    | '/admin/portal'
     | '/admin'
     | '/admin/applicants/$id'
     | '/admin/applicants'
@@ -244,12 +221,10 @@ export interface FileRouteTypes {
     | '/umutu'
     | '/application/$token'
     | '/units/$slug'
-    | '/units/contacts'
     | '/units/'
     | '/_authenticated/admin/account'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/duplicates'
-    | '/_authenticated/admin/portal'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/applicants/$id'
     | '/_authenticated/admin/applicants/'
@@ -266,7 +241,6 @@ export interface RootRouteChildren {
   UmutuRoute: typeof UmutuRoute
   ApplicationTokenRoute: typeof ApplicationTokenRoute
   UnitsSlugRoute: typeof UnitsSlugRoute
-  UnitsContactsRoute: typeof UnitsContactsRoute
   UnitsIndexRoute: typeof UnitsIndexRoute
 }
 
@@ -349,13 +323,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnitsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/units/contacts': {
-      id: '/units/contacts'
-      path: '/units/contacts'
-      fullPath: '/units/contacts'
-      preLoaderRoute: typeof UnitsContactsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/admin'
@@ -384,13 +351,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDuplicatesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/portal': {
-      id: '/_authenticated/admin/portal'
-      path: '/admin/portal'
-      fullPath: '/admin/portal'
-      preLoaderRoute: typeof AuthenticatedAdminPortalRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/admin/applicants/': {
       id: '/_authenticated/admin/applicants/'
       path: '/admin/applicants'
@@ -412,7 +372,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminAccountRoute: typeof AuthenticatedAdminAccountRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminDuplicatesRoute: typeof AuthenticatedAdminDuplicatesRoute
-  AuthenticatedAdminPortalRoute: typeof AuthenticatedAdminPortalRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminApplicantsIdRoute: typeof AuthenticatedAdminApplicantsIdRoute
   AuthenticatedAdminApplicantsIndexRoute: typeof AuthenticatedAdminApplicantsIndexRoute
@@ -422,7 +381,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminAccountRoute: AuthenticatedAdminAccountRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminDuplicatesRoute: AuthenticatedAdminDuplicatesRoute,
-  AuthenticatedAdminPortalRoute: AuthenticatedAdminPortalRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminApplicantsIdRoute: AuthenticatedAdminApplicantsIdRoute,
   AuthenticatedAdminApplicantsIndexRoute:
@@ -443,7 +401,6 @@ const rootRouteChildren: RootRouteChildren = {
   UmutuRoute: UmutuRoute,
   ApplicationTokenRoute: ApplicationTokenRoute,
   UnitsSlugRoute: UnitsSlugRoute,
-  UnitsContactsRoute: UnitsContactsRoute,
   UnitsIndexRoute: UnitsIndexRoute,
 }
 export const routeTree = rootRouteImport

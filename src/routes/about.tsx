@@ -3,6 +3,11 @@ import { Compass, Eye, HeartHandshake, Target } from "lucide-react";
 
 import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { SITE } from "@/lib/site";
+import weldingImg from "@/assets/unit-welding.jpg";
+import ictImg from "@/assets/unit-ict.jpg";
+import tailoringImg from "@/assets/unit-tailoring.jpg";
+import carpentryImg from "@/assets/unit-carpentry.jpg";
+
 
 const DESCRIPTION =
   "About the DSTVEB Umutu Branch: mission, vision, campus facilities and the leadership team behind Delta State's technical and vocational training annex at Umutu.";
@@ -53,12 +58,13 @@ const FACILITIES = [
   "Cosmetology practice salon",
 ];
 
-const LEADERSHIP = [
-  { name: "Branch Coordinator", role: "Head of the Umutu Branch / Annex" },
-  { name: "Head, Academic Affairs", role: "Curriculum, assessment and instructor supervision" },
-  { name: "Head, Admissions & Records", role: "Applications, registration and student records" },
-  { name: "Workshop Superintendent", role: "Equipment, safety and practical training" },
+const UNIT_IMAGES = [
+  { src: weldingImg, alt: "Trainee welding metal in the fabrication workshop", caption: "Welding & fabrication" },
+  { src: ictImg, alt: "Trainees at computers in the ICT training room", caption: "ICT & computer studies" },
+  { src: tailoringImg, alt: "Trainees sewing garments on machines", caption: "Tailoring & garment making" },
+  { src: carpentryImg, alt: "Trainee planing timber at a workbench", caption: "Carpentry & woodwork" },
 ];
+
 
 function About() {
   return (
@@ -109,25 +115,26 @@ function About() {
 
       <section className="container-page py-16">
         <div className="rule-accent">
-          <p className="eyebrow">Leadership</p>
-          <h2 className="mt-2 text-2xl">Branch management</h2>
+          <p className="eyebrow">Workshops</p>
+          <h2 className="mt-2 text-2xl">Inside our trade units</h2>
         </div>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {LEADERSHIP.map((person) => (
-            <article key={person.name} className="surface-card p-5">
-              <div className="grid size-12 place-items-center rounded-full bg-accent font-display text-sm font-bold text-accent-foreground">
-                {person.name
-                  .split(" ")
-                  .map((w) => w[0])
-                  .slice(0, 2)
-                  .join("")}
-              </div>
-              <h3 className="mt-4 font-display text-base">{person.name}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{person.role}</p>
-            </article>
+          {UNIT_IMAGES.map((image) => (
+            <figure key={image.caption} className="surface-card overflow-hidden">
+              <img
+                src={image.src}
+                alt={image.alt}
+                loading="lazy"
+                width={1024}
+                height={768}
+                className="aspect-[4/3] w-full object-cover"
+              />
+              <figcaption className="px-4 py-3 font-display text-sm">{image.caption}</figcaption>
+            </figure>
           ))}
         </div>
       </section>
+
     </SiteShell>
   );
 }
