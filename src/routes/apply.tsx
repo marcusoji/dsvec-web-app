@@ -477,7 +477,7 @@ function ApplyPage() {
                     label="Parent / guardian or next of kin name"
                     htmlFor="next_of_kin_name"
                     error={errors["next_of_kin_name"]}
-                    hint="Mandatory for applicants under 18."
+                    hint="Required — used for emergency contact."
                   >
                     <input
                       id="next_of_kin_name"

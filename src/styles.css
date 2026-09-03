@@ -285,4 +285,22 @@
   .print-avoid-break {
     break-inside: avoid;
   }
+
+  /* Never print third-party editor/badge overlays on the official form */
+  #lovable-badge,
+  [id*="lovable-badge"],
+  [class*="lovable-badge"],
+  a[href*="lovable.dev"],
+  a[href*="lovable.app"] {
+    display: none !important;
+  }
+}
+
+/* Hide editor/badge overlays entirely on the printable application form */
+html[data-hide-badge] #lovable-badge,
+html[data-hide-badge] [id*="lovable-badge"],
+html[data-hide-badge] [class*="lovable-badge"],
+html[data-hide-badge] a[href*="lovable.dev"],
+html[data-hide-badge] a[href*="lovable.app"] {
+  display: none !important;
 }

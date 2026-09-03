@@ -93,33 +93,30 @@ export const unitSchema = z.object({
   unit_id: z.string().uuid("Select a trade unit"),
 });
 
-const optionalName = (label: string) =>
+const requiredName = (label: string) =>
   z
     .string()
     .trim()
+    .min(2, `${label} is required`)
     .max(80, `${label} is too long`)
-    .regex(/^[A-Za-z][A-Za-z'\-\s]*$/, `${label} may only contain letters, spaces, hyphens`)
-    .optional()
-    .or(z.literal(""));
+    .regex(/^[A-Za-z][A-Za-z0-9'\-.,()&/\s]*$/, `${label} contains invalid characters`);
 
 export const guardianEducationSchema = z.object({
-  next_of_kin_name: optionalName("Next of kin name"),
-  next_of_kin_relationship: optionalName("Relationship"),
+  next_of_kin_name: requiredName("Next of kin name"),
+  next_of_kin_relationship: requiredName("Relationship"),
   next_of_kin_phone: z
     .string()
     .trim()
-    .regex(/^(\+?234|0)[7-9][01]\d{8}$/, "Enter a valid Nigerian phone number")
-    .optional()
-    .or(z.literal("")),
-  school: optionalName("School / institution"),
-  qualification: optionalName("Qualification"),
+    .regex(/^(\+?234|0)[7-9][01]\d{8}$/, "Enter a valid Nigerian phone number"),
+  school: requiredName("School / institution"),
+  qualification: requiredName("Qualification"),
   school_year: z
     .string()
     .trim()
+    .min(4, "Year last attended is required")
     .max(12)
-    .regex(/^[0-9]{4}(-[0-9]{4})?$/, "Enter a year, e.g. 2024 or 2023–2024")
-    .optional()
-    .or(z.literal("")),
+    .regex(/^[0-9]{4}(-[0-9]{4})?$/, "Enter a year, e.g. 2024 or 2023-2024"),
+
 });
 
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
