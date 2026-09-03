@@ -274,6 +274,7 @@ export type ApplicantRow = {
   unit_id: string;
   status: ApplicationStatus;
   created_at: string;
+  access_token: string | null;
 };
 
 const listInputSchema = z.object({
@@ -306,7 +307,7 @@ export const listApplicants = createServerFn({ method: "POST" })
     let query = supabaseAdmin
       .from("applicants")
       .select(
-        "id, application_number, first_name, middle_name, last_name, email, phone, unit_id, status, created_at, units(name)",
+        "id, application_number, first_name, middle_name, last_name, email, phone, unit_id, status, created_at, access_token, units(name)",
         { count: "exact" },
       );
 
@@ -354,6 +355,7 @@ export const listApplicants = createServerFn({ method: "POST" })
       unit_id: string;
       status: ApplicationStatus;
       created_at: string;
+      access_token: string | null;
       units: { name?: string } | null;
     };
 
@@ -371,6 +373,7 @@ export const listApplicants = createServerFn({ method: "POST" })
           unit_name: unit?.name ?? "—",
           status: raw.status,
           created_at: raw.created_at,
+          access_token: raw.access_token ?? null,
         } satisfies ApplicantRow;
       }),
       total: count ?? 0,
