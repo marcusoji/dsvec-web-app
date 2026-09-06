@@ -127,6 +127,7 @@ export type Database = {
           school_year: string | null
           state: string
           status: Database["public"]["Enums"]["application_status"]
+          stream: string
           unit_id: string
           updated_at: string
         }
@@ -154,6 +155,7 @@ export type Database = {
           school_year?: string | null
           state: string
           status?: Database["public"]["Enums"]["application_status"]
+          stream?: string
           unit_id: string
           updated_at?: string
         }
@@ -181,6 +183,7 @@ export type Database = {
           school_year?: string | null
           state?: string
           status?: Database["public"]["Enums"]["application_status"]
+          stream?: string
           unit_id?: string
           updated_at?: string
         }
