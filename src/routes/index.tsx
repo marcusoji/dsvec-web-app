@@ -1,14 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Building2,
-  GraduationCap,
-  MapPin,
-  ShieldCheck,
-  Wrench,
-} from "lucide-react";
+import { ArrowRight, Building2, MapPin, ShieldCheck, Wrench } from "lucide-react";
 
 import { BOARD, BRANCHES } from "@/lib/branches";
+import logoDstveb from "@/assets/logo-dstveb.jpg";
+import logoDelta from "@/assets/logo-delta.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -38,11 +33,9 @@ const PILLARS = [
   {
     icon: Building2,
     title: "Centres statewide",
-    body: `${BRANCHES.length} technical colleges and vocational centres across Delta North, Central and South.`,
+    body: `${BRANCHES.length} technical colleges and vocational centres across Delta State.`,
   },
 ];
-
-const ZONES = ["Delta North", "Delta Central", "Delta South"] as const;
 
 function BoardHome() {
   return (
@@ -50,9 +43,16 @@ function BoardHome() {
       <header className="border-b border-border bg-ink text-ink-foreground">
         <div className="container-page flex h-16 items-center justify-between gap-4">
           <span className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-md bg-primary text-primary-foreground">
-              <GraduationCap className="size-5" aria-hidden="true" />
-            </span>
+            <img
+              src={logoDstveb}
+              alt="DSTVEB logo"
+              className="size-10 rounded-md bg-white object-contain p-0.5"
+            />
+            <img
+              src={logoDelta}
+              alt="Delta State government seal"
+              className="hidden size-10 rounded-md bg-white object-contain p-0.5 sm:block"
+            />
             <span className="leading-tight">
               <span className="block font-display text-sm font-bold">{BOARD.shortName}</span>
               <span className="block text-[0.7rem] text-ink-muted">Delta State, Nigeria</span>
@@ -62,10 +62,11 @@ function BoardHome() {
             href="#branches"
             className="rounded-md border border-ink-muted/40 px-4 py-2 text-sm font-semibold"
           >
-            Find a branch
+            Find a centre
           </a>
         </div>
       </header>
+
 
       <section className="border-b border-border bg-secondary/50 grid-paper">
         <div className="container-page grid gap-10 py-16 md:grid-cols-[1.1fr_0.9fr] md:items-center md:py-24">
@@ -104,59 +105,42 @@ function BoardHome() {
 
       <section id="branches" className="container-page py-16 md:py-20">
         <div className="rule-accent">
-          <p className="eyebrow">Branches</p>
+          <p className="eyebrow">Centres</p>
           <h2 className="mt-2 text-2xl md:text-3xl">Technical & vocational centres statewide</h2>
           <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-            Click a branch to open its portal. Online admissions are currently live for the Umutu
-            branch; other centres accept applications at the campus office.
+            Online admissions are currently live for the Umutu centre; other centres accept
+            applications at the campus office.
           </p>
         </div>
 
-        {ZONES.map((zone) => {
-          const branches = BRANCHES.filter((b) => b.zone === zone);
-          if (branches.length === 0) return null;
-          return (
-            <div key={zone} className="mt-10">
-              <h3 className="font-display text-lg">{zone}</h3>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {branches.map((branch) => (
-                  <article key={branch.slug} className="surface-card flex flex-col p-5">
-                    {branch.online ? (
-                      <span className="inline-flex w-fit rounded-full bg-primary px-2.5 py-0.5 text-[0.7rem] font-semibold text-primary-foreground">
-                        Online applications open
-                      </span>
-                    ) : (
-                      <span className="inline-flex w-fit rounded-full border border-border px-2.5 py-0.5 text-[0.7rem] text-muted-foreground">
-                        Campus applications
-                      </span>
-                    )}
-                    <h4 className="mt-3 font-display text-lg">{branch.name}</h4>
-                    <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <MapPin className="size-3.5" aria-hidden="true" /> {branch.lga}
-                    </p>
-                    {branch.online ? (
-                      <Link
-                        to="/umutu"
-                        className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-                      >
-                        Visit website
-                        <ArrowRight className="size-4" aria-hidden="true" />
-                      </Link>
-                    ) : (
-                      <span
-                        aria-disabled="true"
-                        className="mt-4 inline-flex w-fit cursor-not-allowed items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground"
-                        title="This branch has no website yet"
-                      >
-                        Website coming soon
-                      </span>
-                    )}
-                  </article>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {BRANCHES.map((branch) => (
+            <article key={branch.slug} className="surface-card flex flex-col p-5">
+              <h3 className="font-display text-lg">{branch.name}</h3>
+              <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <MapPin className="size-3.5" aria-hidden="true" /> {branch.lga}
+              </p>
+              {branch.online ? (
+                <Link
+                  to="/umutu"
+                  className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  Visit website
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  className="mt-4 inline-flex w-fit cursor-not-allowed items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground"
+                  title="This centre has no website yet"
+                >
+                  Website coming soon
+                </span>
+              )}
+            </article>
+          ))}
+        </div>
+
       </section>
 
       <footer className="border-t border-border bg-ink text-ink-muted">
