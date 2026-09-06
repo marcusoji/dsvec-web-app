@@ -1,20 +1,15 @@
 /**
- * DSTVEB branch directory.
+ * DSTVEB centre directory.
  *
  * The board runs technical & vocational centres across Delta State. Only the
- * Umutu branch currently has an online application portal in this system; the
- * others list their campus contact details.
+ * Umutu centre currently has an online application portal in this system.
  */
 
 export type Branch = {
   slug: string;
   name: string;
   lga: string;
-  zone: "Delta North" | "Delta Central" | "Delta South";
-  focus: string;
-  phone: string;
-  email: string;
-  /** Branches with an online portal link into the Umutu site. */
+  /** Centres with an online portal link into the Umutu site. */
   online: boolean;
 };
 
@@ -30,84 +25,19 @@ export const BOARD = {
 } as const;
 
 export const BRANCHES: readonly Branch[] = [
-  {
-    slug: "umutu",
-    name: "Umutu Branch / Annex",
-    lga: "Ukwuani LGA",
-    zone: "Delta North",
-    focus: "Vocational centre — 10 trade units, online admissions open",
-    phone: "+2347062140688",
-    email: "dsvecumutu@gmail.com",
-    online: true,
-  },
-  {
-    slug: "asaba",
-    name: "Asaba Technical Centre",
-    lga: "Oshimili South LGA",
-    zone: "Delta North",
-    focus: "Technical college — engineering and building trades",
-    phone: "+234 800 000 0001",
-    email: "asaba@dstveb.example.ng",
-    online: false,
-  },
-  {
-    slug: "agbor",
-    name: "Agbor Vocational Centre",
-    lga: "Ika South LGA",
-    zone: "Delta North",
-    focus: "Garment making, catering and ICT",
-    phone: "+234 800 000 0002",
-    email: "agbor@dstveb.example.ng",
-    online: false,
-  },
-  {
-    slug: "issele-uku",
-    name: "Issele-Uku Skills Annex",
-    lga: "Aniocha North LGA",
-    zone: "Delta North",
-    focus: "Agro-processing and carpentry",
-    phone: "+234 800 000 0003",
-    email: "isseleuku@dstveb.example.ng",
-    online: false,
-  },
-  {
-    slug: "warri",
-    name: "Warri Technical College",
-    lga: "Warri South LGA",
-    zone: "Delta South",
-    focus: "Welding, fabrication and marine trades",
-    phone: "+234 800 000 0004",
-    email: "warri@dstveb.example.ng",
-    online: false,
-  },
-  {
-    slug: "sapele",
-    name: "Sapele Vocational Centre",
-    lga: "Sapele LGA",
-    zone: "Delta Central",
-    focus: "Wood technology and furniture making",
-    phone: "+234 800 000 0005",
-    email: "sapele@dstveb.example.ng",
-    online: false,
-  },
-  {
-    slug: "ughelli",
-    name: "Ughelli Technical Annex",
-    lga: "Ughelli North LGA",
-    zone: "Delta Central",
-    focus: "Electrical installation and auto mechanics",
-    phone: "+234 800 000 0006",
-    email: "ughelli@dstveb.example.ng",
-    online: false,
-  },
-  {
-    slug: "oleh",
-    name: "Oleh Vocational Centre",
-    lga: "Isoko South LGA",
-    zone: "Delta South",
-    focus: "Cosmetology, tailoring and hospitality",
-    phone: "+234 800 000 0007",
-    email: "oleh@dstveb.example.ng",
-    online: false,
-  },
+  { slug: "asaba", name: "Asaba Centre", lga: "Oshimili South LGA", online: false },
+  { slug: "ozoro", name: "Ozoro Centre", lga: "Isoko North LGA", online: false },
+  { slug: "sapele", name: "Sapele Centre", lga: "Sapele LGA", online: false },
+  { slug: "agbarho", name: "Agbarho Centre", lga: "Ughelli North LGA", online: false },
+  { slug: "mbiri", name: "Mbiri Centre", lga: "Ika North East LGA", online: false },
+  { slug: "otor-owhe", name: "Otor-Owhe Centre", lga: "Isoko South LGA", online: false },
+  { slug: "afiesere", name: "Afiesere Centre", lga: "Ughelli North LGA", online: false },
+  { slug: "owa-oyibu", name: "Owa-Oyibu Centre", lga: "Ika North East LGA", online: false },
+  { slug: "orerokpe", name: "Orerokpe Centre", lga: "Okpe LGA", online: false },
+  { slug: "egbokodo", name: "Egbokodo Centre", lga: "Warri South LGA", online: false },
+  { slug: "bulu-angiama", name: "Bulu-Angiama Centre", lga: "Bomadi LGA", online: false },
+  { slug: "emede", name: "Emede Centre", lga: "Isoko South LGA", online: false },
+  { slug: "umutu", name: "Umutu Centre", lga: "Ukwuani LGA", online: true },
+  { slug: "kokori", name: "Kokori Centre", lga: "Ethiope East LGA", online: false },
+  { slug: "oza-nogogo", name: "Oza-Nogogo Centre", lga: "Ika North East LGA", online: false },
 ];
