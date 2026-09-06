@@ -1,16 +1,20 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Menu, X, GraduationCap, Mail, Phone, MapPin, Lock } from "lucide-react";
+import { Menu, X, Mail, Phone, MapPin, Lock } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { NAV_LINKS, SITE } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import logoDstveb from "@/assets/logo-dstveb.jpg";
 
 function Brand({ tone = "ink" }: { tone?: "ink" | "paper" }) {
   return (
     <Link to="/umutu" className="flex items-center gap-3" aria-label={`${SITE.shortName} home`}>
-      <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
-        <GraduationCap className="size-5" aria-hidden="true" />
-      </span>
+      <img
+        src={logoDstveb}
+        alt="DSTVEB logo"
+        className="size-10 shrink-0 rounded-md bg-white object-contain p-0.5"
+      />
+
       <span className="leading-tight">
         <span
           className={cn(
