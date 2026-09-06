@@ -1,14 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Building2,
-  GraduationCap,
-  MapPin,
-  ShieldCheck,
-  Wrench,
-} from "lucide-react";
+import { ArrowRight, Building2, MapPin, ShieldCheck, Wrench } from "lucide-react";
 
 import { BOARD, BRANCHES } from "@/lib/branches";
+import logoDstveb from "@/assets/logo-dstveb.jpg";
+import logoDelta from "@/assets/logo-delta.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
