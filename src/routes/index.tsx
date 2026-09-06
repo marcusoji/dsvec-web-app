@@ -105,59 +105,42 @@ function BoardHome() {
 
       <section id="branches" className="container-page py-16 md:py-20">
         <div className="rule-accent">
-          <p className="eyebrow">Branches</p>
+          <p className="eyebrow">Centres</p>
           <h2 className="mt-2 text-2xl md:text-3xl">Technical & vocational centres statewide</h2>
           <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-            Click a branch to open its portal. Online admissions are currently live for the Umutu
-            branch; other centres accept applications at the campus office.
+            Online admissions are currently live for the Umutu centre; other centres accept
+            applications at the campus office.
           </p>
         </div>
 
-        {ZONES.map((zone) => {
-          const branches = BRANCHES.filter((b) => b.zone === zone);
-          if (branches.length === 0) return null;
-          return (
-            <div key={zone} className="mt-10">
-              <h3 className="font-display text-lg">{zone}</h3>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {branches.map((branch) => (
-                  <article key={branch.slug} className="surface-card flex flex-col p-5">
-                    {branch.online ? (
-                      <span className="inline-flex w-fit rounded-full bg-primary px-2.5 py-0.5 text-[0.7rem] font-semibold text-primary-foreground">
-                        Online applications open
-                      </span>
-                    ) : (
-                      <span className="inline-flex w-fit rounded-full border border-border px-2.5 py-0.5 text-[0.7rem] text-muted-foreground">
-                        Campus applications
-                      </span>
-                    )}
-                    <h4 className="mt-3 font-display text-lg">{branch.name}</h4>
-                    <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <MapPin className="size-3.5" aria-hidden="true" /> {branch.lga}
-                    </p>
-                    {branch.online ? (
-                      <Link
-                        to="/umutu"
-                        className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-                      >
-                        Visit website
-                        <ArrowRight className="size-4" aria-hidden="true" />
-                      </Link>
-                    ) : (
-                      <span
-                        aria-disabled="true"
-                        className="mt-4 inline-flex w-fit cursor-not-allowed items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground"
-                        title="This branch has no website yet"
-                      >
-                        Website coming soon
-                      </span>
-                    )}
-                  </article>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {BRANCHES.map((branch) => (
+            <article key={branch.slug} className="surface-card flex flex-col p-5">
+              <h3 className="font-display text-lg">{branch.name}</h3>
+              <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <MapPin className="size-3.5" aria-hidden="true" /> {branch.lga}
+              </p>
+              {branch.online ? (
+                <Link
+                  to="/umutu"
+                  className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  Visit website
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  className="mt-4 inline-flex w-fit cursor-not-allowed items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground"
+                  title="This centre has no website yet"
+                >
+                  Website coming soon
+                </span>
+              )}
+            </article>
+          ))}
+        </div>
+
       </section>
 
       <footer className="border-t border-border bg-ink text-ink-muted">
