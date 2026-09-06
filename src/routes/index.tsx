@@ -33,11 +33,9 @@ const PILLARS = [
   {
     icon: Building2,
     title: "Centres statewide",
-    body: `${BRANCHES.length} technical colleges and vocational centres across Delta North, Central and South.`,
+    body: `${BRANCHES.length} technical colleges and vocational centres across Delta State.`,
   },
 ];
-
-const ZONES = ["Delta North", "Delta Central", "Delta South"] as const;
 
 function BoardHome() {
   return (
@@ -45,9 +43,16 @@ function BoardHome() {
       <header className="border-b border-border bg-ink text-ink-foreground">
         <div className="container-page flex h-16 items-center justify-between gap-4">
           <span className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-md bg-primary text-primary-foreground">
-              <GraduationCap className="size-5" aria-hidden="true" />
-            </span>
+            <img
+              src={logoDstveb}
+              alt="DSTVEB logo"
+              className="size-10 rounded-md bg-white object-contain p-0.5"
+            />
+            <img
+              src={logoDelta}
+              alt="Delta State government seal"
+              className="hidden size-10 rounded-md bg-white object-contain p-0.5 sm:block"
+            />
             <span className="leading-tight">
               <span className="block font-display text-sm font-bold">{BOARD.shortName}</span>
               <span className="block text-[0.7rem] text-ink-muted">Delta State, Nigeria</span>
@@ -57,10 +62,11 @@ function BoardHome() {
             href="#branches"
             className="rounded-md border border-ink-muted/40 px-4 py-2 text-sm font-semibold"
           >
-            Find a branch
+            Find a centre
           </a>
         </div>
       </header>
+
 
       <section className="border-b border-border bg-secondary/50 grid-paper">
         <div className="container-page grid gap-10 py-16 md:grid-cols-[1.1fr_0.9fr] md:items-center md:py-24">
