@@ -3,10 +3,14 @@ import { Compass, Eye, HeartHandshake, Target } from "lucide-react";
 
 import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { SITE } from "@/lib/site";
-import weldingImg from "@/assets/unit-welding.jpg";
-import ictImg from "@/assets/unit-ict.jpg";
-import tailoringImg from "@/assets/unit-tailoring.jpg";
-import carpentryImg from "@/assets/unit-carpentry.jpg";
+import campusImg from "@/assets/about-gallery/img-20260907-wa0128.jpg.asset.json";
+import fashionWorkshopImg from "@/assets/about-gallery/img-20260907-wa0129.jpg.asset.json";
+import monogramImg from "@/assets/about-gallery/img-20260907-wa0130.jpg.asset.json";
+import fashionStudioImg from "@/assets/about-gallery/img-20260907-wa0131.jpg.asset.json";
+import barbingImg from "@/assets/about-gallery/img-20260907-wa0132.jpg.asset.json";
+import electricalImg from "@/assets/about-gallery/img-20260907-wa0133.jpg.asset.json";
+import hairDressingImg from "@/assets/about-gallery/img-20260907-wa0134.jpg.asset.json";
+import decorationImg from "@/assets/about-gallery/img-20260907-wa0135.jpg.asset.json";
 
 
 const DESCRIPTION =
@@ -59,10 +63,14 @@ const FACILITIES = [
 ];
 
 const UNIT_IMAGES = [
-  { src: weldingImg, alt: "Trainee welding metal in the fabrication workshop", caption: "Welding & fabrication" },
-  { src: ictImg, alt: "Trainees at computers in the ICT training room", caption: "ICT & computer studies" },
-  { src: tailoringImg, alt: "Trainees sewing garments on machines", caption: "Tailoring & garment making" },
-  { src: carpentryImg, alt: "Trainee planing timber at a workbench", caption: "Carpentry & woodwork" },
+  { src: campusImg.url, alt: "Side view of the Umutu vocational education centre", caption: "Umutu vocational education centre" },
+  { src: fashionWorkshopImg.url, alt: "Sewing machines in the Fashion and Design workshop", caption: "Fashion and Design" },
+  { src: monogramImg.url, alt: "Decorative monogram embroidery being made with a sewing machine", caption: "Monogram" },
+  { src: fashionStudioImg.url, alt: "Fashion and Design workshop with sewing machines and work tables", caption: "Fashion and Design studio" },
+  { src: barbingImg.url, alt: "Barbing training room with mirrors, chairs and workstations", caption: "Barbing" },
+  { src: electricalImg.url, alt: "Electrical Installation workshop with training boards and equipment", caption: "Electrical Installation" },
+  { src: hairDressingImg.url, alt: "Hair Dressing training room with salon chairs and mirrors", caption: "Hair Dressing" },
+  { src: decorationImg.url, alt: "Event Decoration training room with draped fabric", caption: "Event Management and Decoration" },
 ];
 
 
