@@ -63,14 +63,14 @@ const FACILITIES = [
 ];
 
 const UNIT_IMAGES = [
-  { src: campusImg.url, alt: "Side view of the Umutu vocational education centre", caption: "Umutu vocational education centre" },
-  { src: fashionWorkshopImg.url, alt: "Sewing machines in the Fashion and Design workshop", caption: "Fashion and Design" },
-  { src: monogramImg.url, alt: "Decorative monogram embroidery being made with a sewing machine", caption: "Monogram" },
-  { src: fashionStudioImg.url, alt: "Fashion and Design workshop with sewing machines and work tables", caption: "Fashion and Design studio" },
-  { src: barbingImg.url, alt: "Barbing training room with mirrors, chairs and workstations", caption: "Barbing" },
-  { src: electricalImg.url, alt: "Electrical Installation workshop with training boards and equipment", caption: "Electrical Installation" },
-  { src: hairDressingImg.url, alt: "Hair Dressing training room with salon chairs and mirrors", caption: "Hair Dressing" },
-  { src: decorationImg.url, alt: "Event Decoration training room with draped fabric", caption: "Event Management and Decoration" },
+  { src: campusImg, alt: "Side view of the Umutu vocational education centre", caption: "Umutu vocational education centre" },
+  { src: fashionWorkshopImg, alt: "Sewing machines in the Fashion and Design workshop", caption: "Fashion and Design" },
+  { src: monogramImg, alt: "Decorative monogram embroidery being made with a sewing machine", caption: "Monogram" },
+  { src: fashionStudioImg, alt: "Fashion and Design workshop with sewing machines and work tables", caption: "Fashion and Design studio" },
+  { src: barbingImg, alt: "Barbing training room with mirrors, chairs and workstations", caption: "Barbing" },
+  { src: electricalImg, alt: "Electrical Installation workshop with training boards and equipment", caption: "Electrical Installation" },
+  { src: hairDressingImg, alt: "Hair Dressing training room with salon chairs and mirrors", caption: "Hair Dressing" },
+  { src: decorationImg, alt: "Event Decoration training room with draped fabric", caption: "Event Management and Decoration" },
 ];
 
 
