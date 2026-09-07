@@ -64,7 +64,7 @@ const FACILITIES = [
 
 const UNIT_IMAGES = [
   { src: campusImg, alt: "Side view of the Umutu vocational education centre", caption: "Umutu vocational education centre" },
-  { src: fashionWorkshopImg, alt: "Sewing machines in the Fashion and Design workshop", caption: "Fashion and Design" },
+  { src: ictImg, alt: "ICT laboratory with computers and workstations", caption: "ICT" },
   { src: monogramImg, alt: "Decorative monogram embroidery being made with a sewing machine", caption: "Monogram" },
   { src: fashionStudioImg, alt: "Fashion and Design workshop with sewing machines and work tables", caption: "Fashion and Design studio" },
   { src: barbingImg, alt: "Barbing training room with mirrors, chairs and workstations", caption: "Barbing" },
