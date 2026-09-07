@@ -3,14 +3,14 @@ import { Compass, Eye, HeartHandshake, Target } from "lucide-react";
 
 import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { SITE } from "@/lib/site";
-import campusImg from "@/assets/about-gallery/img-20260907-wa0128.jpg.asset.json";
-import fashionWorkshopImg from "@/assets/about-gallery/img-20260907-wa0129.jpg.asset.json";
-import monogramImg from "@/assets/about-gallery/img-20260907-wa0130.jpg.asset.json";
-import fashionStudioImg from "@/assets/about-gallery/img-20260907-wa0131.jpg.asset.json";
-import barbingImg from "@/assets/about-gallery/img-20260907-wa0132.jpg.asset.json";
-import electricalImg from "@/assets/about-gallery/img-20260907-wa0133.jpg.asset.json";
-import hairDressingImg from "@/assets/about-gallery/img-20260907-wa0134.jpg.asset.json";
-import decorationImg from "@/assets/about-gallery/img-20260907-wa0135.jpg.asset.json";
+import campusImg from "@/assets/about-gallery/img-20260907-wa0128.jpg";
+import fashionWorkshopImg from "@/assets/about-gallery/img-20260907-wa0129.jpg";
+import monogramImg from "@/assets/about-gallery/img-20260907-wa0130.jpg";
+import fashionStudioImg from "@/assets/about-gallery/img-20260907-wa0131.jpg";
+import barbingImg from "@/assets/about-gallery/img-20260907-wa0132.jpg";
+import electricalImg from "@/assets/about-gallery/img-20260907-wa0133.jpg";
+import hairDressingImg from "@/assets/about-gallery/img-20260907-wa0134.jpg";
+import decorationImg from "@/assets/about-gallery/img-20260907-wa0135.jpg";
 
 
 const DESCRIPTION =
