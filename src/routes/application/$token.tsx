@@ -51,7 +51,7 @@ function formatDate(value: string) {
 }
 
 function streamLabel(stream: string) {
-  return stream === "2" ? "Stream 2 (1:00pm – 5:00pm)" : "Stream 1 (8:00am – 12:00pm)";
+  return stream === "2" ? "Stream 2 (July–December)" : "Stream 1 (January–June)";
 }
 
 function ApplicationForm() {

@@ -191,8 +191,8 @@ function Applicants() {
             onChange={(e) => changeFilter("stream", e.target.value)}
           >
             <option value="">All streams</option>
-            <option value="1">Stream 1 (8:00am–12:00pm)</option>
-            <option value="2">Stream 2 (1:00pm–5:00pm)</option>
+            <option value="1">Stream 1 (January–June)</option>
+            <option value="2">Stream 2 (July–December)</option>
           </select>
           <button
             type="button"

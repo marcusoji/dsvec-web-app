@@ -641,7 +641,7 @@ function ApplyPage() {
                 </div>
 
                 <div className="mt-6 border-t border-border pt-5">
-                  <legend className="text-sm font-medium">Choose a stream (session time)</legend>
+                  <legend className="text-sm font-medium">Choose a stream (intake period)</legend>
                   {errors["stream"] ? (
                     <p role="alert" className="mt-1 text-xs font-medium text-destructive">
                       {errors["stream"]}
@@ -673,7 +673,7 @@ function ApplyPage() {
                     ))}
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Your stream fixes your daily class session in the six-month programme.
+                    Your stream fixes your intake period in the six-month programme.
                   </p>
                 </div>
               </fieldset>

@@ -132,8 +132,8 @@ export const photoSchema = z.object({
 });
 
 export const STREAMS = [
-  { value: "1", label: "Stream 1 — 8:00am – 12:00pm", short: "Stream 1" },
-  { value: "2", label: "Stream 2 — 1:00pm – 5:00pm", short: "Stream 2" },
+  { value: "1", label: "Stream 1 — January – June", short: "Stream 1" },
+  { value: "2", label: "Stream 2 — July – December", short: "Stream 2" },
 ] as const;
 
 export const STREAM_LABELS: Record<string, string> = {
