@@ -17,6 +17,7 @@ export const APPLICANT_CSV_COLUMNS = [
   "LGA",
   "Residential Address",
   "Selected Unit",
+  "Stream",
   "Status",
   "Applied On",
 ] as const;
@@ -65,9 +66,7 @@ export function fullName(
 
 export function titleCase(value: string | null | undefined): string {
   if (!value) return "";
-  return value
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 const escapeCell = (value: unknown): string => {

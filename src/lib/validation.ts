@@ -91,6 +91,7 @@ export const contactSchema = z.object({
 
 export const unitSchema = z.object({
   unit_id: z.string().uuid("Select a trade unit"),
+  stream: z.enum(["1", "2"], { message: "Select a stream" }),
 });
 
 const requiredName = (label: string) =>
@@ -116,7 +117,6 @@ export const guardianEducationSchema = z.object({
     .min(4, "Year last attended is required")
     .max(12)
     .regex(/^[0-9]{4}(-[0-9]{4})?$/, "Enter a year, e.g. 2024 or 2023-2024"),
-
 });
 
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
@@ -130,6 +130,16 @@ export const photoSchema = z.object({
     )
     .refine((v) => v.length * 0.75 <= MAX_PHOTO_BYTES + 1024, "Photograph must be 2MB or smaller"),
 });
+
+export const STREAMS = [
+  { value: "1", label: "Stream 1 — 8:00am – 12:00pm", short: "Stream 1" },
+  { value: "2", label: "Stream 2 — 1:00pm – 5:00pm", short: "Stream 2" },
+] as const;
+
+export const STREAM_LABELS: Record<string, string> = {
+  "1": "Stream 1",
+  "2": "Stream 2",
+};
 
 export const applicationSchema = personalSchema
   .merge(contactSchema)

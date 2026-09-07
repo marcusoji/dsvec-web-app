@@ -36,6 +36,7 @@ function Applicants() {
   const [unitId, setUnitId] = useState("");
   const [status, setStatus] = useState<ApplicationStatus | "">("");
   const [year, setYear] = useState<number | "">("");
+  const [stream, setStream] = useState("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<Awaited<ReturnType<typeof listApplicants>> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,6 +59,7 @@ function Applicants() {
           unit_id: unitId || undefined,
           status: status || undefined,
           year: year === "" ? undefined : year,
+          stream: stream === "" ? undefined : (stream as "1" | "2"),
         },
       });
       setData(res);
@@ -72,10 +74,11 @@ function Applicants() {
     void run({ page: 1 });
   }
 
-  function changeFilter(kind: "unit" | "status" | "year", value: string) {
+  function changeFilter(kind: "unit" | "status" | "year" | "stream", value: string) {
     if (kind === "unit") setUnitId(value);
     else if (kind === "status") setStatus(value as ApplicationStatus | "");
-    else setYear(value === "" ? "" : Number(value));
+    else if (kind === "year") setYear(value === "" ? "" : Number(value));
+    else setStream(value);
     void run({ page: 1 });
   }
 
@@ -87,6 +90,7 @@ function Applicants() {
           unit_id: unitId || undefined,
           status: status || undefined,
           year: year === "" ? undefined : year,
+          stream: stream === "" ? undefined : (stream as "1" | "2"),
         },
       });
       // The server already writes a UTF-8 BOM; do not add a second one.
@@ -180,6 +184,16 @@ function Applicants() {
               </option>
             ))}
           </select>
+          <select
+            aria-label="Filter by stream"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={stream}
+            onChange={(e) => changeFilter("stream", e.target.value)}
+          >
+            <option value="">All streams</option>
+            <option value="1">Stream 1 (8:00am–12:00pm)</option>
+            <option value="2">Stream 2 (1:00pm–5:00pm)</option>
+          </select>
           <button
             type="button"
             onClick={applySearch}
@@ -209,6 +223,7 @@ function Applicants() {
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Phone</th>
                   <th className="px-4 py-3 font-medium">Unit</th>
+                  <th className="px-4 py-3 font-medium">Stream</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">
@@ -224,6 +239,9 @@ function Applicants() {
                     <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
                     <td className="px-4 py-3 text-muted-foreground">{r.phone}</td>
                     <td className="px-4 py-3 text-muted-foreground">{r.unit_name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {r.stream === "2" ? "Stream 2" : "Stream 1"}
+                    </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex rounded-full border border-border bg-accent/40 px-2 py-0.5 text-xs capitalize">
                         {r.status.replace(/_/g, " ")}

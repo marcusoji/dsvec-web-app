@@ -26,6 +26,8 @@ import {
 import {
   MAX_PHOTO_BYTES,
   NIGERIAN_STATES,
+  STREAMS,
+  STREAM_LABELS,
   contactSchema,
   guardianEducationSchema,
   personalSchema,
@@ -82,6 +84,7 @@ type FormState = {
   qualification: string;
   school_year: string;
   unit_id: string;
+  stream: string;
   photo_data_url: string;
 };
 
@@ -104,6 +107,7 @@ const EMPTY: FormState = {
   qualification: "",
   school_year: "",
   unit_id: "",
+  stream: "",
   photo_data_url: "",
 };
 
@@ -205,8 +209,46 @@ function ApplyPage() {
       setErrors((e) => ({ ...e, photo_data_url: "Photograph must be 2MB or smaller" }));
       return;
     }
+    if (!file.type.startsWith("image/")) {
+      setErrors((e) => ({ ...e, photo_data_url: "Upload a JPG, PNG or WebP photograph" }));
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = () => set("photo_data_url", String(reader.result));
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_DIM = 640;
+        const RATIO = 3 / 4; // passport aspect (width/height)
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        if (!w || !h) return;
+        let cropW = w;
+        let cropH = w / RATIO;
+        if (cropH > h) {
+          cropH = h;
+          cropW = h * RATIO;
+        }
+        const scale = Math.min(1, MAX_DIM / Math.max(cropW, cropH));
+        const outW = Math.max(1, Math.round(cropW * scale));
+        const outH = Math.max(1, Math.round(cropH * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = outW;
+        canvas.height = outH;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          set("photo_data_url", String(reader.result));
+          return;
+        }
+        // Passport photos sit on a white background; fill first so PNG transparency becomes white.
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, outW, outH);
+        ctx.drawImage(img, (w - cropW) / 2, (h - cropH) / 2, cropW, cropH, 0, 0, outW, outH);
+        set("photo_data_url", canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.onerror = () =>
+        setErrors((e) => ({ ...e, photo_data_url: "Could not read that image." }));
+      img.src = String(reader.result);
+    };
     reader.readAsDataURL(file);
   }
 
@@ -243,10 +285,10 @@ function ApplyPage() {
               required for all correspondence and screening.
             </p>
             <p className="mt-4 rounded-md border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
-              A registration fee is payable before screening.{' '}
+              A registration fee is payable before screening.{" "}
               <Link to="/contact" className="font-semibold underline underline-offset-4">
                 Contact the Admissions Office
-              </Link>{' '}
+              </Link>{" "}
               by call, WhatsApp or email for the amount and payment details.
             </p>
             <p className="mt-6 font-display text-2xl tracking-tight">{done.application_number}</p>
@@ -283,14 +325,14 @@ function ApplyPage() {
         <div className="flex items-start gap-3 rounded-md border border-primary/30 bg-primary/10 p-4 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
           <p>
-            A registration fee is payable after your application is submitted.{' '}
+            A registration fee is payable after your application is submitted.{" "}
             <Link
               to="/contact"
               className="font-semibold underline underline-offset-4 hover:text-primary"
             >
               Click here for pricing and payment information
-            </Link>
-            {' '}— you can call, WhatsApp or email the Admissions Office before you apply.
+            </Link>{" "}
+            — you can call, WhatsApp or email the Admissions Office before you apply.
           </p>
         </div>
       </div>
@@ -597,6 +639,43 @@ function ApplyPage() {
                     </label>
                   ))}
                 </div>
+
+                <div className="mt-6 border-t border-border pt-5">
+                  <legend className="text-sm font-medium">Choose a stream (session time)</legend>
+                  {errors["stream"] ? (
+                    <p role="alert" className="mt-1 text-xs font-medium text-destructive">
+                      {errors["stream"]}
+                    </p>
+                  ) : null}
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {STREAMS.map((stream) => (
+                      <label
+                        key={stream.value}
+                        className={cn(
+                          "cursor-pointer rounded-md border p-4 transition",
+                          form.stream === stream.value
+                            ? "border-primary bg-accent/40"
+                            : "border-border hover:border-foreground/30",
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="stream"
+                          className="sr-only"
+                          checked={form.stream === stream.value}
+                          onChange={() => set("stream", stream.value)}
+                        />
+                        <span className="block font-display text-sm font-bold">{stream.short}</span>
+                        <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                          {stream.label.split("—")[1]?.trim()}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Your stream fixes your daily class session in the six-month programme.
+                  </p>
+                </div>
               </fieldset>
             ) : null}
 
@@ -675,6 +754,7 @@ function ApplyPage() {
                     ["Address", form.address],
                     ["State / LGA", `${form.state} / ${form.local_government}`],
                     ["Trade unit", selectedUnit?.name ?? "—"],
+                    ["Stream", form.stream ? (STREAM_LABELS[form.stream] ?? form.stream) : "—"],
                     ["Next of kin", form.next_of_kin_name || "—"],
                     ["Relationship", form.next_of_kin_relationship || "—"],
                     ["Next of kin phone", form.next_of_kin_phone || "—"],

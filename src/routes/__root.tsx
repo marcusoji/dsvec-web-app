@@ -9,7 +9,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { GraduationCap, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
+import logoDstveb from "../assets/logo-dstveb.jpg";
 
 import appCss from "../styles.css?url";
 import { SITE } from "../lib/site";
@@ -170,8 +171,8 @@ function RouteLoadingOverlay() {
       role="status"
       aria-live="polite"
     >
-      <div className="grid size-20 place-items-center rounded-2xl bg-primary text-primary-foreground">
-        <GraduationCap className="size-10" aria-hidden="true" />
+      <div className="rounded-2xl bg-white p-1.5 shadow-lg">
+        <img src={logoDstveb} alt="DSTVEB logo" className="size-28 object-contain" />
       </div>
       <div>
         <p className="font-display text-2xl font-black tracking-tight text-ink-foreground">

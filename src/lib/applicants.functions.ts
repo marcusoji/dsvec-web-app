@@ -29,6 +29,7 @@ export type ApplicationView = {
   status: string;
   created_at: string;
   unit_name: string;
+  stream: string;
   photo_url: string | null;
 };
 
@@ -132,6 +133,7 @@ export const submitApplication = createServerFn({ method: "POST" })
         qualification: data.qualification?.trim() || null,
         school_year: data.school_year?.trim() || null,
         unit_id: data.unit_id,
+        stream: data.stream,
       })
       .select("id, application_number, access_token")
       .single();
@@ -192,7 +194,7 @@ export const getApplicationByToken = createServerFn({ method: "GET" })
     const { data: row, error } = await supabaseAdmin
       .from("applicants")
       .select(
-        "id, application_number, first_name, middle_name, last_name, gender, date_of_birth, nationality, email, phone, address, state, local_government, next_of_kin_name, next_of_kin_relationship, next_of_kin_phone, school, qualification, school_year, status, created_at, units(name)",
+        "id, application_number, first_name, middle_name, last_name, gender, date_of_birth, nationality, email, phone, address, state, local_government, next_of_kin_name, next_of_kin_relationship, next_of_kin_phone, school, qualification, school_year, status, created_at, stream, units(name)",
       )
       .eq("access_token", data.token)
       .maybeSingle();
@@ -238,6 +240,7 @@ export const getApplicationByToken = createServerFn({ method: "GET" })
       status: row.status,
       created_at: row.created_at,
       unit_name: unit?.name ?? "—",
+      stream: row.stream ?? "1",
       photo_url,
     };
   });

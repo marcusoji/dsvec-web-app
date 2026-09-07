@@ -26,6 +26,7 @@ export const BOARD = {
 
 export const BRANCHES: readonly Branch[] = [
   { slug: "asaba", name: "Asaba Centre", lga: "Oshimili South LGA", online: false },
+  { slug: "umutu", name: "Umutu Centre", lga: "Ukwuani LGA", online: true },
   { slug: "ozoro", name: "Ozoro Centre", lga: "Isoko North LGA", online: false },
   { slug: "sapele", name: "Sapele Centre", lga: "Sapele LGA", online: false },
   { slug: "agbarho", name: "Agbarho Centre", lga: "Ughelli North LGA", online: false },
@@ -37,7 +38,6 @@ export const BRANCHES: readonly Branch[] = [
   { slug: "egbokodo", name: "Egbokodo Centre", lga: "Warri South LGA", online: false },
   { slug: "bulu-angiama", name: "Bulu-Angiama Centre", lga: "Bomadi LGA", online: false },
   { slug: "emede", name: "Emede Centre", lga: "Isoko South LGA", online: false },
-  { slug: "umutu", name: "Umutu Centre", lga: "Ukwuani LGA", online: true },
   { slug: "kokori", name: "Kokori Centre", lga: "Ethiope East LGA", online: false },
   { slug: "oza-nogogo", name: "Oza-Nogogo Centre", lga: "Ika North East LGA", online: false },
 ];

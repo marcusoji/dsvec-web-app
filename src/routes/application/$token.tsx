@@ -50,6 +50,10 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function streamLabel(stream: string) {
+  return stream === "2" ? "Stream 2 (1:00pm – 5:00pm)" : "Stream 1 (8:00am – 12:00pm)";
+}
+
 function ApplicationForm() {
   const application = Route.useLoaderData();
   const fullName = [application.first_name, application.middle_name, application.last_name]
@@ -206,6 +210,12 @@ function ApplicationForm() {
                   Trade unit applied for
                 </dt>
                 <dd className="mt-0.5 font-medium">{application.unit_name}</dd>
+              </div>
+              <div>
+                <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+                  Stream
+                </dt>
+                <dd className="mt-0.5 font-medium">{streamLabel(application.stream)}</dd>
               </div>
               <div>
                 <dt className="text-[0.7rem] uppercase tracking-wide text-muted-foreground">

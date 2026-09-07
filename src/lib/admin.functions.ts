@@ -103,7 +103,6 @@ export const confirmPasswordChanged = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-
 // ---------------------------------------------------------------------------
 // Statistics
 // ---------------------------------------------------------------------------
@@ -131,10 +130,7 @@ export type AdminStats = {
 
 /** `2026` → `[2026-01-01T00:00:00+01:00, 2027-01-01T00:00:00+01:00)` in Lagos time. */
 export function yearBounds(year: number): [string, string] {
-  return [
-    `${year}-01-01T00:00:00+01:00`,
-    `${year + 1}-01-01T00:00:00+01:00`,
-  ];
+  return [`${year}-01-01T00:00:00+01:00`, `${year + 1}-01-01T00:00:00+01:00`];
 }
 
 /** Calendar year (Lagos time) of an ISO timestamp. */
@@ -273,6 +269,7 @@ export type ApplicantRow = {
   unit_name: string;
   unit_id: string;
   status: ApplicationStatus;
+  stream: string;
   created_at: string;
   access_token: string | null;
 };
@@ -284,6 +281,7 @@ const listInputSchema = z.object({
   unit_id: z.string().uuid().optional(),
   status: z.enum(STATUSES).optional(),
   year: z.number().int().min(2000).max(2100).optional(),
+  stream: z.enum(["1", "2"]).optional(),
 });
 type ListInput = z.infer<typeof listInputSchema>;
 
@@ -301,13 +299,13 @@ export const listApplicants = createServerFn({ method: "POST" })
   .middleware([requirePermission("applicants.read")])
   .validator(listInputSchema)
   .handler(async ({ data }): Promise<ApplicantListResult> => {
-    const { page, per_page, search, unit_id, status, year } = data;
+    const { page, per_page, search, unit_id, status, year, stream } = data;
     const fromRow = (page - 1) * per_page;
 
     let query = supabaseAdmin
       .from("applicants")
       .select(
-        "id, application_number, first_name, middle_name, last_name, email, phone, unit_id, status, created_at, access_token, units(name)",
+        "id, application_number, first_name, middle_name, last_name, email, phone, unit_id, status, stream, created_at, access_token, units(name)",
         { count: "exact" },
       );
 
@@ -319,6 +317,7 @@ export const listApplicants = createServerFn({ method: "POST" })
     }
     if (unit_id) query = query.eq("unit_id", unit_id);
     if (status) query = query.eq("status", status);
+    if (stream) query = query.eq("stream", stream);
     if (year) {
       const [start, end] = yearBounds(year);
       query = query.gte("created_at", start).lt("created_at", end);
@@ -354,6 +353,7 @@ export const listApplicants = createServerFn({ method: "POST" })
       phone: string;
       unit_id: string;
       status: ApplicationStatus;
+      stream: string;
       created_at: string;
       access_token: string | null;
       units: { name?: string } | null;
@@ -372,6 +372,7 @@ export const listApplicants = createServerFn({ method: "POST" })
           unit_id: raw.unit_id,
           unit_name: unit?.name ?? "—",
           status: raw.status,
+          stream: raw.stream ?? "1",
           created_at: raw.created_at,
           access_token: raw.access_token ?? null,
         } satisfies ApplicantRow;
@@ -512,6 +513,7 @@ const csvInputSchema = z.object({
   unit_id: z.string().uuid().optional(),
   status: z.enum(STATUSES).optional(),
   year: z.number().int().min(2000).max(2100).optional(),
+  stream: z.enum(["1", "2"]).optional(),
 });
 
 export const exportApplicantsCsv = createServerFn({ method: "POST" })
@@ -523,7 +525,7 @@ export const exportApplicantsCsv = createServerFn({ method: "POST" })
     let query = supabaseAdmin
       .from("applicants")
       .select(
-        "application_number, first_name, middle_name, last_name, email, phone, gender, date_of_birth, nationality, state, local_government, address, status, created_at, units(name)",
+        "application_number, first_name, middle_name, last_name, email, phone, gender, date_of_birth, nationality, state, local_government, address, status, stream, created_at, units(name)",
       )
       // Stable, deterministic ordering: newest first, then by the immutable
       // application number so repeat exports produce identical files.
@@ -532,6 +534,7 @@ export const exportApplicantsCsv = createServerFn({ method: "POST" })
 
     if (data.unit_id) query = query.eq("unit_id", data.unit_id);
     if (data.status) query = query.eq("status", data.status);
+    if (data.stream) query = query.eq("stream", data.stream);
     if (data.year) {
       const [start, end] = yearBounds(data.year);
       query = query.gte("created_at", start).lt("created_at", end);
@@ -554,16 +557,13 @@ export const exportApplicantsCsv = createServerFn({ method: "POST" })
         r.local_government,
         r.address,
         unit?.name ?? "",
+        r.stream === "2" ? "Stream 2" : "Stream 1",
         titleCase(r.status),
         formatDateTime(r.created_at),
       ];
     });
 
-    await audit(
-      admin,
-      "applicants_exported",
-      `Exported ${body.length} applicant record(s) to CSV`,
-    );
+    await audit(admin, "applicants_exported", `Exported ${body.length} applicant record(s) to CSV`);
 
     return toCsv(APPLICANT_CSV_COLUMNS, body);
   });
@@ -634,4 +634,3 @@ export const listAuditLog = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not load the audit log");
     return (rows ?? []) as AuditRow[];
   });
-
