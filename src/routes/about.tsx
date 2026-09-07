@@ -5,6 +5,7 @@ import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { SITE } from "@/lib/site";
 import campusImg from "@/assets/about-gallery/img-20260907-wa0128.jpg";
 import ictImg from "@/assets/units-ict.jpg";
+import cateringImg from "@/assets/catering.jpg";
 import monogramImg from "@/assets/about-gallery/img-20260907-wa0130.jpg";
 import fashionStudioImg from "@/assets/about-gallery/img-20260907-wa0131.jpg";
 import barbingImg from "@/assets/about-gallery/img-20260907-wa0132.jpg";
@@ -65,6 +66,7 @@ const FACILITIES = [
 const UNIT_IMAGES = [
   { src: campusImg, alt: "Side view of the Umutu vocational education centre", caption: "Umutu vocational education centre" },
   { src: ictImg, alt: "ICT laboratory with computers and workstations", caption: "ICT" },
+  { src: cateringImg, alt: "Catering and bakery kitchen with equipment", caption: "Catering" },
   { src: monogramImg, alt: "Decorative monogram embroidery being made with a sewing machine", caption: "Monogram" },
   { src: fashionStudioImg, alt: "Fashion and Design workshop with sewing machines and work tables", caption: "Fashion and Design studio" },
   { src: barbingImg, alt: "Barbing training room with mirrors, chairs and workstations", caption: "Barbing" },
