@@ -4,7 +4,7 @@ import { Compass, Eye, HeartHandshake, Target } from "lucide-react";
 import { PageHero, SiteShell } from "@/components/site/site-shell";
 import { SITE } from "@/lib/site";
 import campusImg from "@/assets/about-gallery/img-20260907-wa0128.jpg";
-import fashionWorkshopImg from "@/assets/about-gallery/img-20260907-wa0129.jpg";
+import ictImg from "@/assets/unit-ict.jpg";
 import monogramImg from "@/assets/about-gallery/img-20260907-wa0130.jpg";
 import fashionStudioImg from "@/assets/about-gallery/img-20260907-wa0131.jpg";
 import barbingImg from "@/assets/about-gallery/img-20260907-wa0132.jpg";
