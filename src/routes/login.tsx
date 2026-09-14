@@ -32,7 +32,7 @@ function Login() {
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) {
         setError(
-          "Sign-in failed. Check your email and password, or contact the portal administrator.",
+          "Sign-in failed. Check your network connection, email and password, or contact the portal administrator.",
         );
         setBusy(false);
         return;
