@@ -14,6 +14,7 @@ import logoDstveb from "../assets/logo-dstveb.jpg";
 
 import appCss from "../styles.css?url";
 import { SITE } from "../lib/site";
+import { BOARD } from "../lib/branches";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -136,10 +137,38 @@ const LOADING_MESSAGES = [
   "Firing up the generator…",
 ];
 
+/**
+ * Paths served by the Umutu branch site, including its staff portal. The
+ * board-level landing page (and anywhere else) keeps the plain DSTVEB identity,
+ * so the loading screen adopts the Umutu branch name only when the destination
+ * is actually a branch page.
+ */
+const UMTU_BRANCH_PREFIXES = [
+  "/umutu",
+  "/about",
+  "/admissions",
+  "/units",
+  "/apply",
+  "/contact",
+  "/application",
+  "/login",
+  "/admin",
+];
+
+function isUmutuBranchPath(pathname: string) {
+  return UMTU_BRANCH_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 function RouteLoadingOverlay() {
   const isLoading = useRouterState({
     select: (s) => s.status === "pending" || s.isLoading,
   });
+  // The router commits the destination location before loaders resolve, so the
+  // pathname already points at the page we are navigating to.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const showingBranch = isUmutuBranchPath(pathname);
   const [visible, setVisible] = useState(false);
   const [message, setMessage] = useState(LOADING_MESSAGES[0]);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -176,9 +205,11 @@ function RouteLoadingOverlay() {
       </div>
       <div>
         <p className="font-display text-2xl font-black tracking-tight text-ink-foreground">
-          {SITE.shortName}
+          {showingBranch ? SITE.shortName : BOARD.shortName}
         </p>
-        <p className="mt-1 text-sm text-ink-muted">{SITE.campusName}</p>
+        <p className="mt-1 text-sm text-ink-muted">
+          {showingBranch ? SITE.campusName : BOARD.region}
+        </p>
       </div>
       <div className="flex items-center gap-2 text-sm text-ink-muted">
         <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />

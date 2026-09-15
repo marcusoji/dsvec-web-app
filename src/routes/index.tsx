@@ -55,7 +55,7 @@ function BoardHome() {
             />
             <span className="leading-tight">
               <span className="block font-display text-sm font-bold">{BOARD.shortName}</span>
-              <span className="block text-[0.7rem] text-ink-muted">Delta State, Nigeria</span>
+              <span className="block text-[0.7rem] text-ink-muted">{BOARD.region}</span>
             </span>
           </span>
           <a

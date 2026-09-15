@@ -20,6 +20,8 @@ export const BOARD = {
   description:
     "Delta State Technical and Vocational Education Board (DSTVEB) oversees technical colleges and vocational centres across Delta State — practical trade training, certification and online admissions.",
   headquarters: "DSTVEB Secretariat, Asaba, Delta State, Nigeria",
+  /** Short board-level location label for compact headers and loading states. */
+  region: "Delta State, Nigeria",
   email: "dsvecumutu@gmail.com",
   phone: "+2347062140688",
 } as const;
