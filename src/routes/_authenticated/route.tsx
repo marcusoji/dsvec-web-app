@@ -8,7 +8,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap, Loader2, LogOut, UserCog } from "lucide-react";
+import { Loader2, LogOut, UserCog } from "lucide-react";
+import logoDstveb from "@/assets/logo-dstveb.jpg";
 
 import { useAdminUser } from "@/lib/use-admin-user";
 import type { Permission } from "@/lib/permissions";
@@ -121,9 +122,11 @@ function AuthenticatedLayout() {
       <header className="sticky top-0 z-40 border-b border-sidebar-border bg-ink">
         <div className="flex h-16 items-center gap-4 px-4 md:px-8">
           <Link to="/admin" className="flex items-center gap-3" aria-label="Staff portal home">
-            <span className="grid size-9 place-items-center rounded-md bg-primary text-primary-foreground">
-              <GraduationCap className="size-5" aria-hidden="true" />
-            </span>
+            <img
+              src={logoDstveb}
+              alt="DSTVEB logo"
+              className="size-9 shrink-0 rounded-md bg-white object-contain p-0.5"
+            />
             <span className="leading-tight">
               <span className="block font-display text-sm font-bold text-ink-foreground">
                 DSTVEB Umutu
