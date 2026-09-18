@@ -24,6 +24,10 @@ export const STATUSES = [
 ] as const;
 export type ApplicationStatus = (typeof STATUSES)[number];
 
+/** Alternate row orderings offered by the applicants list and its export. */
+export const SORT_ORDERS = ["name_asc", "name_desc"] as const;
+export type ApplicantSort = (typeof SORT_ORDERS)[number];
+
 export type AdminUser = {
   userId: string;
   email: string | null;
@@ -282,6 +286,7 @@ const listInputSchema = z.object({
   status: z.enum(STATUSES).optional(),
   year: z.number().int().min(2000).max(2100).optional(),
   stream: z.enum(["1", "2"]).optional(),
+  sort: z.enum(SORT_ORDERS).optional(),
 });
 type ListInput = z.infer<typeof listInputSchema>;
 
@@ -295,11 +300,44 @@ export type ApplicantListResult = {
   years: number[];
 };
 
+/**
+ * PostgREST types `.order()` against the concrete select's column union, which
+ * cannot be expressed as a generic constraint — hence the structural shape.
+ */
+type OrderableQuery = {
+  order(column: string, options: { ascending: boolean; nullsFirst?: boolean }): OrderableQuery;
+};
+
+/**
+ * Shared ordering for the applicant list and its CSV export so a file always
+ * matches the rows staff see on screen. Alphabetical ordering keys off the same
+ * name fields the UI displays.
+ */
+function applyApplicantOrder<Q>(query: Q, sort?: ApplicantSort): Q {
+  const q = query as unknown as OrderableQuery;
+  const ascending = sort === "name_asc";
+
+  const ordered =
+    sort === "name_asc" || sort === "name_desc"
+      ? q
+          .order("last_name", { ascending, nullsFirst: false })
+          .order("first_name", { ascending, nullsFirst: false })
+          .order("middle_name", { ascending, nullsFirst: false })
+          .order("application_number", { ascending: true })
+      : // Default: newest first, then by the immutable application number so
+        // repeat queries produce an identical order.
+        q
+          .order("created_at", { ascending: false })
+          .order("application_number", { ascending: true });
+
+  return ordered as unknown as Q;
+}
+
 export const listApplicants = createServerFn({ method: "POST" })
   .middleware([requirePermission("applicants.read")])
   .validator(listInputSchema)
   .handler(async ({ data }): Promise<ApplicantListResult> => {
-    const { page, per_page, search, unit_id, status, year, stream } = data;
+    const { page, per_page, search, unit_id, status, year, stream, sort } = data;
     const fromRow = (page - 1) * per_page;
 
     let query = supabaseAdmin
@@ -327,9 +365,7 @@ export const listApplicants = createServerFn({ method: "POST" })
       data: rows,
       count,
       error,
-    } = await query
-      .order("created_at", { ascending: false })
-      .range(fromRow, fromRow + per_page - 1);
+    } = await applyApplicantOrder(query, sort).range(fromRow, fromRow + per_page - 1);
     if (error) throw new Error("Could not load applicants");
 
     const { data: units } = await supabaseAdmin
@@ -514,6 +550,7 @@ const csvInputSchema = z.object({
   status: z.enum(STATUSES).optional(),
   year: z.number().int().min(2000).max(2100).optional(),
   stream: z.enum(["1", "2"]).optional(),
+  sort: z.enum(SORT_ORDERS).optional(),
 });
 
 export const exportApplicantsCsv = createServerFn({ method: "POST" })
@@ -526,11 +563,7 @@ export const exportApplicantsCsv = createServerFn({ method: "POST" })
       .from("applicants")
       .select(
         "application_number, first_name, middle_name, last_name, email, phone, gender, date_of_birth, nationality, state, local_government, address, status, stream, created_at, units(name)",
-      )
-      // Stable, deterministic ordering: newest first, then by the immutable
-      // application number so repeat exports produce identical files.
-      .order("created_at", { ascending: false })
-      .order("application_number", { ascending: true });
+      );
 
     if (data.unit_id) query = query.eq("unit_id", data.unit_id);
     if (data.status) query = query.eq("status", data.status);
@@ -540,7 +573,7 @@ export const exportApplicantsCsv = createServerFn({ method: "POST" })
       query = query.gte("created_at", start).lt("created_at", end);
     }
 
-    const { data: rows, error } = await query;
+    const { data: rows, error } = await applyApplicantOrder(query, data.sort);
     if (error) throw new Error("Could not export applicants");
 
     const body = (rows ?? []).map((r) => {

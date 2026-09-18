@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Download, FileDown, FileText, Search, Users } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, Download, FileDown, FileText, Search, Users } from "lucide-react";
 
 import {
   exportApplicantsCsv,
   listApplicants,
   STATUSES,
+  type ApplicantSort,
   type ApplicationStatus,
 } from "@/lib/admin.functions";
 
@@ -37,6 +38,7 @@ function Applicants() {
   const [status, setStatus] = useState<ApplicationStatus | "">("");
   const [year, setYear] = useState<number | "">("");
   const [stream, setStream] = useState("");
+  const [sort, setSort] = useState<ApplicantSort | "">("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<Awaited<ReturnType<typeof listApplicants>> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -47,19 +49,43 @@ function Applicants() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function run(filters?: { page?: number }) {
+  type Filters = {
+    search: string;
+    unit_id: string;
+    status: ApplicationStatus | "";
+    year: number | "";
+    stream: string;
+    sort: ApplicantSort | "";
+  };
+
+  /**
+   * Overrides let a filter change be applied immediately: state updates are
+   * async, so the handler passes the new value through instead of relying on
+   * the next render's closure.
+   */
+  async function run(overrides?: Partial<Filters> & { page?: number }) {
+    const next: Filters = {
+      search,
+      unit_id: unitId,
+      status,
+      year,
+      stream,
+      sort,
+      ...overrides,
+    };
     setLoading(true);
     try {
-      const nextPage = filters?.page ?? page;
+      const nextPage = overrides?.page ?? page;
       const res = await listApplicants({
         data: {
           page: nextPage,
           per_page: 20,
-          search: search || undefined,
-          unit_id: unitId || undefined,
-          status: status || undefined,
-          year: year === "" ? undefined : year,
-          stream: stream === "" ? undefined : (stream as "1" | "2"),
+          search: next.search || undefined,
+          unit_id: next.unit_id || undefined,
+          status: next.status || undefined,
+          year: next.year === "" ? undefined : next.year,
+          stream: next.stream === "" ? undefined : (next.stream as "1" | "2"),
+          sort: next.sort || undefined,
         },
       });
       setData(res);
@@ -70,16 +96,34 @@ function Applicants() {
   }
 
   function applySearch() {
-    setSearch(searchInput.trim());
-    void run({ page: 1 });
+    const value = searchInput.trim();
+    setSearch(value);
+    void run({ search: value, page: 1 });
   }
 
   function changeFilter(kind: "unit" | "status" | "year" | "stream", value: string) {
-    if (kind === "unit") setUnitId(value);
-    else if (kind === "status") setStatus(value as ApplicationStatus | "");
-    else if (kind === "year") setYear(value === "" ? "" : Number(value));
-    else setStream(value);
-    void run({ page: 1 });
+    if (kind === "unit") {
+      setUnitId(value);
+      void run({ unit_id: value, page: 1 });
+    } else if (kind === "status") {
+      const next = value as ApplicationStatus | "";
+      setStatus(next);
+      void run({ status: next, page: 1 });
+    } else if (kind === "year") {
+      const next = value === "" ? "" : Number(value);
+      setYear(next);
+      void run({ year: next, page: 1 });
+    } else {
+      setStream(value);
+      void run({ stream: value, page: 1 });
+    }
+  }
+
+  /** One button: first click sorts A→Z, the next flips to Z→A. */
+  function toggleSort() {
+    const next: ApplicantSort = sort === "name_asc" ? "name_desc" : "name_asc";
+    setSort(next);
+    void run({ sort: next, page: 1 });
   }
 
   async function doExport() {
@@ -91,6 +135,7 @@ function Applicants() {
           status: status || undefined,
           year: year === "" ? undefined : year,
           stream: stream === "" ? undefined : (stream as "1" | "2"),
+          sort: sort || undefined,
         },
       });
       // The server already writes a UTF-8 BOM; do not add a second one.
@@ -112,18 +157,38 @@ function Applicants() {
         <div>
           <h1 className="text-2xl font-display">Applicants</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Search, filter and export applications
+            Search, filter, sort and export applications
           </p>
         </div>
-        <button
-          type="button"
-          onClick={doExport}
-          disabled={exporting}
-          className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-60"
-        >
-          {exporting ? <Download className="size-4 animate-pulse" aria-hidden="true" /> : null}
-          {exporting ? "Preparing…" : "Export CSV"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleSort}
+            disabled={loading || exporting}
+            aria-pressed={sort !== ""}
+            className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-60"
+          >
+            {sort === "name_desc" ? (
+              <ArrowUpAZ className="size-4" aria-hidden="true" />
+            ) : (
+              <ArrowDownAZ className="size-4" aria-hidden="true" />
+            )}
+            {sort === "name_asc"
+              ? "Sorted A–Z"
+              : sort === "name_desc"
+                ? "Sorted Z–A"
+                : "Sort alphabetically"}
+          </button>
+          <button
+            type="button"
+            onClick={doExport}
+            disabled={exporting || loading}
+            className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-60"
+          >
+            {exporting ? <Download className="size-4 animate-pulse" aria-hidden="true" /> : null}
+            {exporting ? "Preparing…" : "Export CSV"}
+          </button>
+        </div>
       </div>
 
       <div className="surface-card mt-6 p-4">
