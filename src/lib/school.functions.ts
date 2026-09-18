@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { readStaffProfiles } from "./admin.functions";
 import { requirePermission, type AdminAuthContext } from "./admin-auth";
 import { ROLE_LABELS, requiresUnit, type StaffRole } from "./permissions";
 import { emailSchema } from "./validation";
@@ -90,13 +91,11 @@ export const listStaff = createServerFn({ method: "GET" })
     const [authUsers, roles, profiles, units] = await Promise.all([
       listAllAuthUsers(),
       supabaseAdmin.from("user_roles").select("user_id, role"),
-      supabaseAdmin
-        .from("staff_profiles")
-        .select("user_id, full_name, unit_id, must_change_password"),
+      readStaffProfiles(),
       supabaseAdmin.from("units").select("id, name"),
     ]);
     const unitNames = new Map((units.data ?? []).map((u) => [u.id, u.name]));
-    const profileByUser = new Map((profiles.data ?? []).map((p) => [p.user_id, p]));
+    const profileByUser = new Map(profiles.map((p) => [p.user_id, p]));
     const roleByUser = new Map((roles.data ?? []).map((r) => [r.user_id, r.role as StaffRole]));
 
     return authUsers

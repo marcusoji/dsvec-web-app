@@ -87,14 +87,22 @@ export const requireAdmin = createMiddleware({ type: "function" }).server(async 
   const email = typeof data.claims.email === "string" ? data.claims.email : null;
 
   // Department scope: resolved from the staff profile rather than the client so
-  // a caller can never widen their own access.
+  // a caller can never widen their own access. If the column is missing the
+  // migration has not run, so scope stays empty (least privilege) instead of
+  // failing the whole request.
   let unitId: string | null = null;
   if (role !== "admin") {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("staff_profiles")
       .select("unit_id")
       .eq("user_id", userId)
       .maybeSingle();
+    if (profileError) {
+      console.error(
+        "[auth] unit scope unresolved (has the staff-department migration run?)",
+        profileError.message,
+      );
+    }
     unitId = profile?.unit_id ?? null;
   }
 

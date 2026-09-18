@@ -43,6 +43,69 @@ function adminOf(context: unknown): AdminAuthContext["admin"] {
   return (context as { admin: AdminAuthContext["admin"] }).admin;
 }
 
+/** Staff profile fields the portal reads. `unit_id` is absent until the
+ * staff-department migration runs, so every read below tolerates its absence. */
+export type StaffProfileRow = {
+  user_id: string;
+  full_name: string | null;
+  must_change_password: boolean;
+  unit_id: string | null;
+};
+
+/**
+ * Loads one staff profile row.
+ *
+ * A database that predates the staff-department migration must not look like a
+ * missing profile: doing so previously reset every account into the forced
+ * password-change flow, and no amount of changing the password could clear it.
+ */
+export async function readStaffProfile(userId: string): Promise<StaffProfileRow | null> {
+  const { data, error } = await supabaseAdmin
+    .from("staff_profiles")
+    .select("user_id, full_name, must_change_password, unit_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!error) return data;
+
+  const legacy = await supabaseAdmin
+    .from("staff_profiles")
+    .select("user_id, full_name, must_change_password")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (legacy.error) {
+    console.error("[admin] staff profile lookup failed", legacy.error.message);
+    throw new Error("Could not read your staff profile. Please contact the portal administrator.");
+  }
+
+  console.error(
+    "[admin] staff profile read degraded (has the staff-department migration run?)",
+    error.message,
+  );
+  return legacy.data ? { ...legacy.data, unit_id: null } : null;
+}
+
+/** Bulk variant of {@link readStaffProfile} for the staff directory. */
+export async function readStaffProfiles(): Promise<StaffProfileRow[]> {
+  const { data, error } = await supabaseAdmin
+    .from("staff_profiles")
+    .select("user_id, full_name, must_change_password, unit_id");
+  if (!error) return data ?? [];
+
+  const legacy = await supabaseAdmin
+    .from("staff_profiles")
+    .select("user_id, full_name, must_change_password");
+  if (legacy.error) {
+    console.error("[admin] staff profile list failed", legacy.error.message);
+    return [];
+  }
+
+  console.error(
+    "[admin] staff profile list degraded (has the staff-department migration run?)",
+    error.message,
+  );
+  return (legacy.data ?? []).map((row) => ({ ...row, unit_id: null }));
+}
+
 /** Append an attributable entry to the audit trail. Never throws. */
 async function audit(
   admin: AdminAuthContext["admin"],
@@ -72,16 +135,17 @@ export const getUser = createServerFn({ method: "GET" })
   .middleware([requireAdmin])
   .handler(async ({ context }): Promise<AdminUser> => {
     const admin = adminOf(context);
-    const { data: profile } = await supabaseAdmin
-      .from("staff_profiles")
-      .select("must_change_password, unit_id")
-      .eq("user_id", admin.userId)
-      .maybeSingle();
+    const profile = await readStaffProfile(admin.userId);
 
+    // Only create a row when the read genuinely found nothing. A failed read
+    // already threw above, so it can never be mistaken for an absent profile.
     if (!profile) {
-      await supabaseAdmin
+      const { error: insertError } = await supabaseAdmin
         .from("staff_profiles")
         .insert({ user_id: admin.userId, must_change_password: true });
+      if (insertError) {
+        console.error("[admin] staff profile insert failed", insertError.message);
+      }
     }
 
     const unitId = admin.role === "admin" ? null : (profile?.unit_id ?? null);

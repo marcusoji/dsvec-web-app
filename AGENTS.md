@@ -34,4 +34,10 @@
   sheet via `.print-sheet`; "Print / Save as PDF" is just `window.print()`.
 - Regenerate the route tree with `npm run build` after adding route files, or
   `tsc` will complain about unknown route paths.
+- `unit_id` on `staff_profiles` only exists after
+  `20260918120000_staff_departments_and_scores.sql` has been applied to the
+  target database. Until then there is no department scoping and staff see
+  nothing. Profile reads tolerate the missing column so a stale database
+  degrades instead of impersonating a missing profile — treat every
+  "has the staff-department migration run?" log line as a deployment warning.
 
