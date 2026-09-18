@@ -5,7 +5,6 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { highestRole, permissionsFor, type Permission, type StaffRole } from "./permissions";
 
-
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
 }
@@ -35,6 +34,11 @@ export type AdminAuthContext = {
     email: string | null;
     role: StaffRole;
     permissions: readonly Permission[];
+    /**
+     * Trade unit this account belongs to. `null` means unscoped (an admin) or
+     * unassigned, in which case department-scoped functions show nothing.
+     */
+    unitId: string | null;
   };
 };
 
@@ -82,9 +86,21 @@ export const requireAdmin = createMiddleware({ type: "function" }).server(async 
 
   const email = typeof data.claims.email === "string" ? data.claims.email : null;
 
+  // Department scope: resolved from the staff profile rather than the client so
+  // a caller can never widen their own access.
+  let unitId: string | null = null;
+  if (role !== "admin") {
+    const { data: profile } = await supabase
+      .from("staff_profiles")
+      .select("unit_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    unitId = profile?.unit_id ?? null;
+  }
+
   return next({
     context: {
-      admin: { userId, email, role, permissions: permissionsFor(role) },
+      admin: { userId, email, role, permissions: permissionsFor(role), unitId },
     } satisfies AdminAuthContext,
   });
 });
@@ -104,4 +120,3 @@ export function requirePermission(permission: Permission) {
       return next();
     });
 }
-

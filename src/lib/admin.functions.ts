@@ -34,6 +34,9 @@ export type AdminUser = {
   role: AdminRole;
   permissions: readonly Permission[];
   mustChangePassword: boolean;
+  /** Trade unit for department-scoped staff; `null` for admins and unassigned. */
+  unitId: string | null;
+  unitName: string | null;
 };
 
 function adminOf(context: unknown): AdminAuthContext["admin"] {
@@ -71,7 +74,7 @@ export const getUser = createServerFn({ method: "GET" })
     const admin = adminOf(context);
     const { data: profile } = await supabaseAdmin
       .from("staff_profiles")
-      .select("must_change_password")
+      .select("must_change_password, unit_id")
       .eq("user_id", admin.userId)
       .maybeSingle();
 
@@ -81,12 +84,25 @@ export const getUser = createServerFn({ method: "GET" })
         .insert({ user_id: admin.userId, must_change_password: true });
     }
 
+    const unitId = admin.role === "admin" ? null : (profile?.unit_id ?? null);
+    let unitName: string | null = null;
+    if (unitId) {
+      const { data: unit } = await supabaseAdmin
+        .from("units")
+        .select("name")
+        .eq("id", unitId)
+        .maybeSingle();
+      unitName = unit?.name ?? null;
+    }
+
     return {
       userId: admin.userId,
       email: admin.email,
       role: admin.role,
       permissions: admin.permissions,
       mustChangePassword: profile ? profile.must_change_password : true,
+      unitId,
+      unitName,
     };
   });
 

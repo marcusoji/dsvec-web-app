@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import {
   Activity,
   CalendarDays,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { getAdminStats } from "@/lib/admin.functions";
+import { useAdminUser } from "@/lib/use-admin-user";
 
 const DESCRIPTION = "Statistics and activity overview for the DSTVEB Umutu Branch staff portal.";
 
@@ -62,7 +64,23 @@ function dateLabel(iso: string) {
 }
 
 function Dashboard() {
-  const { data: stats, isLoading } = useQuery(statsQuery);
+  const { user, hasPermission, isLoading: loadingUser } = useAdminUser();
+  const navigate = useNavigate();
+  const canSeeApplicants = hasPermission("applicants.read");
+
+  // Unit staff land straight on their students instead of a dashboard they
+  // have no permission to load.
+  useEffect(() => {
+    if (!loadingUser && user && !canSeeApplicants && hasPermission("students.read")) {
+      navigate({ to: "/admin/students" });
+    }
+  }, [loadingUser, user, canSeeApplicants, hasPermission, navigate]);
+
+  const { data: stats, isLoading } = useQuery({ ...statsQuery, enabled: canSeeApplicants });
+
+  if (!canSeeApplicants) {
+    return <p className="text-sm text-muted-foreground">Taking you to your students…</p>;
+  }
 
   if (isLoading || !stats) {
     return (
@@ -103,7 +121,8 @@ function Dashboard() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className="surface-card p-6">
           <h2 className="flex items-center gap-2 font-display text-base">
-            <CalendarDays className="size-4 text-primary" aria-hidden="true" /> Applications per year
+            <CalendarDays className="size-4 text-primary" aria-hidden="true" /> Applications per
+            year
           </h2>
           {stats.per_year.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">No applications yet.</p>

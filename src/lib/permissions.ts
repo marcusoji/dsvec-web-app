@@ -8,12 +8,27 @@
 export const ROLES = ["admin", "registrar", "reviewer", "staff"] as const;
 export type StaffRole = (typeof ROLES)[number];
 
+/**
+ * Roles that work inside a single trade unit. They must be given a department,
+ * and their access is limited to that unit's admitted students. Administrators
+ * are deliberately excluded: they span every department.
+ */
+export const UNIT_SCOPED_ROLES = ["staff"] as const;
+export type UnitScopedRole = (typeof UNIT_SCOPED_ROLES)[number];
+
+export function requiresUnit(role: string): role is UnitScopedRole {
+  return (UNIT_SCOPED_ROLES as readonly string[]).includes(role);
+}
+
 export const PERMISSIONS = [
   "applicants.read",
   "applicants.status.update",
   "applicants.export",
   "audit.read",
   "staff.manage",
+  "students.read",
+  "scores.read",
+  "scores.write",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -21,7 +36,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
   admin: PERMISSIONS,
   registrar: ["applicants.read", "applicants.status.update", "applicants.export", "audit.read"],
   reviewer: ["applicants.read", "audit.read"],
-  staff: ["applicants.read"],
+  staff: ["students.read", "scores.read", "scores.write"],
 };
 
 export const ROLE_LABELS: Record<StaffRole, string> = {

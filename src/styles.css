@@ -273,6 +273,21 @@
     display: none !important;
   }
 
+  /* Marked-up blocks that only make sense on paper (list/scoresheet headers) */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Keep table rows and headers from splitting across pages on registers */
+  thead {
+    display: table-header-group;
+  }
+
+  tr,
+  .print-avoid-break {
+    break-inside: avoid;
+  }
+
   .print-sheet {
     box-shadow: none !important;
     border: none !important;

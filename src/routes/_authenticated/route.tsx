@@ -55,13 +55,14 @@ function AuthenticatedLayout() {
   // Least-privilege navigation: only surface what the role may open.
   const navItems = (
     [
-      { to: "/admin", label: "Dashboard", permission: "applicants.read" },
-      { to: "/admin/applicants", label: "Applicants", permission: "applicants.read" },
-      
-      { to: "/admin/duplicates", label: "Duplicate audit", permission: "audit.read" },
-      { to: "/admin/audit", label: "Audit log", permission: "audit.read" },
-    ] satisfies Array<{ to: string; label: string; permission: Permission }>
-  ).filter((item) => hasPermission(item.permission));
+      { to: "/admin", label: "Dashboard", permissions: ["applicants.read"] },
+      { to: "/admin/applicants", label: "Applicants", permissions: ["applicants.read"] },
+      { to: "/admin/students", label: "Students", permissions: ["students.read"] },
+      { to: "/admin/staff", label: "Staff", permissions: ["staff.manage"] },
+      { to: "/admin/duplicates", label: "Duplicate audit", permissions: ["audit.read"] },
+      { to: "/admin/audit", label: "Audit log", permissions: ["audit.read"] },
+    ] satisfies Array<{ to: string; label: string; permissions: Permission[] }>
+  ).filter((item) => item.permissions.some((permission) => hasPermission(permission)));
 
   useEffect(() => {
     let active = true;
@@ -119,7 +120,7 @@ function AuthenticatedLayout() {
       >
         Skip to content
       </a>
-      <header className="sticky top-0 z-40 border-b border-sidebar-border bg-ink">
+      <header className="no-print sticky top-0 z-40 border-b border-sidebar-border bg-ink">
         <div className="flex h-16 items-center gap-4 px-4 md:px-8">
           <Link to="/admin" className="flex items-center gap-3" aria-label="Staff portal home">
             <img
@@ -182,7 +183,7 @@ function AuthenticatedLayout() {
       <main id="admin-main" className="mx-auto w-full max-w-[78rem] flex-1 px-4 py-8 md:px-8">
         <Outlet />
       </main>
-      <footer className="border-t border-border py-5">
+      <footer className="no-print border-t border-border py-5">
         <p className="px-4 text-center text-xs text-muted-foreground">
           Authorized personnel only. All access is logged.
         </p>
