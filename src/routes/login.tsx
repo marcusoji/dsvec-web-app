@@ -72,7 +72,7 @@ function Login() {
           ) : null}
 
           <label htmlFor="login-email" className="text-sm font-medium text-foreground">
-            Staff email
+            Staff Email
           </label>
           <input
             id="login-email"
