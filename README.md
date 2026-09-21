@@ -173,7 +173,7 @@ creates every table, policy, storage bucket and function, then seeds the trade u
 the initial staff admin account. After seeding, turn **off** "Allow new users to sign up"
 in Authentication settings — staff accounts are created manually.
 
-The seeded admin signs in with `dsvecumutu@gmail.com` / `Admin@umutudsvec27` and can
+The seeded admin signs in with `dsvecumutu@gmail.com` and can
 change it at `/admin/account` at any time.
 
 ## Routes
