@@ -173,7 +173,8 @@ creates every table, policy, storage bucket and function, then seeds the trade u
 the initial staff admin account. After seeding, turn **off** "Allow new users to sign up"
 in Authentication settings — staff accounts are created manually.
 
-The seeded admin is prompted to change its password at `/admin/account` on first sign-in.
+The seeded admin signs in with `dsvecumutu@gmail.com` / `Admin@umutudsvec27` and can
+change it at `/admin/account` at any time.
 
 ## Routes
 
@@ -200,11 +201,21 @@ user holds more than one, the highest-privilege role wins.
 | `admin` | All permissions |
 | `registrar` | Read applicants, update status, export CSV, read audit |
 | `reviewer` | Read applicants, read audit |
-| `staff` | Read applicants |
+| `staff` | Read students and scores in their own trade unit |
 
 Permissions: `applicants.read`, `applicants.status.update`, `applicants.export`,
-`audit.read`, `staff.manage`. Portal navigation only surfaces pages the signed-in role can
-open.
+`audit.read`, `staff.manage`, `students.read`, `scores.read`, `scores.write`. Portal
+navigation only surfaces pages the signed-in role can open.
+
+Department staff (`staff`) never see the Applicants, Duplicate audit or Audit log pages.
+They get a read-only roster of the admitted students in their own trade unit and the two
+official printouts issued from it:
+
+- **Contact list** — name, application number and phone number.
+- **Scoresheet** — name, application number and blank C.A. / examination boxes for the
+  assessor to fill in by hand.
+
+Scores are also entered in the portal (test /40, exam /60) at `/admin/students/:id/scoresheet`.
 
 ## Application lifecycle
 

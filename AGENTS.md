@@ -32,6 +32,20 @@
   print set `data-hide-badge` on `<html>` so the editor badge stays out of PDFs.
 - `src/routes/_authenticated/admin/students/$id/scoresheet.tsx` renders an A4
   sheet via `.print-sheet`; "Print / Save as PDF" is just `window.print()`.
+- The staff roster issues two official printouts, both built in
+  `src/components/site/student-print-sheets.tsx` from the `listStudents` rows:
+  a contact list (name, application number, phone) tagged `data-sheet="contact"`
+  and a scoresheet (name, application number, blank C.A./exam boxes) tagged
+  `data-sheet="scores"`. `printSheet()` in `src/lib/print-sheets.ts` sets
+  `<html data-print="…">`, which the print CSS uses to hide the other sheet;
+  the wrapper is `print-only hidden` because a bare `print-only` rule wins over
+  Tailwind's `hidden`. Keep both sheets in the DOM so `window.print()` is
+  synchronous.
+- The seeded administrator password is set in two places that must agree:
+  `supabase/export/full-setup.sql` (fresh databases) and
+  `20260921100000_admin_credential_and_staff_blank_sheets.sql` (existing ones).
+  `crypt`/`gen_salt` need the `extensions` schema prefix on Supabase, with a
+  `public` fallback for stock Postgres.
 - Regenerate the route tree with `npm run build` after adding route files, or
   `tsc` will complain about unknown route paths.
 - `unit_id` on `staff_profiles` only exists after

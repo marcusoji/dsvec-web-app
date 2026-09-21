@@ -1,14 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { CheckCircle2, Loader2, Printer, Search, ShieldCheck, Users } from "lucide-react";
+import {
+  ClipboardList,
+  FileText,
+  Loader2,
+  Printer,
+  Search,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 
+import { StudentContactSheet, StudentScoreSheet } from "@/components/site/student-print-sheets";
+import { printSheet } from "@/lib/print-sheets";
 import { listStudents, type StudentRow } from "@/lib/school.functions";
-import { SITE } from "@/lib/site";
 import { useAdminUser } from "@/lib/use-admin-user";
 
 const DESCRIPTION =
-  "Admitted students for a trade unit, with printable class lists and score sheets.";
+  "Admitted students for a trade unit, with a printable contact list and a blank scoresheet.";
 
 export const Route = createFileRoute("/_authenticated/admin/students/")({
   head: () => ({
@@ -20,19 +29,6 @@ export const Route = createFileRoute("/_authenticated/admin/students/")({
   }),
   component: StudentsPage,
 });
-
-function scoreLabel(value: number | null) {
-  return value === null ? "—" : String(value);
-}
-
-function printedOn() {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "Africa/Lagos",
-  }).format(new Date());
-}
 
 function StudentsPage() {
   const { user, hasPermission, isLoading: loadingUser } = useAdminUser();
@@ -102,17 +98,27 @@ function StudentsPage() {
             <Users className="size-5 text-primary" aria-hidden="true" /> Students
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Admitted applicants in {heading}. Only admitted students appear here.
+            Admitted applicants in {heading}. This register is read-only.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          disabled={rows.length === 0}
-          className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-60"
-        >
-          <Printer className="size-4" aria-hidden="true" /> Print student list
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => printSheet("contact")}
+            disabled={rows.length === 0}
+            className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-60"
+          >
+            <Printer className="size-4" aria-hidden="true" /> Print contact list
+          </button>
+          <button
+            type="button"
+            onClick={() => printSheet("scores")}
+            disabled={rows.length === 0}
+            className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-60"
+          >
+            <ClipboardList className="size-4" aria-hidden="true" /> Print scoresheet
+          </button>
+        </div>
       </div>
 
       <div className="no-print surface-card mt-6 p-4">
@@ -163,7 +169,7 @@ function StudentsPage() {
         </div>
       </div>
 
-      <div className="surface-card mt-4 overflow-hidden">
+      <div className="no-print surface-card mt-4 overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" aria-hidden="true" /> Loading students…
@@ -177,67 +183,48 @@ function StudentsPage() {
             </p>
           </div>
         ) : (
-          <>
-            <div className="print-only hidden border-b border-border px-4 py-3">
-              <p className="font-display text-base font-bold">Student list — {heading}</p>
-              <p className="text-xs text-muted-foreground">
-                {SITE.campusName} · printed {printedOn()}
-              </p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[52rem] text-left text-sm">
-                <thead className="border-b border-border bg-secondary/60">
-                  <tr className="text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="px-4 py-3 font-medium">S/N</th>
-                    <th className="px-4 py-3 font-medium">Application #</th>
-                    <th className="px-4 py-3 font-medium">Name</th>
-                    <th className="px-4 py-3 font-medium">Phone</th>
-                    <th className="px-4 py-3 font-medium">Unit</th>
-                    <th className="px-4 py-3 font-medium">Stream</th>
-                    <th className="px-4 py-3 font-medium">Test (/40)</th>
-                    <th className="px-4 py-3 font-medium">Exam (/60)</th>
-                    <th className="px-4 py-3 font-medium">Total</th>
-                    <th className="no-print px-4 py-3 font-medium">
-                      <span className="sr-only">Actions</span>
-                    </th>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[36rem] text-left text-sm">
+              <thead className="border-b border-border bg-secondary/60">
+                <tr className="text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3 font-medium">S/N</th>
+                  <th className="px-4 py-3 font-medium">Name</th>
+                  <th className="px-4 py-3 font-medium">Application #</th>
+                  <th className="px-4 py-3 font-medium">Phone number</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {rows.map((r: StudentRow, index) => (
+                  <tr key={r.id}>
+                    <td className="px-4 py-3 text-muted-foreground">{index + 1}</td>
+                    <td className="px-4 py-3 font-medium">{r.full_name}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{r.application_number}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{r.phone || "—"}</td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {rows.map((r: StudentRow, index) => (
-                    <tr key={r.id}>
-                      <td className="px-4 py-3 text-muted-foreground">{index + 1}</td>
-                      <td className="px-4 py-3 font-mono text-xs">{r.application_number}</td>
-                      <td className="px-4 py-3 font-medium">{r.full_name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{r.phone}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{r.unit_name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {r.stream === "2" ? "Stream 2" : "Stream 1"}
-                      </td>
-                      <td className="px-4 py-3">{scoreLabel(r.test_score)}</td>
-                      <td className="px-4 py-3">{scoreLabel(r.exam_score)}</td>
-                      <td className="px-4 py-3 font-medium">{scoreLabel(r.total_score)}</td>
-                      <td className="no-print px-4 py-3 text-right">
-                        <Link
-                          to="/admin/students/$id/scoresheet"
-                          params={{ id: r.id }}
-                          className="inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-4"
-                        >
-                          <CheckCircle2 className="size-3.5" aria-hidden="true" /> Scoresheet
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      <p className="no-print mt-3 text-xs text-muted-foreground">
-        Showing {rows.length} admitted student{rows.length === 1 ? "" : "s"}. Applicants appear here
-        only after their status is set to <strong className="font-semibold">admitted</strong>.
+      <p className="no-print mt-3 flex items-start gap-2 text-xs text-muted-foreground">
+        <FileText className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+        Showing {rows.length} admitted student{rows.length === 1 ? "" : "s"}. The contact list
+        carries the name, application number and phone number; the scoresheet carries the name,
+        application number and blank C.A. (/40) and examination (/60) boxes for handwritten marks.
+        Applicants appear here only after their status is set to{" "}
+        <strong className="font-semibold">admitted</strong>.
       </p>
+
+      {/* Printable lists. They stay in the DOM so printing is synchronous, but
+          are hidden on screen and off the page unless targeted by the buttons. */}
+      {rows.length > 0 ? (
+        <div className="print-only hidden mt-6 space-y-6">
+          <StudentContactSheet rows={rows} heading={heading} />
+          <StudentScoreSheet rows={rows} heading={heading} />
+        </div>
+      ) : null}
     </section>
   );
 }

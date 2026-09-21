@@ -7,7 +7,7 @@ Lovable keeps working as-is. Follow these steps only when you are ready to move.
 1. Create a new Supabase project.
 2. Open the SQL editor, paste the whole of `supabase/export/full-setup.sql`, run it once.
    It creates every table, permission, storage bucket, the 15 trade units and the staff admin
-   (`dsvecumutu@gmail.com` / `admin@umutudsvec2026`).
+   (`dsvecumutu@gmail.com` / `Admin@umutudsvec27`).
 3. In Authentication settings, turn **off** "Allow new users to sign up" (staff accounts are created manually).
 4. Copy from Project Settings → API: the project URL, the publishable/anon key and the service role key.
 

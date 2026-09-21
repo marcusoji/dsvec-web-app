@@ -255,6 +255,10 @@ function ScoresheetPage() {
         </div>
 
         <div className="px-6 py-5">
+          <p className="mb-2 text-xs text-muted-foreground">
+            Write the marks in the blank boxes — C.A. out of {TEST_MAX}, examination out of{" "}
+            {EXAM_MAX}.
+          </p>
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
@@ -268,23 +272,37 @@ function ScoresheetPage() {
               <tr>
                 <td className="py-3 pr-4 font-medium">Continuous assessment test</td>
                 <td className="py-3 pr-4">{TEST_MAX}</td>
-                <td className="py-3 pr-4 font-semibold">{testValue === null ? "—" : testValue}</td>
+                <td className="py-3 pr-4">
+                  <span className="score-box block w-24" aria-hidden="true" />
+                </td>
                 <td className="py-3">40%</td>
               </tr>
               <tr>
                 <td className="py-3 pr-4 font-medium">Examination</td>
                 <td className="py-3 pr-4">{EXAM_MAX}</td>
-                <td className="py-3 pr-4 font-semibold">{examValue === null ? "—" : examValue}</td>
+                <td className="py-3 pr-4">
+                  <span className="score-box block w-24" aria-hidden="true" />
+                </td>
                 <td className="py-3">60%</td>
               </tr>
               <tr>
                 <td className="py-3 pr-4 font-bold">Total</td>
                 <td className="py-3 pr-4 font-bold">100</td>
-                <td className="py-3 pr-4 text-base font-bold">{total === null ? "—" : total}</td>
-                <td className="py-3 font-semibold">{gradeFor(total)}</td>
+                <td className="py-3 pr-4">
+                  <span className="score-box block w-24" aria-hidden="true" />
+                </td>
+                <td className="py-3">
+                  <span className="score-box block w-28" aria-hidden="true" />
+                </td>
               </tr>
             </tbody>
           </table>
+          {total !== null ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Recorded in the portal: C.A. {testValue ?? "—"} / {TEST_MAX}, examination{" "}
+              {examValue ?? "—"} / {EXAM_MAX}, total {total} — {gradeFor(total)}.
+            </p>
+          ) : null}
         </div>
 
         <div className="border-t border-border px-6 py-4">

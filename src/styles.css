@@ -297,6 +297,24 @@
     max-width: none !important;
   }
 
+  /* Each official list starts on its own page when more than one is printed. */
+  .print-sheet[data-sheet] + .print-sheet[data-sheet] {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  /* "Print this list" buttons select a single sheet via <html data-print="…">. */
+  html[data-print="contact"] .print-sheet:not([data-sheet="contact"]),
+  html[data-print="scores"] .print-sheet:not([data-sheet="scores"]) {
+    display: none !important;
+  }
+
+  /* Blank writing lines on the handwritten score sheet. */
+  .score-box {
+    border-bottom: 1px solid #000 !important;
+    min-height: 1.4rem;
+  }
+
   .print-avoid-break {
     break-inside: avoid;
   }

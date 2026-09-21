@@ -307,7 +307,7 @@ INSERT INTO public.units (slug, name, summary, description, skills, careers, req
   ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, summary = EXCLUDED.summary, description = EXCLUDED.description, skills = EXCLUDED.skills, careers = EXCLUDED.careers, requirements = EXCLUDED.requirements, duration = EXCLUDED.duration, image_url = EXCLUDED.image_url, icon = EXCLUDED.icon, is_active = EXCLUDED.is_active, sort_order = EXCLUDED.sort_order, coordinator_name = EXCLUDED.coordinator_name, contact_phone = EXCLUDED.contact_phone, contact_email = EXCLUDED.contact_email, office_location = EXCLUDED.office_location;
 
 -- ---------- seeded staff admin ----------
--- Email: dsvecumutu@gmail.com   Password: admin@umutudsvec2026
+-- Email: dsvecumutu@gmail.com   Password: Admin@umutudsvec27
 -- Change the password after first sign-in via /admin/account.
 DO $$
 DECLARE uid uuid;
@@ -319,7 +319,7 @@ BEGIN
       raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token,
       email_change_token_new, email_change)
     VALUES ('00000000-0000-0000-0000-000000000000', uid, 'authenticated', 'authenticated',
-      'dsvecumutu@gmail.com', crypt('admin@umutudsvec2026', gen_salt('bf')), now(),
+      'dsvecumutu@gmail.com', crypt('Admin@umutudsvec27', gen_salt('bf')), now(),
       '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '');
     INSERT INTO auth.identities (id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
     VALUES (gen_random_uuid(), uid, uid::text, 'email',
