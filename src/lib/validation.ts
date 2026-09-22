@@ -119,7 +119,11 @@ export const guardianEducationSchema = z.object({
     .regex(/^[0-9]{4}(-[0-9]{4})?$/, "Enter a year, e.g. 2024 or 2023-2024"),
 });
 
+/** Upper bound on the file a user may pick. The stored copy is far smaller. */
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+
+/** Target size of the compressed passport photograph held in storage. */
+export const TARGET_PHOTO_BYTES = 15 * 1024;
 
 export const photoSchema = z.object({
   photo_data_url: z

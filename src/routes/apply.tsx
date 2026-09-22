@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { PageHero, SiteShell } from "@/components/site/site-shell";
+import { compressPassportPhoto } from "@/lib/image-compression";
 import { SITE } from "@/lib/site";
 import { listUnits } from "@/lib/units.functions";
 import {
@@ -213,43 +214,24 @@ function ApplyPage() {
       setErrors((e) => ({ ...e, photo_data_url: "Upload a JPG, PNG or WebP photograph" }));
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const MAX_DIM = 640;
-        const RATIO = 3 / 4; // passport aspect (width/height)
-        const w = img.naturalWidth;
-        const h = img.naturalHeight;
-        if (!w || !h) return;
-        let cropW = w;
-        let cropH = w / RATIO;
-        if (cropH > h) {
-          cropH = h;
-          cropW = h * RATIO;
-        }
-        const scale = Math.min(1, MAX_DIM / Math.max(cropW, cropH));
-        const outW = Math.max(1, Math.round(cropW * scale));
-        const outH = Math.max(1, Math.round(cropH * scale));
-        const canvas = document.createElement("canvas");
-        canvas.width = outW;
-        canvas.height = outH;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          set("photo_data_url", String(reader.result));
-          return;
-        }
-        // Passport photos sit on a white background; fill first so PNG transparency becomes white.
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0, 0, outW, outH);
-        ctx.drawImage(img, (w - cropW) / 2, (h - cropH) / 2, cropW, cropH, 0, 0, outW, outH);
-        set("photo_data_url", canvas.toDataURL("image/jpeg", 0.8));
-      };
-      img.onerror = () =>
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      // Decoding from a blob URL keeps the full-resolution source out of the DOM
+      // and the form state; only the compressed result is ever stored.
+      const compressed = compressPassportPhoto(img, img.naturalWidth, img.naturalHeight);
+      URL.revokeObjectURL(url);
+      if (!compressed) {
         setErrors((e) => ({ ...e, photo_data_url: "Could not read that image." }));
-      img.src = String(reader.result);
+        return;
+      }
+      set("photo_data_url", compressed);
     };
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      setErrors((e) => ({ ...e, photo_data_url: "Could not read that image." }));
+    };
+    img.src = url;
   }
 
   async function onSubmit() {
@@ -683,7 +665,8 @@ function ApplyPage() {
               <div>
                 <h2 className="font-display text-lg">Passport photograph</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Plain background, face clearly visible. JPG, PNG or WebP, maximum 2MB.
+                  Plain background, face clearly visible. JPG, PNG or WebP, up to 2MB. We shrink the
+                  photograph before saving it.
                 </p>
                 <div className="mt-5 flex flex-wrap items-start gap-6">
                   <div className="grid h-40 w-32 place-items-center overflow-hidden rounded-md border border-dashed border-border bg-secondary">
