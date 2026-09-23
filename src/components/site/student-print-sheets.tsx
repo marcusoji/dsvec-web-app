@@ -3,7 +3,7 @@ import { printedOn, type SheetKind } from "@/lib/print-sheets";
 import { SITE } from "@/lib/site";
 
 /**
- * The two official printouts the branch issues to a trade unit:
+ * The two(2) official printouts the branch issues to a trade unit:
  *
  *  - `contact` — a name / application number / phone number list;
  *  - `scores`  — a scoresheet with name, application number and blank C.A. and
