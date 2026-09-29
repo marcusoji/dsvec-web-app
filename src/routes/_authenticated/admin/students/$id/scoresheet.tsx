@@ -9,6 +9,7 @@ import {
   TEST_MAX,
   type StudentDetail,
 } from "@/lib/school.functions";
+import { PrintLogo } from "@/components/site/print-logo";
 import { SITE } from "@/lib/site";
 import { useAdminUser } from "@/lib/use-admin-user";
 
@@ -218,9 +219,7 @@ function ScoresheetPage() {
       <article className="print-sheet surface-card mt-6 overflow-hidden bg-paper">
         <header className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
           <div className="flex items-center gap-4">
-            <div className="grid size-14 shrink-0 place-items-center rounded-md bg-ink text-ink-foreground">
-              <span className="font-display text-sm font-black tracking-tight">DSTVEB</span>
-            </div>
+            <PrintLogo />
             <div>
               <h2 className="font-display text-lg font-bold leading-tight">
                 Assessment Scoresheet

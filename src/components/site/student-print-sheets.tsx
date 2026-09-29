@@ -1,4 +1,5 @@
 import type { StudentRow } from "@/lib/school.functions";
+import { PrintLogo } from "@/components/site/print-logo";
 import { printedOn, type SheetKind } from "@/lib/print-sheets";
 import { SITE } from "@/lib/site";
 
@@ -17,9 +18,7 @@ function header(kind: SheetKind, heading: string) {
   return (
     <header className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
       <div className="flex items-center gap-4">
-        <div className="grid size-14 shrink-0 place-items-center rounded-md bg-ink text-ink-foreground">
-          <span className="font-display text-sm font-black tracking-tight">DSTVEB</span>
-        </div>
+        <PrintLogo />
         <div>
           <h2 className="font-display text-lg font-bold leading-tight">{heading}</h2>
           <p className="text-sm font-medium">{SITE.campusName}</p>
