@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790879592777,
+      "tag": "0000_staff_departments_and_scores",
+      "breakpoints": true
+    }
+  ]
+}

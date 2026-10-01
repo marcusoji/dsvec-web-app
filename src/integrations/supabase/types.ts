@@ -102,6 +102,44 @@ export type Database = {
           },
         ]
       }
+      applicant_scores: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          exam_score: number | null
+          recorded_by: string | null
+          recorded_by_email: string | null
+          test_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          exam_score?: number | null
+          recorded_by?: string | null
+          recorded_by_email?: string | null
+          test_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          exam_score?: number | null
+          recorded_by?: string | null
+          recorded_by_email?: string | null
+          test_score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applicant_scores_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: true
+            referencedRelation: "applicants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       applicants: {
         Row: {
           access_token: string
@@ -203,6 +241,7 @@ export type Database = {
           full_name: string | null
           must_change_password: boolean
           password_changed_at: string | null
+          unit_id: string | null
           updated_at: string
           user_id: string
         }
@@ -211,6 +250,7 @@ export type Database = {
           full_name?: string | null
           must_change_password?: boolean
           password_changed_at?: string | null
+          unit_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -219,10 +259,19 @@ export type Database = {
           full_name?: string | null
           must_change_password?: boolean
           password_changed_at?: string | null
+          unit_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "staff_profiles_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       units: {
         Row: {
@@ -316,6 +365,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_applicant: {
+        Args: { _applicant_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -324,6 +377,7 @@ export type Database = {
         Returns: boolean
       }
       next_application_number: { Args: never; Returns: string }
+      staff_unit_id: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "staff" | "reviewer" | "registrar"
