@@ -7,6 +7,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, LogOut, UserCog } from "lucide-react";
 import logoDstveb from "@/assets/logo-dstveb.jpg";
@@ -41,6 +42,7 @@ function AuthenticatedLayout() {
   const [checking, setChecking] = useState(true);
   const [authed, setAuthed] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, hasPermission } = useAdminUser();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -83,8 +85,14 @@ function AuthenticatedLayout() {
         if (active) setChecking(false);
       });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
+      // A different account signed in (or out): drop every cached role,
+      // permission and data set so the portal never shows the previous user's.
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        queryClient.removeQueries({ queryKey: ["admin-user"] });
+        if (event !== "USER_UPDATED") queryClient.clear();
+      }
       if (!session) {
         router.navigate({ to: "/login" });
       } else {
@@ -95,11 +103,12 @@ function AuthenticatedLayout() {
       active = false;
       sub.subscription.unsubscribe();
     };
-  }, [router]);
+  }, [router, queryClient]);
 
   async function logout() {
     await supabase.auth.signOut();
-    router.navigate({ to: "/login" });
+    queryClient.clear();
+    router.navigate({ to: "/login", replace: true });
   }
 
   if (checking && !authed) {

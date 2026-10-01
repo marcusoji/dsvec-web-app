@@ -24,6 +24,7 @@ export const PERMISSIONS = [
   "applicants.read",
   "applicants.status.update",
   "applicants.export",
+  "applicants.delete",
   "audit.read",
   "staff.manage",
   "students.read",

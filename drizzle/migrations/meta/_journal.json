@@ -8,6 +8,13 @@
       "when": 1790879592777,
       "tag": "0000_staff_departments_and_scores",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790892866532,
+      "tag": "0001_password_reset_requests",
+      "breakpoints": true
     }
   ]
 }

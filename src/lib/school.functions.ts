@@ -511,3 +511,58 @@ export const saveScores = createServerFn({ method: "POST" })
 
     return { ok: true as const, saved: data.entries.length };
   });
+
+// ---------------------------------------------------------------------------
+// Staff removal and admin-assisted password resets
+// ---------------------------------------------------------------------------
+
+export const deleteStaff = createServerFn({ method: "POST" })
+  .middleware([requirePermission("staff.manage")])
+  .validator(z.object({ user_id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const caller = adminOf(context);
+    if (data.user_id === caller.userId) {
+      throw new Error("You cannot delete your own account");
+    }
+    const { data: target } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
+    const email = target?.user?.email ?? data.user_id;
+
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
+    await supabaseAdmin.from("staff_profiles").delete().eq("user_id", data.user_id);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
+    if (error) throw new Error("Could not delete this account");
+
+    await audit(caller, "staff_deleted", `Deleted staff account ${email}`);
+    return { ok: true as const };
+  });
+
+export type ResetRequest = { id: string; email: string; note: string | null; createdAt: string };
+
+export const listResetRequests = createServerFn({ method: "GET" })
+  .middleware([requirePermission("staff.manage")])
+  .handler(async (): Promise<ResetRequest[]> => {
+    const { data } = await supabaseAdmin
+      .from("password_reset_requests")
+      .select("id, email, note, created_at")
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    return (data ?? []).map((r) => ({
+      id: r.id,
+      email: r.email,
+      note: r.note,
+      createdAt: r.created_at,
+    }));
+  });
+
+export const resolveResetRequest = createServerFn({ method: "POST" })
+  .middleware([requirePermission("staff.manage")])
+  .validator(z.object({ id: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const caller = adminOf(context);
+    await supabaseAdmin
+      .from("password_reset_requests")
+      .update({ status: "resolved", resolved_at: new Date().toISOString(), resolved_by: caller.userId })
+      .eq("id", data.id);
+    return { ok: true as const };
+  });
