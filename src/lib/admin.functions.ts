@@ -747,3 +747,76 @@ export const listAuditLog = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not load the audit log");
     return (rows ?? []) as AuditRow[];
   });
+
+// ---------------------------------------------------------------------------
+// Stale applications: not admitted 30+ days after submission
+// ---------------------------------------------------------------------------
+
+export const STALE_DAYS = 30;
+
+export type StaleApplicant = {
+  id: string;
+  application_number: string;
+  full_name: string;
+  status: ApplicationStatus;
+  created_at: string;
+};
+
+export const listStaleApplicants = createServerFn({ method: "GET" })
+  .middleware([requirePermission("applicants.delete")])
+  .handler(async (): Promise<StaleApplicant[]> => {
+    const cutoff = new Date(Date.now() - STALE_DAYS * 86_400_000).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from("applicants")
+      .select("id, application_number, first_name, middle_name, last_name, status, created_at")
+      .neq("status", "admitted")
+      .lt("created_at", cutoff)
+      .order("created_at", { ascending: true })
+      .limit(500);
+    if (error) throw new Error("Could not load old applications");
+    return (data ?? []).map((a) => ({
+      id: a.id,
+      application_number: a.application_number,
+      full_name: [a.first_name, a.middle_name, a.last_name].filter(Boolean).join(" "),
+      status: a.status as ApplicationStatus,
+      created_at: a.created_at,
+    }));
+  });
+
+export const deleteApplicants = createServerFn({ method: "POST" })
+  .middleware([requirePermission("applicants.delete")])
+  .validator(z.object({ ids: z.array(z.string().uuid()).min(1).max(500) }))
+  .handler(async ({ data, context }) => {
+    const admin = adminOf(context);
+    const { data: rows } = await supabaseAdmin
+      .from("applicants")
+      .select("id, application_number, status")
+      .in("id", data.ids)
+      .neq("status", "admitted");
+    const ids = (rows ?? []).map((r) => r.id);
+    if (!ids.length) return { deleted: 0 };
+
+    const { data: docs } = await supabaseAdmin
+      .from("applicant_documents")
+      .select("bucket, storage_path")
+      .in("applicant_id", ids);
+    const byBucket = new Map<string, string[]>();
+    for (const d of docs ?? []) {
+      byBucket.set(d.bucket, [...(byBucket.get(d.bucket) ?? []), d.storage_path]);
+    }
+    for (const [bucket, paths] of byBucket) {
+      await supabaseAdmin.storage.from(bucket).remove(paths);
+    }
+    await supabaseAdmin.from("applicant_documents").delete().in("applicant_id", ids);
+    await supabaseAdmin.from("applicant_scores").delete().in("applicant_id", ids);
+    await supabaseAdmin.from("activity_log").update({ applicant_id: null }).in("applicant_id", ids);
+    const { error } = await supabaseAdmin.from("applicants").delete().in("id", ids);
+    if (error) throw new Error("Could not delete the selected applications");
+
+    for (const r of rows ?? []) {
+      await audit(admin, "applicant_deleted", `Deleted ${r.status} application`, {
+        application_number: r.application_number,
+      });
+    }
+    return { deleted: ids.length };
+  });
