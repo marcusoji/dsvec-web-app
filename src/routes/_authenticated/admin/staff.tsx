@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { KeyRound, Loader2, PlusCircle, ShieldCheck, UserPlus } from "lucide-react";
+import { KeyRound, Loader2, PlusCircle, ShieldCheck, Trash2, UserPlus } from "lucide-react";
 
 import {
   createStaff,
+  deleteStaff,
+  listResetRequests,
   listStaff,
+  resolveResetRequest,
   resetStaffPassword,
   updateStaff,
   type StaffMember,
@@ -59,12 +62,17 @@ function stamp(iso: string) {
 }
 
 function StaffPage() {
-  const { hasPermission, isLoading: loadingUser } = useAdminUser();
+  const { user, hasPermission, isLoading: loadingUser } = useAdminUser();
   const allowed = hasPermission("staff.manage");
   const queryClient = useQueryClient();
 
   const { data: staff, isLoading } = useQuery({ ...staffQuery, enabled: allowed });
   const { data: units } = useQuery({ ...unitsQuery, enabled: allowed });
+  const { data: resetRequests } = useQuery({
+    queryKey: ["reset-requests"],
+    queryFn: () => listResetRequests(),
+    enabled: allowed,
+  });
 
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -138,6 +146,39 @@ function StaffPage() {
       <p className="mt-1 text-sm text-muted-foreground">
         Create logins for unit staff and control which department they can see.
       </p>
+
+      {(resetRequests ?? []).length > 0 ? (
+        <div className="surface-card mt-6 border-primary/50 p-5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <KeyRound className="size-4" aria-hidden="true" /> Password reset requests
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Find the account below, click Password to set a temporary one, share it with the
+            person, then mark the request done.
+          </p>
+          <ul className="mt-3 divide-y divide-border">
+            {(resetRequests ?? []).map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                <span>
+                  <strong>{r.email}</strong>
+                  {r.note ? <span className="text-muted-foreground"> — {r.note}</span> : null}
+                  <span className="ml-2 text-xs text-muted-foreground">{stamp(r.createdAt)}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await resolveResetRequest({ data: { id: r.id } });
+                    await queryClient.invalidateQueries({ queryKey: ["reset-requests"] });
+                  }}
+                  className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs font-semibold"
+                >
+                  Mark done
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <form onSubmit={onCreate} className="surface-card mt-6 p-5">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
@@ -269,6 +310,7 @@ function StaffPage() {
                   key={member.userId}
                   member={member}
                   units={units ?? []}
+                  isSelf={member.userId === user?.userId}
                   onChanged={() => queryClient.invalidateQueries({ queryKey: staffQuery.queryKey })}
                 />
               ))
@@ -283,10 +325,12 @@ function StaffPage() {
 function StaffRow({
   member,
   units,
+  isSelf,
   onChanged,
 }: {
   member: StaffMember;
   units: Array<{ id: string; name: string }>;
+  isSelf: boolean;
   onChanged: () => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -317,6 +361,19 @@ function StaffRow({
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not update this account.");
     } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    if (!window.confirm(`Delete the account for ${member.email ?? "this staff member"}? They will no longer be able to sign in. This cannot be undone.`)) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteStaff({ data: { user_id: member.userId } });
+      onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete this account.");
       setBusy(false);
     }
   }
@@ -436,6 +493,16 @@ function StaffRow({
               >
                 <KeyRound className="size-3.5" aria-hidden="true" /> Password
               </button>
+              {!isSelf ? (
+                <button
+                  type="button"
+                  onClick={remove}
+                  disabled={busy}
+                  className="inline-flex h-9 items-center gap-1 rounded-md border border-destructive/50 px-3 text-sm font-semibold text-destructive disabled:opacity-60"
+                >
+                  <Trash2 className="size-3.5" aria-hidden="true" /> Delete
+                </button>
+              ) : null}
             </>
           )}
         </div>
