@@ -7,7 +7,7 @@ import {
   STALE_DAYS,
   type ArchiveRow,
 } from "@/lib/admin.functions";
-import { downloadArchiveExcel } from "@/lib/archive-excel";
+import { downloadArchiveBundle } from "@/lib/archive-excel";
 import { useAdminUser } from "@/lib/use-admin-user";
 
 export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) {
@@ -42,11 +42,13 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
     setBusy("download");
     try {
       const chosen = rows.filter((r) => selected.has(r.id));
-      await downloadArchiveExcel(chosen, "dstveb-old-applications");
+      const { photos } = await downloadArchiveBundle(chosen, "dstveb-old-applications");
       setDownloaded(true);
-      setMessage("Excel downloaded. The delete button is now unlocked.");
+      setMessage(
+        `Downloaded records.xlsx${photos ? ` and ${photos} photo(s)` : ""}. The delete button is now unlocked.`,
+      );
     } catch {
-      setMessage("Could not create the Excel file. Please try again.");
+      setMessage("Could not create the download. Please try again.");
     } finally {
       setBusy("");
     }
@@ -139,7 +141,7 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
               className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-50"
             >
               <Download className="size-4" aria-hidden="true" />
-              {busy === "download" ? "Preparing…" : "1. Download Excel"}
+              {busy === "download" ? "Preparing…" : "1. Download Excel + photos"}
             </button>
             <button
               type="button"

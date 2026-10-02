@@ -70,9 +70,13 @@
   `listStaleArchiveRows`, `deleteApplicants`, `deleteArchivedRecords`) require
   the `applicants.manage` permission, held by `admin` only. Unit-scoped `staff`
   cannot purge records.
-- Both deletion flows download an Excel workbook first and disable the delete
-  button until it succeeds. The schema lives in `src/lib/archive-excel.ts`;
-  `exceljs` is imported on demand so it stays out of the initial bundle.
+- Both deletion flows download a `.zip` first and disable the delete button
+  until it succeeds. The zip holds `records.xlsx` plus a `photos/` folder; the
+  sheet's "Photo File" column points at each image. The schema lives in
+  `src/lib/archive-excel.ts`; `exceljs` and `jszip` are imported on demand so
+  they stay out of the initial bundle. `listArchivePhotoUrls` signs the private
+  `applicant-photos` objects in chunks (150 at a time) and a failed image is
+  skipped rather than aborting the export.
 - `storage_usage()` reports `pg_database_size()` and the summed
   `storage.objects` metadata size. `getStorageUsage` degrades to
   `unavailable: true` when the function is missing, so a stale database shows a

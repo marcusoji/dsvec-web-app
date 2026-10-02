@@ -8,7 +8,7 @@ import {
   type ArchiveRow,
   type StorageUsage,
 } from "@/lib/admin.functions";
-import { downloadArchiveExcel } from "@/lib/archive-excel";
+import { downloadArchiveBundle } from "@/lib/archive-excel";
 import { useAdminUser } from "@/lib/use-admin-user";
 
 const mb = (b: number) => `${(b / 1024 / 1024).toFixed(1)} MB`;
@@ -55,11 +55,13 @@ export function StorageCleanupPanel() {
     if (!rows.length) return;
     setBusy("download");
     try {
-      await downloadArchiveExcel(rows, "dstveb-past-records");
+      const { photos } = await downloadArchiveBundle(rows, "dstveb-past-records");
       setDownloaded(true);
-      setMessage("Excel downloaded. The delete button is now unlocked.");
+      setMessage(
+        `Downloaded records.xlsx${photos ? ` and ${photos} photo(s)` : ""}. The delete button is now unlocked.`,
+      );
     } catch {
-      setMessage("Could not create the Excel file. Please try again.");
+      setMessage("Could not create the download. Please try again.");
     } finally {
       setBusy("");
     }
@@ -129,7 +131,7 @@ export function StorageCleanupPanel() {
       <p className="mt-4 text-sm text-muted-foreground">
         {rows.length} past record(s): graduated, rejected or withdrawn, and earlier-stream
         applications that were never admitted. Current students are never included. You must
-        download the Excel file first before deleting.
+        download the records (Excel plus their photographs) first before deleting.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
@@ -139,7 +141,7 @@ export function StorageCleanupPanel() {
           className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-50"
         >
           <Download className="size-4" aria-hidden="true" />
-          {busy === "download" ? "Preparing…" : "1. Download Excel"}
+          {busy === "download" ? "Preparing…" : "1. Download Excel + photos"}
         </button>
         <button
           type="button"

@@ -993,6 +993,56 @@ export const listStaleArchiveRows = createServerFn({ method: "GET" })
     return mapArchiveRows(data ?? []);
   });
 
+/** A photograph paired with its applicant, ready to fetch for a zip export. */
+export type ArchivePhotoRef = {
+  applicant_id: string;
+  application_number: string;
+  url: string;
+  ext: string;
+};
+
+const PHOTO_URL_TTL_SECONDS = 60 * 30;
+
+/**
+ * Signed URLs for the photographs of the given records. Signing is capped per
+ * call (the client chunks), so a large clean-up does not build one enormous
+ * request. The URL lifetime covers the time it takes to download the zip.
+ */
+export const listArchivePhotoUrls = createServerFn({ method: "POST" })
+  .middleware([requirePermission("applicants.manage")])
+  .validator(z.object({ ids: z.array(z.string().uuid()).min(1).max(200) }))
+  .handler(async ({ data }): Promise<ArchivePhotoRef[]> => {
+    const { data: docs, error } = await supabaseAdmin
+      .from("applicant_documents")
+      .select("applicant_id, storage_path, bucket, applicants(application_number)")
+      .in("applicant_id", data.ids)
+      .eq("kind", "photograph");
+    if (error) throw new Error("Could not load photographs");
+
+    const refs: ArchivePhotoRef[] = [];
+    for (const doc of docs ?? []) {
+      const row = doc as unknown as {
+        applicant_id: string;
+        storage_path: string;
+        bucket: string;
+        applicants: { application_number: string } | { application_number: string }[] | null;
+      };
+      const applicant = Array.isArray(row.applicants) ? row.applicants[0] : row.applicants;
+      const { data: signed } = await supabaseAdmin.storage
+        .from(row.bucket)
+        .createSignedUrl(row.storage_path, PHOTO_URL_TTL_SECONDS);
+      if (!signed?.signedUrl) continue;
+      const ext = (row.storage_path.split(".").pop() ?? "jpg").toLowerCase();
+      refs.push({
+        applicant_id: row.applicant_id,
+        application_number: applicant?.application_number ?? row.applicant_id,
+        url: signed.signedUrl,
+        ext,
+      });
+    }
+    return refs;
+  });
+
 export const deleteArchivedRecords = createServerFn({ method: "POST" })
   .middleware([requirePermission("applicants.manage")])
   .validator(z.object({ ids: z.array(z.string().uuid()).min(1).max(5000) }))
