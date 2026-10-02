@@ -408,6 +408,13 @@ export type Database = {
       }
       next_application_number: { Args: never; Returns: string }
       staff_unit_id: { Args: { _user_id: string }; Returns: string }
+      storage_usage: {
+        Args: never
+        Returns: {
+          bucket_bytes: number
+          db_bytes: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "staff" | "reviewer" | "registrar"
@@ -418,6 +425,7 @@ export type Database = {
         | "admitted"
         | "rejected"
         | "withdrawn"
+        | "graduated"
       document_kind: "photograph"
     }
     CompositeTypes: {
@@ -554,6 +562,7 @@ export const Constants = {
         "admitted",
         "rejected",
         "withdrawn",
+        "graduated",
       ],
       document_kind: ["photograph"],
     },
