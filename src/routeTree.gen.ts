@@ -24,7 +24,9 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminAccountRouteImport } from './routes/_authenticated/admin/account'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin/audit'
 import { Route as AuthenticatedAdminDuplicatesRouteImport } from './routes/_authenticated/admin/duplicates'
+import { Route as AuthenticatedAdminGraduatesRouteImport } from './routes/_authenticated/admin/graduates'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
+import { Route as ApiPublicKeepaliveRouteImport } from './routes/api/public/keepalive'
 import { Route as AuthenticatedAdminApplicantsIndexRouteImport } from './routes/_authenticated/admin/applicants/index'
 import { Route as AuthenticatedAdminApplicantsIdRouteImport } from './routes/_authenticated/admin/applicants/$id'
 import { Route as AuthenticatedAdminStudentsIndexRouteImport } from './routes/_authenticated/admin/students/index'
@@ -106,10 +108,21 @@ const AuthenticatedAdminDuplicatesRoute =
     path: '/admin/duplicates',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminGraduatesRoute =
+  AuthenticatedAdminGraduatesRouteImport.update({
+    id: '/admin/graduates',
+    path: '/admin/graduates',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
   id: '/admin/staff',
   path: '/admin/staff',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicKeepaliveRoute = ApiPublicKeepaliveRouteImport.update({
+  id: '/api/public/keepalive',
+  path: '/api/public/keepalive',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminApplicantsIndexRoute =
   AuthenticatedAdminApplicantsIndexRouteImport.update({
@@ -150,7 +163,9 @@ export interface FileRoutesByFullPath {
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
+  '/admin/graduates': typeof AuthenticatedAdminGraduatesRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/api/public/keepalive': typeof ApiPublicKeepaliveRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/applicants/$id': typeof AuthenticatedAdminApplicantsIdRoute
   '/admin/applicants/': typeof AuthenticatedAdminApplicantsIndexRoute
@@ -171,7 +186,9 @@ export interface FileRoutesByTo {
   '/admin/account': typeof AuthenticatedAdminAccountRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
+  '/admin/graduates': typeof AuthenticatedAdminGraduatesRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/api/public/keepalive': typeof ApiPublicKeepaliveRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/applicants/$id': typeof AuthenticatedAdminApplicantsIdRoute
   '/admin/applicants': typeof AuthenticatedAdminApplicantsIndexRoute
@@ -194,7 +211,9 @@ export interface FileRoutesById {
   '/_authenticated/admin/account': typeof AuthenticatedAdminAccountRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/duplicates': typeof AuthenticatedAdminDuplicatesRoute
+  '/_authenticated/admin/graduates': typeof AuthenticatedAdminGraduatesRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/api/public/keepalive': typeof ApiPublicKeepaliveRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/applicants/$id': typeof AuthenticatedAdminApplicantsIdRoute
   '/_authenticated/admin/applicants/': typeof AuthenticatedAdminApplicantsIndexRoute
@@ -217,7 +236,9 @@ export interface FileRouteTypes {
     | '/admin/account'
     | '/admin/audit'
     | '/admin/duplicates'
+    | '/admin/graduates'
     | '/admin/staff'
+    | '/api/public/keepalive'
     | '/admin/'
     | '/admin/applicants/$id'
     | '/admin/applicants/'
@@ -238,7 +259,9 @@ export interface FileRouteTypes {
     | '/admin/account'
     | '/admin/audit'
     | '/admin/duplicates'
+    | '/admin/graduates'
     | '/admin/staff'
+    | '/api/public/keepalive'
     | '/admin'
     | '/admin/applicants/$id'
     | '/admin/applicants'
@@ -260,7 +283,9 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/account'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/duplicates'
+    | '/_authenticated/admin/graduates'
     | '/_authenticated/admin/staff'
+    | '/api/public/keepalive'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/applicants/$id'
     | '/_authenticated/admin/applicants/'
@@ -280,6 +305,7 @@ export interface RootRouteChildren {
   ApplicationTokenRoute: typeof ApplicationTokenRoute
   UnitsSlugRoute: typeof UnitsSlugRoute
   UnitsIndexRoute: typeof UnitsIndexRoute
+  ApiPublicKeepaliveRoute: typeof ApiPublicKeepaliveRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -389,12 +415,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDuplicatesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/graduates': {
+      id: '/_authenticated/admin/graduates'
+      path: '/admin/graduates'
+      fullPath: '/admin/graduates'
+      preLoaderRoute: typeof AuthenticatedAdminGraduatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/staff': {
       id: '/_authenticated/admin/staff'
       path: '/admin/staff'
       fullPath: '/admin/staff'
       preLoaderRoute: typeof AuthenticatedAdminStaffRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/keepalive': {
+      id: '/api/public/keepalive'
+      path: '/api/public/keepalive'
+      fullPath: '/api/public/keepalive'
+      preLoaderRoute: typeof ApiPublicKeepaliveRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/applicants/': {
       id: '/_authenticated/admin/applicants/'
@@ -431,6 +471,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminAccountRoute: typeof AuthenticatedAdminAccountRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminDuplicatesRoute: typeof AuthenticatedAdminDuplicatesRoute
+  AuthenticatedAdminGraduatesRoute: typeof AuthenticatedAdminGraduatesRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminApplicantsIdRoute: typeof AuthenticatedAdminApplicantsIdRoute
@@ -443,6 +484,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminAccountRoute: AuthenticatedAdminAccountRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminDuplicatesRoute: AuthenticatedAdminDuplicatesRoute,
+  AuthenticatedAdminGraduatesRoute: AuthenticatedAdminGraduatesRoute,
   AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminApplicantsIdRoute: AuthenticatedAdminApplicantsIdRoute,
@@ -468,6 +510,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApplicationTokenRoute: ApplicationTokenRoute,
   UnitsSlugRoute: UnitsSlugRoute,
   UnitsIndexRoute: UnitsIndexRoute,
+  ApiPublicKeepaliveRoute: ApiPublicKeepaliveRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
