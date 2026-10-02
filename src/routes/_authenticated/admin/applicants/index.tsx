@@ -9,6 +9,7 @@ import {
   type ApplicantSort,
   type ApplicationStatus,
 } from "@/lib/admin.functions";
+import { StaleApplicantsPrompt } from "@/components/site/stale-applicants-prompt";
 
 const DESCRIPTION = "Browse, search, filter and export applications at the DSTVEB Umutu Branch.";
 
@@ -190,6 +191,8 @@ function Applicants() {
           </button>
         </div>
       </div>
+
+      <StaleApplicantsPrompt onDeleted={() => void run()} />
 
       <div className="surface-card mt-6 p-4">
         <div className="grid gap-3 lg:grid-cols-[1fr_12rem_12rem_8rem_auto]">
