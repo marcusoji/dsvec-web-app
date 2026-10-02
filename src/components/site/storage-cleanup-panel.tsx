@@ -6,33 +6,12 @@ import {
   getStorageUsage,
   listArchiveCandidates,
   type ArchiveRow,
+  type StorageUsage,
 } from "@/lib/admin.functions";
+import { downloadArchiveExcel } from "@/lib/archive-excel";
 import { useAdminUser } from "@/lib/use-admin-user";
 
-type Usage = Awaited<ReturnType<typeof getStorageUsage>>;
-
 const mb = (b: number) => `${(b / 1024 / 1024).toFixed(1)} MB`;
-
-const COLUMNS: { header: string; key: keyof ArchiveRow; width: number }[] = [
-  { header: "Application Number", key: "application_number", width: 24 },
-  { header: "Full Name", key: "full_name", width: 28 },
-  { header: "Email", key: "email", width: 28 },
-  { header: "Phone", key: "phone", width: 16 },
-  { header: "Gender", key: "gender", width: 10 },
-  { header: "Date of Birth", key: "date_of_birth", width: 14 },
-  { header: "State of Origin", key: "state", width: 16 },
-  { header: "LGA", key: "local_government", width: 16 },
-  { header: "Residential Address", key: "address", width: 36 },
-  { header: "Next of Kin", key: "next_of_kin", width: 32 },
-  { header: "School", key: "school", width: 24 },
-  { header: "Qualification", key: "qualification", width: 18 },
-  { header: "Trade Unit", key: "unit", width: 24 },
-  { header: "Stream", key: "stream", width: 10 },
-  { header: "Status", key: "status", width: 14 },
-  { header: "Test (40)", key: "test_score", width: 10 },
-  { header: "Exam (60)", key: "exam_score", width: 10 },
-  { header: "Applied On", key: "applied_on", width: 20 },
-];
 
 function Bar({ used, limit }: { used: number; limit: number }) {
   const pct = Math.min(100, Math.round((used / limit) * 100));
@@ -48,8 +27,8 @@ function Bar({ used, limit }: { used: number; limit: number }) {
 
 export function StorageCleanupPanel() {
   const { hasPermission, isLoading } = useAdminUser();
-  const allowed = hasPermission("applicants.delete");
-  const [usage, setUsage] = useState<Usage | null>(null);
+  const allowed = hasPermission("applicants.manage");
+  const [usage, setUsage] = useState<StorageUsage | null>(null);
   const [rows, setRows] = useState<ArchiveRow[]>([]);
   const [downloaded, setDownloaded] = useState(false);
   const [busy, setBusy] = useState<"" | "download" | "delete">("");
@@ -60,6 +39,7 @@ export function StorageCleanupPanel() {
       const [u, r] = await Promise.all([getStorageUsage(), listArchiveCandidates()]);
       setUsage(u);
       setRows(r);
+      setDownloaded(false);
     } catch {
       setMessage("Could not check storage right now.");
     }
@@ -72,27 +52,12 @@ export function StorageCleanupPanel() {
   if (!allowed) return null;
 
   async function download() {
+    if (!rows.length) return;
     setBusy("download");
     try {
-      const ExcelJS = (await import("exceljs")).default;
-      const wb = new ExcelJS.Workbook();
-      const ws = wb.addWorksheet("Past records");
-      ws.columns = COLUMNS;
-      ws.addRows(rows.map((r) => ({ ...r, test_score: r.test_score ?? "", exam_score: r.exam_score ?? "" })));
-      ws.getRow(1).font = { bold: true };
-      ws.views = [{ state: "frozen", ySplit: 1 }];
-      const buf = await wb.xlsx.writeBuffer();
-      const url = URL.createObjectURL(
-        new Blob([buf], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        }),
-      );
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `dstveb-past-records-${new Date().toISOString().slice(0, 10)}.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadArchiveExcel(rows, "dstveb-past-records");
       setDownloaded(true);
+      setMessage("Excel downloaded. The delete button is now unlocked.");
     } catch {
       setMessage("Could not create the Excel file. Please try again.");
     } finally {
@@ -101,6 +66,7 @@ export function StorageCleanupPanel() {
   }
 
   async function remove() {
+    if (!downloaded || !rows.length) return;
     if (
       !window.confirm(
         `Permanently delete ${rows.length} past record(s) and their photos? Make sure the Excel file is saved safely. This cannot be undone.`,
@@ -126,30 +92,37 @@ export function StorageCleanupPanel() {
         Storage &amp; clean-up
       </h2>
       {usage ? (
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          <div>
-            <p className="flex items-center gap-2 text-sm">
-              <Database className="size-4" aria-hidden="true" /> Database: {mb(usage.db_bytes)} of{" "}
-              {mb(usage.db_limit)}
-            </p>
-            <Bar used={usage.db_bytes} limit={usage.db_limit} />
+        usage.unavailable ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Storage usage is not available yet. Apply the latest database migration to enable the
+            free-plan size check.
+          </p>
+        ) : (
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="flex items-center gap-2 text-sm">
+                <Database className="size-4" aria-hidden="true" /> Database: {mb(usage.db_bytes)} of{" "}
+                {mb(usage.db_limit)}
+              </p>
+              <Bar used={usage.db_bytes} limit={usage.db_limit} />
+            </div>
+            <div>
+              <p className="flex items-center gap-2 text-sm">
+                <HardDrive className="size-4" aria-hidden="true" /> Photos: {mb(usage.bucket_bytes)}{" "}
+                of {mb(usage.bucket_limit)}
+              </p>
+              <Bar used={usage.bucket_bytes} limit={usage.bucket_limit} />
+            </div>
           </div>
-          <div>
-            <p className="flex items-center gap-2 text-sm">
-              <HardDrive className="size-4" aria-hidden="true" /> Photos: {mb(usage.bucket_bytes)}{" "}
-              of {mb(usage.bucket_limit)}
-            </p>
-            <Bar used={usage.bucket_bytes} limit={usage.bucket_limit} />
-          </div>
-        </div>
+        )
       ) : (
         <p className="mt-3 text-sm text-muted-foreground">Checking storage…</p>
       )}
 
       {usage?.over_limit ? (
         <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
-          Storage is almost full. Please download the past records and then delete them to free
-          up space.
+          Storage is almost full. Please download the past records and then delete them to free up
+          space.
         </p>
       ) : null}
 

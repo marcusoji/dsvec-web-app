@@ -25,6 +25,13 @@ export const STATUSES = [
 /** Includes the retired "withdrawn" value so older rows still type-check. */
 export type ApplicationStatus = (typeof STATUSES)[number] | "withdrawn";
 
+/**
+ * Accepted by status filters and exports. The retired `withdrawn` value is
+ * still readable so old records can be filtered and purged, but it is never
+ * offered as a status a staff member can set.
+ */
+const FILTER_STATUSES = [...STATUSES, "withdrawn"] as const;
+
 /** Alternate row orderings offered by the applicants list and its export. */
 export const SORT_ORDERS = ["name_asc", "name_desc"] as const;
 export type ApplicantSort = (typeof SORT_ORDERS)[number];
@@ -364,7 +371,7 @@ const listInputSchema = z.object({
   per_page: z.number().int().min(5).max(100).default(20),
   search: z.string().trim().max(120).optional(),
   unit_id: z.string().uuid().optional(),
-  status: z.enum(STATUSES).optional(),
+  status: z.enum(FILTER_STATUSES).optional(),
   year: z.number().int().min(2000).max(2100).optional(),
   stream: z.enum(["1", "2"]).optional(),
   sort: z.enum(SORT_ORDERS).optional(),
@@ -587,7 +594,9 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
   .validator(
     z.object({
       id: z.string().uuid(),
-      status: z.enum(STATUSES),
+      // The retired `withdrawn` value is accepted only so a legacy record can be
+      // re-saved unchanged; the UI never offers it as a new choice.
+      status: z.enum(FILTER_STATUSES),
       notes: z.string().trim().max(2000).optional(),
     }),
   )
@@ -628,7 +637,7 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
 
 const csvInputSchema = z.object({
   unit_id: z.string().uuid().optional(),
-  status: z.enum(STATUSES).optional(),
+  status: z.enum(FILTER_STATUSES).optional(),
   year: z.number().int().min(2000).max(2100).optional(),
   stream: z.enum(["1", "2"]).optional(),
   sort: z.enum(SORT_ORDERS).optional(),
@@ -755,38 +764,9 @@ export const listAuditLog = createServerFn({ method: "POST" })
 
 export const STALE_DAYS = 60;
 
-export type StaleApplicant = {
-  id: string;
-  application_number: string;
-  full_name: string;
-  status: ApplicationStatus;
-  created_at: string;
-};
-
-export const listStaleApplicants = createServerFn({ method: "GET" })
-  .middleware([requirePermission("applicants.delete")])
-  .handler(async (): Promise<StaleApplicant[]> => {
-    const cutoff = new Date(Date.now() - STALE_DAYS * 86_400_000).toISOString();
-    const { data, error } = await supabaseAdmin
-      .from("applicants")
-      .select("id, application_number, first_name, middle_name, last_name, status, created_at")
-      .not("status", "in", "(admitted,graduated)")
-      .lt("created_at", cutoff)
-      .order("created_at", { ascending: true })
-      .limit(500);
-    if (error) throw new Error("Could not load old applications");
-    return (data ?? []).map((a) => ({
-      id: a.id,
-      application_number: a.application_number,
-      full_name: [a.first_name, a.middle_name, a.last_name].filter(Boolean).join(" "),
-      status: a.status as ApplicationStatus,
-      created_at: a.created_at,
-    }));
-  });
-
 export const deleteApplicants = createServerFn({ method: "POST" })
-  .middleware([requirePermission("applicants.delete")])
-  .validator(z.object({ ids: z.array(z.string().uuid()).min(1).max(500) }))
+  .middleware([requirePermission("applicants.manage")])
+  .validator(z.object({ ids: z.array(z.string().uuid()).min(1).max(5000) }))
   .handler(async ({ data, context }) => {
     const { data: rows } = await supabaseAdmin
       .from("applicants")
@@ -819,7 +799,10 @@ async function purgeApplicants(
     }
     await supabaseAdmin.from("applicant_documents").delete().in("applicant_id", chunk);
     await supabaseAdmin.from("applicant_scores").delete().in("applicant_id", chunk);
-    await supabaseAdmin.from("activity_log").update({ applicant_id: null }).in("applicant_id", chunk);
+    await supabaseAdmin
+      .from("activity_log")
+      .update({ applicant_id: null })
+      .in("applicant_id", chunk);
     const { error } = await supabaseAdmin.from("applicants").delete().in("id", chunk);
     if (error) throw new Error("Could not delete the selected applications");
   }
@@ -838,14 +821,38 @@ async function purgeApplicants(
 export const DB_LIMIT_BYTES = 350 * 1024 * 1024;
 export const BUCKET_LIMIT_BYTES = 700 * 1024 * 1024;
 
+export type StorageUsage = {
+  db_bytes: number;
+  bucket_bytes: number;
+  db_limit: number;
+  bucket_limit: number;
+  /** True when the `storage_usage` migration has not been applied yet. */
+  unavailable: boolean;
+  over_limit: boolean;
+};
+
 export const getStorageUsage = createServerFn({ method: "GET" })
-  .middleware([requirePermission("applicants.delete")])
-  .handler(async () => {
+  .middleware([requirePermission("applicants.manage")])
+  .handler(async (): Promise<StorageUsage> => {
+    const empty: StorageUsage = {
+      db_bytes: 0,
+      bucket_bytes: 0,
+      db_limit: DB_LIMIT_BYTES,
+      bucket_limit: BUCKET_LIMIT_BYTES,
+      unavailable: true,
+      over_limit: false,
+    };
+
     const { data, error } = await supabaseAdmin.rpc("storage_usage");
-    if (error) throw new Error("Could not read storage usage");
+    if (error) {
+      // A database that predates the migration must degrade to "unknown"
+      // rather than crash the whole clean-up panel.
+      console.error("[admin] storage_usage unavailable", error.message);
+      return empty;
+    }
+
     const row = (Array.isArray(data) ? data[0] : data) as
-      | { db_bytes: number; bucket_bytes: number }
-      | undefined;
+      { db_bytes: number; bucket_bytes: number } | undefined;
     const db = Number(row?.db_bytes ?? 0);
     const bucket = Number(row?.bucket_bytes ?? 0);
     return {
@@ -853,6 +860,7 @@ export const getStorageUsage = createServerFn({ method: "GET" })
       bucket_bytes: bucket,
       db_limit: DB_LIMIT_BYTES,
       bucket_limit: BUCKET_LIMIT_BYTES,
+      unavailable: false,
       over_limit: db >= DB_LIMIT_BYTES || bucket >= BUCKET_LIMIT_BYTES,
     };
   });
@@ -886,60 +894,107 @@ export type ArchiveRow = {
   applied_on: string;
 };
 
+const ARCHIVE_SELECT =
+  "id, application_number, first_name, middle_name, last_name, email, phone, gender, date_of_birth, state, local_government, address, next_of_kin_name, next_of_kin_relationship, next_of_kin_phone, school, qualification, stream, status, created_at, units(name), applicant_scores(test_score, exam_score)";
+
+type ArchiveRawRow = {
+  id: string;
+  application_number: string;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+  email: string;
+  phone: string;
+  gender: string;
+  date_of_birth: string;
+  state: string;
+  local_government: string;
+  address: string;
+  next_of_kin_name: string | null;
+  next_of_kin_relationship: string | null;
+  next_of_kin_phone: string | null;
+  school: string | null;
+  qualification: string | null;
+  stream: string;
+  status: string;
+  created_at: string;
+  units: { name?: string } | null;
+  applicant_scores:
+    | { test_score: number | null; exam_score: number | null }
+    | { test_score: number | null; exam_score: number | null }[]
+    | null;
+};
+
+function mapArchiveRows(rows: unknown[]): ArchiveRow[] {
+  return (rows as unknown as ArchiveRawRow[]).map((a) => {
+    const scores = Array.isArray(a.applicant_scores) ? a.applicant_scores[0] : a.applicant_scores;
+    return {
+      id: a.id,
+      application_number: a.application_number,
+      full_name: fullName(a.first_name, a.middle_name, a.last_name),
+      email: a.email,
+      phone: a.phone,
+      gender: a.gender,
+      date_of_birth: formatDate(a.date_of_birth),
+      state: a.state,
+      local_government: a.local_government,
+      address: a.address,
+      next_of_kin: [a.next_of_kin_name, a.next_of_kin_relationship, a.next_of_kin_phone]
+        .filter(Boolean)
+        .join(" · "),
+      school: a.school ?? "",
+      qualification: a.qualification ?? "",
+      unit: a.units?.name ?? "",
+      stream: a.stream === "2" ? "Stream 2" : "Stream 1",
+      status: titleCase(a.status),
+      test_score: scores?.test_score ?? null,
+      exam_score: scores?.exam_score ?? null,
+      applied_on: formatDateTime(a.created_at),
+    };
+  });
+}
+
 /**
  * Past records: graduated, rejected or withdrawn applications, plus anything
  * from an earlier stream that never got admitted. Current students are kept.
  */
 export const listArchiveCandidates = createServerFn({ method: "GET" })
-  .middleware([requirePermission("applicants.delete")])
+  .middleware([requirePermission("applicants.manage")])
   .handler(async (): Promise<ArchiveRow[]> => {
     const start = currentStreamStart();
     const { data, error } = await supabaseAdmin
       .from("applicants")
-      .select(
-        "id, application_number, first_name, middle_name, last_name, email, phone, gender, date_of_birth, state, local_government, address, next_of_kin_name, next_of_kin_relationship, next_of_kin_phone, school, qualification, stream, status, created_at, units(name), applicant_scores(test_score, exam_score)",
-      )
+      .select(ARCHIVE_SELECT)
       .or(
         `status.in.(graduated,rejected,withdrawn),and(created_at.lt.${start},status.neq.admitted)`,
       )
       .order("created_at", { ascending: true })
       .limit(5000);
     if (error) throw new Error("Could not load past records");
-    return (data ?? []).map((a) => {
-      const unit = a.units as unknown as { name: string } | null;
-      const sc = a.applicant_scores as unknown as
-        | { test_score: number | null; exam_score: number | null }
-        | { test_score: number | null; exam_score: number | null }[]
-        | null;
-      const score = Array.isArray(sc) ? sc[0] : sc;
-      return {
-        id: a.id,
-        application_number: a.application_number,
-        full_name: fullName(a.first_name, a.middle_name, a.last_name),
-        email: a.email,
-        phone: a.phone,
-        gender: a.gender,
-        date_of_birth: formatDate(a.date_of_birth),
-        state: a.state,
-        local_government: a.local_government,
-        address: a.address,
-        next_of_kin: [a.next_of_kin_name, a.next_of_kin_relationship, a.next_of_kin_phone]
-          .filter(Boolean)
-          .join(" · "),
-        school: a.school ?? "",
-        qualification: a.qualification ?? "",
-        unit: unit?.name ?? "",
-        stream: a.stream === "2" ? "Stream 2" : "Stream 1",
-        status: titleCase(a.status),
-        test_score: score?.test_score ?? null,
-        exam_score: score?.exam_score ?? null,
-        applied_on: formatDateTime(a.created_at),
-      };
-    });
+    return mapArchiveRows(data ?? []);
+  });
+
+/**
+ * The same past records, narrowed to those a {@link STALE_DAYS}-day prompt is
+ * about, with their full details so the operator can export before deleting.
+ */
+export const listStaleArchiveRows = createServerFn({ method: "GET" })
+  .middleware([requirePermission("applicants.manage")])
+  .handler(async (): Promise<ArchiveRow[]> => {
+    const cutoff = new Date(Date.now() - STALE_DAYS * 86_400_000).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from("applicants")
+      .select(ARCHIVE_SELECT)
+      .not("status", "in", "(admitted,graduated)")
+      .lt("created_at", cutoff)
+      .order("created_at", { ascending: true })
+      .limit(5000);
+    if (error) throw new Error("Could not load old applications");
+    return mapArchiveRows(data ?? []);
   });
 
 export const deleteArchivedRecords = createServerFn({ method: "POST" })
-  .middleware([requirePermission("applicants.delete")])
+  .middleware([requirePermission("applicants.manage")])
   .validator(z.object({ ids: z.array(z.string().uuid()).min(1).max(5000) }))
   .handler(async ({ data, context }) => {
     const start = currentStreamStart();

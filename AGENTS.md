@@ -55,3 +55,34 @@
   degrades instead of impersonating a missing profile — treat every
   "has the staff-department migration run?" log line as a deployment warning.
 
+## Graduation, storage clean-up and the free plan
+
+- `graduated` is a real `application_status` enum value (added by
+  `20261002000000_graduated_status_and_storage_usage.sql` for existing
+  databases and by `supabase/export/full-setup.sql` for fresh ones). Graduating
+  an applicant removes them from the class roster — `listStudents`/`getStudent`
+  filter `status='admitted'` — and shows them under `/admin/graduates` until the
+  clean-up removes them. `STATUSES` in `src/lib/admin.functions.ts` is the single
+  source of truth for what the status pickers offer.
+- `withdrawn` is retired. It stays in the DB enum and in `FILTER_STATUSES`
+  (filters, exports, legacy re-save) but is never offered as a status to set.
+- Clean-up functions (`getStorageUsage`, `listArchiveCandidates`,
+  `listStaleArchiveRows`, `deleteApplicants`, `deleteArchivedRecords`) require
+  the `applicants.manage` permission, held by `admin` only. Unit-scoped `staff`
+  cannot purge records.
+- Both deletion flows download an Excel workbook first and disable the delete
+  button until it succeeds. The schema lives in `src/lib/archive-excel.ts`;
+  `exceljs` is imported on demand so it stays out of the initial bundle.
+- `storage_usage()` reports `pg_database_size()` and the summed
+  `storage.objects` metadata size. `getStorageUsage` degrades to
+  `unavailable: true` when the function is missing, so a stale database shows a
+  message instead of breaking the dashboard.
+- Stale applications are those still not admitted `STALE_DAYS` (60) after
+  submission. The prompt appears on `/admin/applicants` and on the dashboard
+  clean-up panel; graduated and admitted records are never stale.
+- `/api/public/keepalive` does a single read so the free database is not idle
+  long enough to pause. It is pinged twice a week by
+  `.github/workflows/keepalive.yml` (GitHub Actions, `vars.SITE_URL`) and by the
+  Vercel cron in `vercel.json`.
+
+

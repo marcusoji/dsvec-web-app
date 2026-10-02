@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { getAdminStats } from "@/lib/admin.functions";
+import { StorageCleanupPanel } from "@/components/site/storage-cleanup-panel";
 import { useAdminUser } from "@/lib/use-admin-user";
 
 const DESCRIPTION = "Statistics and activity overview for the DSTVEB Umutu Branch staff portal.";
@@ -251,6 +252,8 @@ function Dashboard() {
           </div>
         )}
       </section>
+
+      <StorageCleanupPanel />
     </section>
   );
 }

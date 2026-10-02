@@ -2,7 +2,12 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, FileText, ImageIcon, Loader2, Save } from "lucide-react";
 
-import { getApplicantDetail, STATUSES, updateApplicationStatus } from "@/lib/admin.functions";
+import {
+  getApplicantDetail,
+  STATUSES,
+  updateApplicationStatus,
+  type ApplicationStatus,
+} from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/applicants/$id")({
   loader: async ({ params }) => {
@@ -53,7 +58,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 function ApplicantDetail() {
   const detail = Route.useLoaderData();
-  const [status, setStatus] = useState(detail.status);
+  const [status, setStatus] = useState<ApplicationStatus>(detail.status);
   const [notes, setNotes] = useState(detail.admin_notes ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -143,8 +148,11 @@ function ApplicantDetail() {
             id="detail-status"
             className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={status}
-            onChange={(e) => setStatus(e.target.value as (typeof STATUSES)[number])}
+            onChange={(e) => setStatus(e.target.value as ApplicationStatus)}
           >
+            {!(STATUSES as readonly string[]).includes(detail.status) ? (
+              <option value={detail.status}>{detail.status.replace(/_/g, " ")} (retired)</option>
+            ) : null}
             {STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s.replace(/_/g, " ")}

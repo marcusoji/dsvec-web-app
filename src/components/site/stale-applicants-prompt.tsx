@@ -1,28 +1,31 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Download } from "lucide-react";
 
 import {
   deleteApplicants,
-  listStaleApplicants,
+  listStaleArchiveRows,
   STALE_DAYS,
-  type StaleApplicant,
+  type ArchiveRow,
 } from "@/lib/admin.functions";
+import { downloadArchiveExcel } from "@/lib/archive-excel";
 import { useAdminUser } from "@/lib/use-admin-user";
 
 export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) {
   const { hasPermission, isLoading } = useAdminUser();
-  const allowed = hasPermission("applicants.delete" as never);
-  const [rows, setRows] = useState<StaleApplicant[]>([]);
+  const allowed = hasPermission("applicants.manage");
+  const [rows, setRows] = useState<ArchiveRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+  const [busy, setBusy] = useState<"" | "download" | "delete">("");
   const [message, setMessage] = useState("");
 
   async function load() {
     try {
-      const res = await listStaleApplicants();
+      const res = await listStaleArchiveRows();
       setRows(res);
       setSelected(new Set(res.map((r) => r.id)));
+      setDownloaded(false);
     } catch {
       setRows([]);
     }
@@ -34,11 +37,30 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
 
   if (!allowed) return null;
 
-  async function confirmDelete() {
+  async function download() {
     if (!selected.size) return;
-    if (!window.confirm(`Permanently delete ${selected.size} application(s)? This cannot be undone.`))
+    setBusy("download");
+    try {
+      const chosen = rows.filter((r) => selected.has(r.id));
+      await downloadArchiveExcel(chosen, "dstveb-old-applications");
+      setDownloaded(true);
+      setMessage("Excel downloaded. The delete button is now unlocked.");
+    } catch {
+      setMessage("Could not create the Excel file. Please try again.");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function confirmDelete() {
+    if (!selected.size || !downloaded) return;
+    if (
+      !window.confirm(
+        `Permanently delete ${selected.size} application(s) and their photos? Make sure the Excel file is saved safely. This cannot be undone.`,
+      )
+    )
       return;
-    setBusy(true);
+    setBusy("delete");
     try {
       const res = await deleteApplicants({ data: { ids: [...selected] } });
       setMessage(`Deleted ${res.deleted} application(s).`);
@@ -48,7 +70,7 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
     } catch {
       setMessage("Could not delete the selected applications. Please try again.");
     } finally {
-      setBusy(false);
+      setBusy("");
     }
   }
 
@@ -57,6 +79,7 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
     if (next.has(id)) next.delete(id);
     else next.add(id);
     setSelected(next);
+    setDownloaded(false);
   }
 
   return (
@@ -69,13 +92,13 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
           />
           {rows.length > 0 ? (
             <span>
-              <strong>{rows.length}</strong> application(s) are over {STALE_DAYS} days old and
-              still not admitted. Would you like to delete them?
+              <strong>{rows.length}</strong> application(s) are over {STALE_DAYS} days old and still
+              not admitted. Download them as Excel, then delete them.
             </span>
           ) : (
             <span className="text-muted-foreground">
-              No applications are over {STALE_DAYS} days old without admission. The delete
-              button unlocks when there are.
+              No applications are over {STALE_DAYS} days old without admission. The delete button
+              unlocks when there are.
             </span>
           )}
         </p>
@@ -85,7 +108,7 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
           onClick={() => setOpen((o) => !o)}
           className="rounded-md border border-border-strong bg-paper px-3 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {open ? "Hide list" : "Delete old applications"}
+          {open ? "Hide list" : "Review old applications"}
         </button>
       </div>
       {message ? <p className="mt-2 text-sm text-muted-foreground">{message}</p> : null}
@@ -103,19 +126,30 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
                 <span className="font-mono text-xs">{r.application_number}</span>
                 <span className="font-medium">{r.full_name}</span>
                 <span className="ml-auto capitalize text-muted-foreground">
-                  {r.status.replace(/_/g, " ")} · {new Date(r.created_at).toLocaleDateString("en-GB")}
+                  {r.status} · {r.applied_on}
                 </span>
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            disabled={busy || !selected.size}
-            onClick={confirmDelete}
-            className="mt-3 rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground disabled:opacity-50"
-          >
-            {busy ? "Deleting…" : `Delete ${selected.size} selected`}
-          </button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy !== "" || !selected.size}
+              onClick={download}
+              className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-50"
+            >
+              <Download className="size-4" aria-hidden="true" />
+              {busy === "download" ? "Preparing…" : "1. Download Excel"}
+            </button>
+            <button
+              type="button"
+              disabled={busy !== "" || !selected.size || !downloaded}
+              onClick={confirmDelete}
+              className="rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {busy === "delete" ? "Deleting…" : `2. Delete ${selected.size} selected`}
+            </button>
+          </div>
         </div>
       ) : null}
     </div>
