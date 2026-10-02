@@ -22,7 +22,8 @@ export const STATUSES = [
   "rejected",
   "graduated",
 ] as const;
-export type ApplicationStatus = (typeof STATUSES)[number];
+/** Includes the retired "withdrawn" value so older rows still type-check. */
+export type ApplicationStatus = (typeof STATUSES)[number] | "withdrawn";
 
 /** Alternate row orderings offered by the applicants list and its export. */
 export const SORT_ORDERS = ["name_asc", "name_desc"] as const;
