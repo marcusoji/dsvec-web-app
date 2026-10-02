@@ -32,7 +32,7 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
     if (!isLoading && allowed) void load();
   }, [isLoading, allowed]);
 
-  if (!allowed || (rows.length === 0 && !message)) return null;
+  if (!allowed) return null;
 
   async function confirmDelete() {
     if (!selected.size) return;
@@ -61,26 +61,35 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
 
   return (
     <div className="surface-card mt-6 border-l-4 border-l-primary p-4">
-      {rows.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="size-4 text-primary" aria-hidden="true" />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="flex items-center gap-2 text-sm">
+          <AlertTriangle
+            className={`size-4 ${rows.length ? "text-primary" : "text-muted-foreground"}`}
+            aria-hidden="true"
+          />
+          {rows.length > 0 ? (
             <span>
               <strong>{rows.length}</strong> application(s) are over {STALE_DAYS} days old and
               still not admitted. Would you like to delete them?
             </span>
-          </p>
-          <button
-            type="button"
-            onClick={() => setOpen((o) => !o)}
-            className="rounded-md border border-border-strong bg-paper px-3 py-1.5 text-sm font-semibold"
-          >
-            {open ? "Hide list" : "Review & delete"}
-          </button>
-        </div>
-      ) : null}
+          ) : (
+            <span className="text-muted-foreground">
+              No applications are over {STALE_DAYS} days old without admission. The delete
+              button unlocks when there are.
+            </span>
+          )}
+        </p>
+        <button
+          type="button"
+          disabled={rows.length === 0}
+          onClick={() => setOpen((o) => !o)}
+          className="rounded-md border border-border-strong bg-paper px-3 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {open ? "Hide list" : "Delete old applications"}
+        </button>
+      </div>
       {message ? <p className="mt-2 text-sm text-muted-foreground">{message}</p> : null}
-      {open ? (
+      {open && rows.length > 0 ? (
         <div className="mt-4">
           <ul className="max-h-72 divide-y divide-border overflow-y-auto rounded-md border border-border">
             {rows.map((r) => (
