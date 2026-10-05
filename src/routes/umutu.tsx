@@ -62,7 +62,7 @@ function UmutuHome() {
             </Link>
             <p className="eyebrow mt-3">{SITE.branch}</p>
             <h1 className="mt-3 text-4xl leading-[1.05] md:text-6xl">
-              Delta State Technical and&nbsp;Vocational Education,&nbsp;Umutu
+              Delta State Technical and&nbsp;Vocational Education Center,&nbsp;Umutu
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
               {SITE.tagline} Register online, generate your application number instantly and
