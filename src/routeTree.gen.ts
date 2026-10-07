@@ -16,6 +16,7 @@ import { Route as AdmissionsRouteImport } from './routes/admissions'
 import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as UmutuRouteImport } from './routes/umutu'
 import { Route as ApplicationTokenRouteImport } from './routes/application/$token'
 import { Route as UnitsIndexRouteImport } from './routes/units/index'
@@ -64,6 +65,11 @@ const ContactRoute = ContactRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UmutuRoute = UmutuRouteImport.update({
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/umutu': typeof UmutuRoute
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/umutu': typeof UmutuRoute
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/apply': typeof ApplyRoute
   '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/umutu': typeof UmutuRoute
   '/application/$token': typeof ApplicationTokenRoute
   '/units/$slug': typeof UnitsSlugRoute
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
     | '/apply'
     | '/contact'
     | '/login'
+    | '/reset-password'
     | '/umutu'
     | '/application/$token'
     | '/units/$slug'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/apply'
     | '/contact'
     | '/login'
+    | '/reset-password'
     | '/umutu'
     | '/application/$token'
     | '/units/$slug'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/apply'
     | '/contact'
     | '/login'
+    | '/reset-password'
     | '/umutu'
     | '/application/$token'
     | '/units/$slug'
@@ -301,6 +313,7 @@ export interface RootRouteChildren {
   ApplyRoute: typeof ApplyRoute
   ContactRoute: typeof ContactRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   UmutuRoute: typeof UmutuRoute
   ApplicationTokenRoute: typeof ApplicationTokenRoute
   UnitsSlugRoute: typeof UnitsSlugRoute
@@ -357,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/umutu': {
@@ -506,6 +526,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApplyRoute: ApplyRoute,
   ContactRoute: ContactRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   UmutuRoute: UmutuRoute,
   ApplicationTokenRoute: ApplicationTokenRoute,
   UnitsSlugRoute: UnitsSlugRoute,

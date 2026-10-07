@@ -89,4 +89,23 @@
   `.github/workflows/keepalive.yml` (GitHub Actions, `vars.SITE_URL`) and by the
   Vercel cron in `vercel.json`.
 
+## Password resets
 
+- The login "Forgot your password?" panel has two tabs. Staff raise an admin
+  request (`requestPasswordReset` in `src/lib/password-reset.functions.ts`,
+  stored in `password_reset_requests` and actioned from `/admin/staff`). An
+  administrator raises a self-service request (`requestAdminPasswordReset`),
+  which emails a recovery link via Supabase's built-in SMTP.
+- For the emailed link to arrive, the Supabase project must have a working SMTP
+  sender and must allow the `/reset-password` URL in Auth → URL Configuration →
+  Redirect URLs. Supabase falls back to its rate-limited shared sender otherwise.
+- `requestAdminPasswordReset` resolves the account and checks for the `admin`
+  role before sending, and always answers `{ ok: true }` — the public form must
+  never reveal which emails exist or let a non-admin trigger a reset.
+- `/reset-password` (`src/routes/reset-password.tsx`) exchanges the recovery
+  token for a session — tokens normally arrive in the URL *fragment*, so it
+  reads both the query string and the fragment, and tolerates the `code` (PKCE),
+  `token_hash`, and implicit `access_token`/`refresh_token` shapes. Keep that in
+  sync with the Supabase Auth flow setting.
+- The admin reset does **not** clear `staff_profiles.must_change_password`, so a
+  seeded administrator still clears it from `/admin/account` after signing in.

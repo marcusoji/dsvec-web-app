@@ -153,6 +153,7 @@ const UMTU_BRANCH_PREFIXES = [
   "/contact",
   "/application",
   "/login",
+  "/reset-password",
   "/admin",
 ];
 

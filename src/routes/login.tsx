@@ -2,10 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getUser } from "@/lib/admin.functions";
-import { requestPasswordReset } from "@/lib/password-reset.functions";
+import { requestAdminPasswordReset, requestPasswordReset } from "@/lib/password-reset.functions";
 import { adminUserQuery } from "@/lib/use-admin-user";
 import { can } from "@/lib/permissions";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, GraduationCap, Loader2, Lock } from "lucide-react";
 import { SITE } from "@/lib/site";
 
@@ -52,7 +53,9 @@ function Login() {
         me = await getUser();
       } catch {
         await supabase.auth.signOut();
-        setError("This account does not have staff portal access. Contact the portal administrator.");
+        setError(
+          "This account does not have staff portal access. Contact the portal administrator.",
+        );
         setBusy(false);
         return;
       }
@@ -153,6 +156,26 @@ function Login() {
 }
 
 function ForgotPassword({ defaultEmail }: { defaultEmail: string }) {
+  return (
+    <section className="mt-4 rounded-lg border border-border-strong bg-background p-6 shadow-raised">
+      <h2 className="font-display text-lg text-foreground">Reset your password</h2>
+      <Tabs defaultValue="staff" className="mt-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="staff">Staff</TabsTrigger>
+          <TabsTrigger value="admin">Administrator</TabsTrigger>
+        </TabsList>
+        <TabsContent value="staff">
+          <StaffResetForm defaultEmail={defaultEmail} />
+        </TabsContent>
+        <TabsContent value="admin">
+          <AdminResetForm defaultEmail={defaultEmail} />
+        </TabsContent>
+      </Tabs>
+    </section>
+  );
+}
+
+function StaffResetForm({ defaultEmail }: { defaultEmail: string }) {
   const [email, setEmail] = useState(defaultEmail);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -173,53 +196,124 @@ function ForgotPassword({ defaultEmail }: { defaultEmail: string }) {
     }
   }
 
+  if (sent) {
+    return (
+      <p role="status" className="mt-2 text-sm text-muted-foreground">
+        Request sent. The portal administrator will set a temporary password for you and share it
+        with you. Sign in with it and you will be asked to choose a new password.
+      </p>
+    );
+  }
+
   return (
-    <section className="mt-4 rounded-lg border border-border-strong bg-background p-6 shadow-raised">
-      <h2 className="font-display text-lg text-foreground">Reset your password</h2>
-      {sent ? (
-        <p role="status" className="mt-2 text-sm text-muted-foreground">
-          Request sent. The portal administrator will set a temporary password for you and share
-          it with you. Sign in with it and you will be asked to choose a new password.
+    <form onSubmit={onSubmit}>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Send a request to the portal administrator. They will give you a temporary password, which
+        you change on your next sign-in.
+      </p>
+      {error ? (
+        <p role="alert" className="mt-3 text-sm text-destructive">
+          {error}
         </p>
-      ) : (
-        <form onSubmit={onSubmit}>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Send a request to the portal administrator. They will give you a temporary password,
-            which you change on your next sign-in.
-          </p>
-          {error ? <p role="alert" className="mt-3 text-sm text-destructive">{error}</p> : null}
-          <label htmlFor="forgot-email" className="mt-4 block text-sm font-medium text-foreground">
-            Staff Email
-          </label>
-          <input
-            id="forgot-email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-          <label htmlFor="forgot-note" className="mt-4 block text-sm font-medium text-foreground">
-            Message to the administrator (optional)
-          </label>
-          <input
-            id="forgot-note"
-            maxLength={500}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="e.g. your name and phone number"
-            className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-          >
-            {busy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
-            Ask administrator to reset
-          </button>
-        </form>
-      )}
-    </section>
+      ) : null}
+      <label htmlFor="forgot-email" className="mt-4 block text-sm font-medium text-foreground">
+        Staff Email
+      </label>
+      <input
+        id="forgot-email"
+        type="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+      <label htmlFor="forgot-note" className="mt-4 block text-sm font-medium text-foreground">
+        Message to the administrator (optional)
+      </label>
+      <input
+        id="forgot-note"
+        maxLength={500}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="e.g. your name and phone number"
+        className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+      <button
+        type="submit"
+        disabled={busy}
+        className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+      >
+        {busy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+        Ask administrator to reset
+      </button>
+    </form>
+  );
+}
+
+function AdminResetForm({ defaultEmail }: { defaultEmail: string }) {
+  const [email, setEmail] = useState(defaultEmail);
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await requestAdminPasswordReset({ data: { email } });
+      setSent(true);
+    } catch {
+      setError("Could not send your request. Please check the email and try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <p role="status" className="mt-2 text-sm text-muted-foreground">
+        If that email belongs to an administrator, we have sent a link to reset the password. Open
+        the link in your email to choose a new one. It may take a minute to arrive — check your spam
+        folder if you do not see it.
+      </p>
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit}>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Enter the administrator email address. We will send a link to that inbox; opening it lets
+        you set a new password.
+      </p>
+      {error ? (
+        <p role="alert" className="mt-3 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+      <label
+        htmlFor="forgot-admin-email"
+        className="mt-4 block text-sm font-medium text-foreground"
+      >
+        Administrator Email
+      </label>
+      <input
+        id="forgot-admin-email"
+        type="email"
+        autoComplete="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+      <button
+        type="submit"
+        disabled={busy}
+        className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+      >
+        {busy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+        Email me a reset link
+      </button>
+    </form>
   );
 }
