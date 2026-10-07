@@ -1,0 +1,3 @@
+- [ ] Add separate Staff and Administrator password recovery options; keep staff requests routed to the portal administrator and provide administrators an email-link reset with a public recovery page.
+- [ ] Verify password recovery configuration and relevant current database/migration state; resolve only safe, actionable mismatches.
+- [ ] Verify the preview and check the latest build/runtime signals.
