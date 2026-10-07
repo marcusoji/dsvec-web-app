@@ -562,7 +562,11 @@ export const resolveResetRequest = createServerFn({ method: "POST" })
     const caller = adminOf(context);
     await supabaseAdmin
       .from("password_reset_requests")
-      .update({ status: "resolved", resolved_at: new Date().toISOString(), resolved_by: caller.userId })
+      .update({
+        status: "resolved",
+        resolved_at: new Date().toISOString(),
+        resolved_by: caller.userId,
+      })
       .eq("id", data.id);
     return { ok: true as const };
   });

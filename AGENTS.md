@@ -148,6 +148,12 @@
   stored in `password_reset_requests` and actioned from `/admin/staff`). An
   administrator raises a self-service request (`requestAdminPasswordReset`),
   which emails a recovery link via Supabase's built-in SMTP.
+- `password_reset_requests` is defined by
+  `supabase/migrations/20260907000000_password_reset_requests.sql` and, for
+  fresh databases, `supabase/export/full-setup.sql`. It was originally only in
+  `drizzle/migrations/`, which Supabase does not apply — the Supabase copy is
+  what a running project actually needs, so keep the two migration folders in
+  step (Drizzle mirrors the Supabase set, not the other way around).
 - For the emailed link to arrive, the Supabase project must have a working SMTP
   sender and must allow the `/reset-password` URL in Auth → URL Configuration →
   Redirect URLs. Supabase falls back to its rate-limited shared sender otherwise.

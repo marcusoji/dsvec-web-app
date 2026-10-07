@@ -30,6 +30,28 @@ CREATE POLICY "users read own roles" ON public.user_roles
 CREATE POLICY "admins read all roles" ON public.user_roles
   FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 
+-- ============ staff password reset requests ============
+-- A staff member who forgot their password asks an administrator to reset it;
+-- the open rows surface on the staff screen. Migration
+-- 20260907000000_password_reset_requests.sql adds the same objects to existing
+-- databases.
+CREATE TABLE IF NOT EXISTS public.password_reset_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL,
+  note text,
+  status text NOT NULL DEFAULT 'open',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  resolved_at timestamptz,
+  resolved_by uuid
+);
+GRANT SELECT ON public.password_reset_requests TO authenticated;
+GRANT ALL ON public.password_reset_requests TO service_role;
+ALTER TABLE public.password_reset_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admins read reset requests" ON public.password_reset_requests
+  FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE INDEX password_reset_requests_open_idx
+  ON public.password_reset_requests (status, created_at DESC);
+
 -- ============ shared updated_at ============
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
