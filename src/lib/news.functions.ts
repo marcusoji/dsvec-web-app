@@ -11,19 +11,22 @@ import { requirePermission, type AdminAuthContext } from "./admin-auth";
  */
 export const NEWS_VISIBLE_LIMIT = 4;
 
-/** Media constraints. Images are re-encoded on the client; documents are sent raw. */
+/** Media constraints. Images are re-encoded on the client; other files are sent raw. */
 export const NEWS_IMAGE_MAX_BYTES = 1_500_000;
 export const NEWS_DOC_MAX_BYTES = 4_000_000;
 const ALLOWED_IMAGE_MIME = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const ALLOWED_DOC_MIME = [
   "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "text/plain",
-  "text/csv",
 ];
+
+/** An image previews inline; anything else is offered as read/download. */
+function newsKindForMime(mime: string): "image" | "document" | null {
+  if (ALLOWED_IMAGE_MIME.includes(mime)) return "image";
+  if (ALLOWED_DOC_MIME.includes(mime)) return "document";
+  return null;
+}
 
 export type NewsAttachment = {
   id: string;
@@ -153,7 +156,7 @@ const mediaSchema = z.object({
       file_name: z.string().trim().min(1).max(200),
     })
     .optional(),
-  documents: z
+  files: z
     .array(
       z.object({
         data_url: z.string().min(1),
@@ -198,17 +201,17 @@ type PreparedAttachment = {
 async function uploadMedia(
   postId: string,
   image: MediaInput | undefined,
-  documents: MediaInput[],
+  files: MediaInput[],
 ): Promise<PreparedAttachment[]> {
   const prepared: PreparedAttachment[] = [];
 
-  const uploadOne = async (media: MediaInput, kind: "image" | "document") => {
+  const uploadOne = async (media: MediaInput, forcedKind?: "image" | "document") => {
     const decoded = decodeDataUrl(media.data_url);
     if (!decoded) throw new Error(`Could not read "${media.file_name}".`);
     const mime = decoded.mime || "application/octet-stream";
-    const allowed = kind === "image" ? ALLOWED_IMAGE_MIME : ALLOWED_DOC_MIME;
-    if (!allowed.includes(mime)) {
-      throw new Error(`"${media.file_name}" is not a supported ${kind} file type.`);
+    const kind = forcedKind ?? newsKindForMime(mime);
+    if (!kind) {
+      throw new Error(`"${media.file_name}" is not a supported file (image, PDF or Excel).`);
     }
     const limit = kind === "image" ? NEWS_IMAGE_MAX_BYTES : NEWS_DOC_MAX_BYTES;
     if (decoded.bytes.byteLength > limit) {
@@ -234,7 +237,7 @@ async function uploadMedia(
 
   try {
     if (image) await uploadOne(image, "image");
-    for (const doc of documents) await uploadOne(doc, "document");
+    for (const file of files) await uploadOne(file);
   } catch (err) {
     // Roll back anything already stored so a rejected file cannot leak space.
     if (prepared.length) {
@@ -320,7 +323,7 @@ export const createNewsPost = createServerFn({ method: "POST" })
 
     let uploaded: PreparedAttachment[] = [];
     try {
-      uploaded = await uploadMedia(post.id, data.image, data.documents);
+      uploaded = await uploadMedia(post.id, data.image, data.files);
       if (uploaded.length) {
         const { error: attachError } = await supabaseAdmin.from("news_attachments").insert(
           uploaded.map((p) => ({
@@ -360,7 +363,7 @@ export const updateNewsPost = createServerFn({ method: "POST" })
       image: z
         .object({ data_url: z.string().min(1), file_name: z.string().trim().min(1).max(200) })
         .optional(),
-      documents: z
+      files: z
         .array(
           z.object({ data_url: z.string().min(1), file_name: z.string().trim().min(1).max(200) }),
         )
@@ -395,7 +398,7 @@ export const updateNewsPost = createServerFn({ method: "POST" })
         .eq("post_id", data.id);
     }
 
-    const prepared = await uploadMedia(data.id, data.image, data.documents);
+    const prepared = await uploadMedia(data.id, data.image, data.files);
     if (prepared.length) {
       const { error: attachError } = await supabaseAdmin.from("news_attachments").insert(
         prepared.map((p) => ({

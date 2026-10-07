@@ -54,6 +54,19 @@ const formatDate = (value: string) =>
 /** A file chosen in the form, kept as a data URL until the post is saved. */
 type PickedFile = { data_url: string; file_name: string; size: number };
 
+/** Mime types the server accepts for attachments (images plus documents). */
+const ALLOWED_UPLOAD_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+];
+
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -61,6 +74,27 @@ function readAsDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(new Error("Could not read that file."));
     reader.readAsDataURL(file);
   });
+}
+
+/** Loads an image File and re-encodes it to fit the upload budget. */
+async function compressPickedImage(file: File): Promise<PickedFile | null> {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Could not read that image."));
+      img.src = objectUrl;
+    });
+    const compressed = compressImage(img, img.naturalWidth, img.naturalHeight);
+    if (!compressed) return null;
+    const baseName = file.name.replace(/\.[^.]+$/, "");
+    return { data_url: compressed, file_name: `${baseName}.jpg`, size: file.size };
+  } catch {
+    return null;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 }
 
 function NewsAdmin() {
@@ -288,7 +322,7 @@ function NewsForm({
   const [body, setBody] = useState(post?.body ?? "");
   const [pinned, setPinned] = useState(post?.pinned ?? false);
   const [image, setImage] = useState<PickedFile | null>(null);
-  const [documents, setDocuments] = useState<PickedFile[]>([]);
+  const [files, setFiles] = useState<PickedFile[]>([]);
   const [removeIds, setRemoveIds] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -298,51 +332,51 @@ function NewsForm({
     e.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("The picture must be an image file.");
+      setError("The cover image must be an image file.");
+      return;
+    }
+    const prepared = await compressPickedImage(file);
+    if (!prepared) {
+      setError("Could not read that image.");
       return;
     }
     setError(null);
-    try {
-      // Re-encode on the client so a large phone photo still fits the budget.
-      const objectUrl = URL.createObjectURL(file);
-      const img = new Image();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Could not read that image."));
-        img.src = objectUrl;
-      });
-      const compressed = compressImage(img, img.naturalWidth, img.naturalHeight);
-      URL.revokeObjectURL(objectUrl);
-      if (!compressed) {
-        setError("Could not read that image.");
-        return;
-      }
-      const baseName = file.name.replace(/\.[^.]+$/, "");
-      setImage({ data_url: compressed, file_name: `${baseName}.jpg`, size: file.size });
-    } catch {
-      setError("Could not read that image.");
-    }
+    setImage(prepared);
   }
 
-  async function onDocumentsChange(e: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
+  async function onFilesChange(e: ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files ?? []);
     e.target.value = "";
-    if (!files.length) return;
-    for (const file of files) {
-      if (file.size > NEWS_DOC_MAX_BYTES) {
-        setError(`"${file.name}" is too large (max ${mb(NEWS_DOC_MAX_BYTES)}).`);
-        return;
+    if (!picked.length) return;
+
+    const prepared: PickedFile[] = [];
+    for (const file of picked) {
+      if (file.type.startsWith("image/")) {
+        // Re-encode so a large photo still fits the image budget.
+        const compressed = await compressPickedImage(file);
+        if (!compressed) {
+          setError(`Could not read "${file.name}".`);
+          return;
+        }
+        prepared.push(compressed);
+      } else {
+        if (!ALLOWED_UPLOAD_TYPES.includes(file.type)) {
+          setError(`"${file.name}" must be an image, PDF or Excel file.`);
+          return;
+        }
+        if (file.size > NEWS_DOC_MAX_BYTES) {
+          setError(`"${file.name}" is too large (max ${mb(NEWS_DOC_MAX_BYTES)}).`);
+          return;
+        }
+        prepared.push({
+          data_url: await readAsDataUrl(file),
+          file_name: file.name,
+          size: file.size,
+        });
       }
     }
     setError(null);
-    const picked = await Promise.all(
-      files.map(async (file) => ({
-        data_url: await readAsDataUrl(file),
-        file_name: file.name,
-        size: file.size,
-      })),
-    );
-    setDocuments((current) => [...current, ...picked].slice(0, 10));
+    setFiles((current) => [...current, ...prepared].slice(0, 10));
   }
 
   async function submit(e: FormEvent) {
@@ -359,7 +393,7 @@ function NewsForm({
             pinned,
             remove_attachment_ids: [...removeIds],
             image: image ? { data_url: image.data_url, file_name: image.file_name } : undefined,
-            documents: documents.map((d) => ({
+            files: files.map((d) => ({
               data_url: d.data_url,
               file_name: d.file_name,
             })),
@@ -373,7 +407,7 @@ function NewsForm({
             body,
             pinned,
             image: image ? { data_url: image.data_url, file_name: image.file_name } : undefined,
-            documents: documents.map((d) => ({ data_url: d.data_url, file_name: d.file_name })),
+            files: files.map((d) => ({ data_url: d.data_url, file_name: d.file_name })),
           },
         });
         onSaved(res.pruned);
@@ -472,14 +506,14 @@ function NewsForm({
 
         <div>
           <label htmlFor="news-docs" className="block text-sm font-medium text-foreground">
-            Documents (optional, up to 10)
+            Files (optional, up to 10 — images, PDF or Excel)
           </label>
           <input
             id="news-docs"
             type="file"
             multiple
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
-            onChange={onDocumentsChange}
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+            onChange={onFilesChange}
             className="mt-1.5 block w-full text-sm"
           />
         </div>
@@ -516,18 +550,22 @@ function NewsForm({
         </div>
       ) : null}
 
-      {documents.length ? (
+      {files.length ? (
         <ul className="mt-3 flex flex-wrap gap-2">
-          {documents.map((d, i) => (
+          {files.map((d, i) => (
             <li
               key={`${d.file_name}-${i}`}
               className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1 text-xs"
             >
-              <FileText className="size-3.5 text-primary" aria-hidden="true" />
+              {d.data_url.startsWith("data:image/") ? (
+                <ImageIcon className="size-3.5 text-primary" aria-hidden="true" />
+              ) : (
+                <FileText className="size-3.5 text-primary" aria-hidden="true" />
+              )}
               {d.file_name}
               <button
                 type="button"
-                onClick={() => setDocuments((list) => list.filter((_, index) => index !== i))}
+                onClick={() => setFiles((list) => list.filter((_, index) => index !== i))}
                 aria-label={`Remove ${d.file_name}`}
                 className="text-muted-foreground hover:text-foreground"
               >
