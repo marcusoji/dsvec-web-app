@@ -880,12 +880,14 @@ export type ArchiveRow = {
   phone: string;
   gender: string;
   date_of_birth: string;
+  nationality: string;
   state: string;
   local_government: string;
   address: string;
   next_of_kin: string;
   school: string;
   qualification: string;
+  school_year: string;
   unit: string;
   stream: string;
   status: string;
@@ -895,7 +897,7 @@ export type ArchiveRow = {
 };
 
 const ARCHIVE_SELECT =
-  "id, application_number, first_name, middle_name, last_name, email, phone, gender, date_of_birth, state, local_government, address, next_of_kin_name, next_of_kin_relationship, next_of_kin_phone, school, qualification, stream, status, created_at, units(name), applicant_scores(test_score, exam_score)";
+  "id, application_number, first_name, middle_name, last_name, email, phone, gender, date_of_birth, nationality, state, local_government, address, next_of_kin_name, next_of_kin_relationship, next_of_kin_phone, school, qualification, school_year, stream, status, created_at, units(name), applicant_scores(test_score, exam_score)";
 
 type ArchiveRawRow = {
   id: string;
@@ -907,6 +909,7 @@ type ArchiveRawRow = {
   phone: string;
   gender: string;
   date_of_birth: string;
+  nationality: string | null;
   state: string;
   local_government: string;
   address: string;
@@ -915,6 +918,7 @@ type ArchiveRawRow = {
   next_of_kin_phone: string | null;
   school: string | null;
   qualification: string | null;
+  school_year: string | null;
   stream: string;
   status: string;
   created_at: string;
@@ -936,6 +940,7 @@ function mapArchiveRows(rows: unknown[]): ArchiveRow[] {
       phone: a.phone,
       gender: a.gender,
       date_of_birth: formatDate(a.date_of_birth),
+      nationality: a.nationality ?? "Nigerian",
       state: a.state,
       local_government: a.local_government,
       address: a.address,
@@ -944,6 +949,7 @@ function mapArchiveRows(rows: unknown[]): ArchiveRow[] {
         .join(" · "),
       school: a.school ?? "",
       qualification: a.qualification ?? "",
+      school_year: a.school_year ?? "",
       unit: a.units?.name ?? "",
       stream: a.stream === "2" ? "Stream 2" : "Stream 1",
       status: titleCase(a.status),

@@ -42,10 +42,14 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
     setBusy("download");
     try {
       const chosen = rows.filter((r) => selected.has(r.id));
-      const { photos } = await downloadArchiveBundle(chosen, "dstveb-old-applications");
+      const { photos, forms, records } = await downloadArchiveBundle(
+        chosen,
+        "dstveb-old-applications",
+      );
       setDownloaded(true);
       setMessage(
-        `Downloaded records.xlsx${photos ? ` and ${photos} photo(s)` : ""}. The delete button is now unlocked.`,
+        `Downloaded ${records} record(s): records.xlsx, ${forms} application form(s)` +
+          `${photos ? `, ${photos} photo(s)` : ""}. The delete button is now unlocked.`,
       );
     } catch {
       setMessage("Could not create the download. Please try again.");
@@ -58,7 +62,9 @@ export function StaleApplicantsPrompt({ onDeleted }: { onDeleted: () => void }) 
     if (!selected.size || !downloaded) return;
     if (
       !window.confirm(
-        `Permanently delete ${selected.size} application(s) and their photos? Make sure the Excel file is saved safely. This cannot be undone.`,
+        `Permanently delete ${selected.size} application(s) and their photos?\n\n` +
+          `Make sure the zip (records.xlsx + ${selected.size} application form(s) + photos) is ` +
+          `saved safely — everything selected is removed and cannot be recovered.`,
       )
     )
       return;

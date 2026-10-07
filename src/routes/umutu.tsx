@@ -3,6 +3,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, BadgeCheck, CalendarDays, FileText, Users, Wrench } from "lucide-react";
 
 import { SiteShell } from "@/components/site/site-shell";
+import { NewsSection } from "@/components/site/news-section";
 import { listUnits } from "@/lib/units.functions";
 import { SITE } from "@/lib/site";
 
@@ -132,6 +133,8 @@ function UmutuHome() {
           See all {units.length} units
         </Link>
       </section>
+
+      <NewsSection />
 
       <section className="border-y border-border bg-secondary/50">
         <div className="container-page py-16 md:py-20">

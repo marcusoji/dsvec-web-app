@@ -235,6 +235,83 @@ export type Database = {
           },
         ]
       }
+      news_attachments: {
+        Row: {
+          bucket: string
+          created_at: string
+          file_name: string
+          id: string
+          kind: Database["public"]["Enums"]["news_attachment_kind"]
+          mime_type: string
+          post_id: string
+          size_bytes: number
+          storage_path: string
+        }
+        Insert: {
+          bucket?: string
+          created_at?: string
+          file_name: string
+          id?: string
+          kind: Database["public"]["Enums"]["news_attachment_kind"]
+          mime_type: string
+          post_id: string
+          size_bytes?: number
+          storage_path: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["news_attachment_kind"]
+          mime_type?: string
+          post_id?: string
+          size_bytes?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_attachments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "news_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_posts: {
+        Row: {
+          author_email: string | null
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          pinned: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_email?: string | null
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          pinned?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_email?: string | null
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          pinned?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       password_reset_requests: {
         Row: {
           created_at: string
@@ -427,6 +504,7 @@ export type Database = {
         | "withdrawn"
         | "graduated"
       document_kind: "photograph"
+      news_attachment_kind: "image" | "document"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -565,6 +643,7 @@ export const Constants = {
         "graduated",
       ],
       document_kind: ["photograph"],
+      news_attachment_kind: ["image", "document"],
     },
   },
 } as const

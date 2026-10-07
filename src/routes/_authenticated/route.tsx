@@ -61,6 +61,7 @@ function AuthenticatedLayout() {
       { to: "/admin/applicants", label: "Applicants", permissions: ["applicants.read"] },
       { to: "/admin/students", label: "Students", permissions: ["students.read"] },
       { to: "/admin/graduates", label: "Graduates", permissions: ["applicants.read"] },
+      { to: "/admin/news", label: "School news", permissions: ["news.manage"] },
       { to: "/admin/staff", label: "Staff", permissions: ["staff.manage"] },
       { to: "/admin/duplicates", label: "Duplicate audit", permissions: ["audit.read"] },
       { to: "/admin/audit", label: "Audit log", permissions: ["audit.read"] },

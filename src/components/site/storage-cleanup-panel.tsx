@@ -13,6 +13,44 @@ import { useAdminUser } from "@/lib/use-admin-user";
 
 const mb = (b: number) => `${(b / 1024 / 1024).toFixed(1)} MB`;
 
+/** Counts a field across the rows, largest group first. */
+function breakdown(rows: ArchiveRow[], key: (row: ArchiveRow) => string) {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const k = key(row) || "—";
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+}
+
+function Breakdown({
+  title,
+  rows,
+  of,
+}: {
+  title: string;
+  rows: ArchiveRow[];
+  of: (r: ArchiveRow) => string;
+}) {
+  const groups = breakdown(rows, of);
+  if (!groups.length) return null;
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</p>
+      <ul className="mt-1 space-y-0.5 text-sm">
+        {groups.map((g) => (
+          <li key={g.label} className="flex justify-between gap-4">
+            <span className="text-muted-foreground">{g.label}</span>
+            <span className="font-semibold tabular-nums">{g.value}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function Bar({ used, limit }: { used: number; limit: number }) {
   const pct = Math.min(100, Math.round((used / limit) * 100));
   return (
@@ -55,10 +93,11 @@ export function StorageCleanupPanel() {
     if (!rows.length) return;
     setBusy("download");
     try {
-      const { photos } = await downloadArchiveBundle(rows, "dstveb-past-records");
+      const { photos, forms, records } = await downloadArchiveBundle(rows, "dstveb-past-records");
       setDownloaded(true);
       setMessage(
-        `Downloaded records.xlsx${photos ? ` and ${photos} photo(s)` : ""}. The delete button is now unlocked.`,
+        `Downloaded ${records} record(s): records.xlsx, ${forms} application form(s)` +
+          `${photos ? `, ${photos} photo(s)` : ""}. The delete button is now unlocked.`,
       );
     } catch {
       setMessage("Could not create the download. Please try again.");
@@ -69,16 +108,29 @@ export function StorageCleanupPanel() {
 
   async function remove() {
     if (!downloaded || !rows.length) return;
+    const byStatus = breakdown(rows, (r) => r.status)
+      .map((g) => `${g.value} ${g.label}`)
+      .join(", ");
     if (
       !window.confirm(
-        `Permanently delete ${rows.length} past record(s) and their photos? Make sure the Excel file is saved safely. This cannot be undone.`,
+        `Permanently delete ${rows.length} past record(s) and their photos?\n\n` +
+          `By status: ${byStatus}.\n\n` +
+          `Make sure the zip (records.xlsx + ${rows.length} application form(s) + photos) ` +
+          `is saved safely — everything listed here is removed and cannot be recovered.`,
       )
     )
       return;
     setBusy("delete");
     try {
       const res = await deleteArchivedRecords({ data: { ids: rows.map((r) => r.id) } });
-      setMessage(`Deleted ${res.deleted} past record(s).`);
+      if (res.deleted !== rows.length) {
+        setMessage(
+          `Deleted ${res.deleted} of ${rows.length} record(s). The rest are no longer eligible ` +
+            `(they may be current students now). Review the list and try again.`,
+        );
+      } else {
+        setMessage(`Deleted ${res.deleted} past record(s).`);
+      }
       setDownloaded(false);
       await load();
     } catch {
@@ -131,8 +183,28 @@ export function StorageCleanupPanel() {
       <p className="mt-4 text-sm text-muted-foreground">
         {rows.length} past record(s): graduated, rejected or withdrawn, and earlier-stream
         applications that were never admitted. Current students are never included. You must
-        download the records (Excel plus their photographs) first before deleting.
+        download the records (Excel + a printable application form and photograph per person) first
+        before deleting.
       </p>
+
+      {rows.length ? (
+        <div className="mt-4 rounded-md border border-border bg-secondary/40 p-4">
+          <p className="text-sm font-semibold">
+            Before you delete: {rows.length} record(s) accounted for
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            The zip will contain {rows.length} row(s) in records.xlsx plus {rows.length} application
+            form(s). The delete step removes every record counted below — nothing more, nothing
+            less.
+          </p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-3">
+            <Breakdown title="By status" rows={rows} of={(r) => r.status} />
+            <Breakdown title="By trade unit" rows={rows} of={(r) => r.unit} />
+            <Breakdown title="By stream" rows={rows} of={(r) => r.stream} />
+          </div>
+        </div>
+      ) : null}
+
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
@@ -141,7 +213,7 @@ export function StorageCleanupPanel() {
           className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-50"
         >
           <Download className="size-4" aria-hidden="true" />
-          {busy === "download" ? "Preparing…" : "1. Download Excel + photos"}
+          {busy === "download" ? "Preparing…" : "1. Download records + forms + photos"}
         </button>
         <button
           type="button"

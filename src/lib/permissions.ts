@@ -30,6 +30,7 @@ export const PERMISSIONS = [
   "students.read",
   "scores.read",
   "scores.write",
+  "news.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

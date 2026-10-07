@@ -94,3 +94,52 @@ export function dataUrlBytes(dataUrl: string): number {
   const padding = payload.endsWith("==") ? 2 : payload.endsWith("=") ? 1 : 0;
   return Math.floor((payload.length * 3) / 4) - padding;
 }
+
+/** Longest stored edge for a general (non-passport) image, e.g. a news picture. */
+const MAX_UPLOAD_DIM = 1600;
+/** Byte budget for a general image before quality/resolution give way. */
+export const TARGET_UPLOAD_BYTES = 1_200_000;
+
+/**
+ * Scales an image down to fit a byte budget without cropping it, so an
+ * administrator's phone photo can be attached to a post. Preserves the aspect
+ * ratio (unlike {@link compressPassportPhoto}) and always emits JPEG.
+ */
+export function compressImage(
+  source: CanvasImageSource,
+  sourceWidth: number,
+  sourceHeight: number,
+  budgetBytes: number = TARGET_UPLOAD_BYTES,
+  maxDim: number = MAX_UPLOAD_DIM,
+): string {
+  if (!sourceWidth || !sourceHeight) return "";
+
+  const startScale = Math.min(1, maxDim / Math.max(sourceWidth, sourceHeight));
+  let width = Math.max(1, Math.round(sourceWidth * startScale));
+  let height = Math.max(1, Math.round(sourceHeight * startScale));
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return "";
+
+  let last = "";
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    canvas.width = width;
+    canvas.height = height;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(source, 0, 0, sourceWidth, sourceHeight, 0, 0, width, height);
+
+    for (let quality = START_QUALITY; quality >= MIN_QUALITY; quality -= 5) {
+      last = canvas.toDataURL("image/jpeg", quality / 100);
+      if (dataUrlBytes(last) <= budgetBytes) return last;
+    }
+
+    const next = Math.max(1, Math.round(width * 0.85));
+    if (next === width) break;
+    width = next;
+    height = Math.max(1, Math.round(height * 0.85));
+  }
+
+  return last;
+}
