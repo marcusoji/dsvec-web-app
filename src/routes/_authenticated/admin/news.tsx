@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Download,
@@ -12,6 +12,7 @@ import {
   Pin,
   PinOff,
   Plus,
+  Save,
   Trash2,
   X,
 } from "lucide-react";
@@ -43,6 +44,57 @@ const allNewsQuery = {
 };
 
 const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+const savedMessage = (verb: string, pruned: number) =>
+  pruned > 0
+    ? `Post ${verb}. ${pruned} older post(s) removed to keep the page at ${NEWS_VISIBLE_LIMIT}.`
+    : `Post ${verb}.`;
+
+type Draft = {
+  title: string;
+  body: string;
+  pinned: boolean;
+  updatedAt: number;
+};
+
+const draftKey = (postId?: string) => `dsvec:news-draft:${postId ?? "new"}`;
+
+function readDraft(postId?: string): Draft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(draftKey(postId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<Draft>;
+    if (typeof parsed.title !== "string" || typeof parsed.body !== "string") return null;
+    return {
+      title: parsed.title,
+      body: parsed.body,
+      pinned: Boolean(parsed.pinned),
+      updatedAt: typeof parsed.updatedAt === "number" ? parsed.updatedAt : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(postId: string | undefined, draft: Draft) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(draftKey(postId), JSON.stringify(draft));
+  } catch {
+    // Storage can be full or blocked; the saved draft on the server still stands.
+  }
+}
+
+function clearDraft(postId?: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(draftKey(postId));
+  } catch {
+    // Nothing to do if storage is unavailable.
+  }
+}
+
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
@@ -126,6 +178,16 @@ function NewsAdmin() {
   }
 
   const posts = data ?? [];
+  // Mirrors selectPostsToPrune for the "On public page" badge: drafts never
+  // count, pinned posts always show.
+  const pinnedCount = posts.filter((p) => !p.is_draft && p.pinned).length;
+  const publicIds = new Set([
+    ...posts.filter((p) => !p.is_draft && p.pinned).map((p) => p.id),
+    ...posts
+      .filter((p) => !p.is_draft && !p.pinned)
+      .slice(0, Math.max(0, NEWS_VISIBLE_LIMIT - pinnedCount))
+      .map((p) => p.id),
+  ]);
 
   return (
     <section>
@@ -135,7 +197,9 @@ function NewsAdmin() {
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             Publish the latest information for the public Umutu page. Only the {NEWS_VISIBLE_LIMIT}{" "}
             most recent posts are shown; adding another drops the oldest unpinned post, while a
-            pinned post keeps its place and pushes an older one out instead.
+            pinned post keeps its place and pushes an older one out instead. Save a draft to keep
+            work in progress off the public page — the form also keeps a local copy as you type, so
+            a dropped connection will not lose your text.
           </p>
         </div>
         {!composing && !editing ? (
@@ -156,14 +220,11 @@ function NewsAdmin() {
 
       {composing ? (
         <NewsForm
+          key="new"
           onCancel={() => setComposing(false)}
-          onSaved={(pruned) => {
+          onSaved={(pruned, draft) => {
             setComposing(false);
-            setMessage(
-              pruned > 0
-                ? `Post published. ${pruned} older post(s) removed to keep the page at ${NEWS_VISIBLE_LIMIT}.`
-                : "Post published.",
-            );
+            setMessage(savedMessage(draft ? "saved" : "published", pruned));
             refresh();
           }}
         />
@@ -171,15 +232,12 @@ function NewsAdmin() {
 
       {editing ? (
         <NewsForm
+          key={editing.id}
           post={editing}
           onCancel={() => setEditing(null)}
-          onSaved={(pruned) => {
+          onSaved={(pruned, draft) => {
             setEditing(null);
-            setMessage(
-              pruned > 0
-                ? `Post updated. ${pruned} older post(s) removed to keep the page at ${NEWS_VISIBLE_LIMIT}.`
-                : "Post updated.",
-            );
+            setMessage(savedMessage(draft ? "saved" : "updated", pruned));
             refresh();
           }}
         />
@@ -199,17 +257,21 @@ function NewsAdmin() {
             </p>
           </div>
         ) : (
-          posts.map((post, index) => (
+          posts.map((post) => (
             <article key={post.id} className="surface-card p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {post.pinned ? (
+                    {post.is_draft ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                        Draft
+                      </span>
+                    ) : post.pinned ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                         <Pin className="size-3" aria-hidden="true" /> Pinned
                       </span>
                     ) : null}
-                    {index < NEWS_VISIBLE_LIMIT && !post.pinned ? (
+                    {publicIds.has(post.id) && !post.pinned ? (
                       <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
                         On public page
                       </span>
@@ -316,7 +378,7 @@ function NewsForm({
 }: {
   post?: NewsPost;
   onCancel: () => void;
-  onSaved: (pruned: number) => void;
+  onSaved: (pruned: number, draft: boolean) => void;
 }) {
   const [title, setTitle] = useState(post?.title ?? "");
   const [body, setBody] = useState(post?.body ?? "");
@@ -326,6 +388,98 @@ function NewsForm({
   const [removeIds, setRemoveIds] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
+  const [autosavedAt, setAutosavedAt] = useState<number | null>(null);
+  // Mirrors the latest field values so the autosave effects can read them
+  // without re-running on every keystroke.
+  const latest = useRef({
+    title,
+    body,
+    pinned,
+    image,
+    files,
+    removeIds,
+    busy,
+  });
+  latest.current = { title, body, pinned, image, files, removeIds, busy };
+  const skipAutosave = useRef(false);
+  // Guards: the first debounce run is the mount (skip it so we never clobber a
+  // recoverable draft), and the interval waits until the user has actually
+  // edited something.
+  const mounted = useRef(false);
+  const edited = useRef(false);
+
+  // Offer to restore unsaved text after a reload, crash or dropped network.
+  useEffect(() => {
+    const saved = readDraft(post?.id);
+    if (!saved) return;
+    if (post && saved.updatedAt <= new Date(post.updated_at).getTime()) {
+      clearDraft(post.id);
+      return;
+    }
+    const newer = !post || post.title !== saved.title || post.body !== saved.body;
+    if (newer) setRestoredAt(saved.updatedAt);
+    // Everything the effect needs is fixed for this mount (post id and the
+    // server copy); the saved values are read once on purpose.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const buildDraft = useCallback((): Draft => {
+    const c = latest.current;
+    return { title: c.title, body: c.body, pinned: c.pinned, updatedAt: Date.now() };
+  }, []);
+
+  const persistDraft = useCallback(
+    (draft: Draft) => {
+      writeDraft(post?.id, draft);
+      setAutosavedAt(draft.updatedAt);
+    },
+    [post?.id],
+  );
+
+  // Snapshot on every edit (cheap, synchronous) …
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    if (skipAutosave.current) return;
+    edited.current = true;
+    const draft = buildDraft();
+    if (!draft.title && !draft.body) return;
+    const timer = window.setTimeout(() => persistDraft(draft), 600);
+    return () => window.clearTimeout(timer);
+  }, [title, body, pinned, buildDraft, persistDraft]);
+
+  // … and a heavier safety write every 20 seconds, so a long typing session
+  // survives even if the tab is closed between keystroke snapshots.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (skipAutosave.current || latest.current.busy || !edited.current) return;
+      const draft = buildDraft();
+      if (draft.title || draft.body) persistDraft(draft);
+    }, 20_000);
+    return () => window.clearInterval(timer);
+  }, [buildDraft, persistDraft]);
+
+  function restoreDraft() {
+    const saved = readDraft(post?.id);
+    if (!saved) return;
+    skipAutosave.current = true;
+    edited.current = false;
+    setTitle(saved.title);
+    setBody(saved.body);
+    setPinned(saved.pinned);
+    setRestoredAt(null);
+    window.setTimeout(() => {
+      skipAutosave.current = false;
+    }, 0);
+  }
+
+  function dismissRestore() {
+    clearDraft(post?.id);
+    setRestoredAt(null);
+  }
 
   async function onImageChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -379,10 +533,11 @@ function NewsForm({
     setFiles((current) => [...current, ...prepared].slice(0, 10));
   }
 
-  async function submit(e: FormEvent) {
-    e.preventDefault();
+  async function save(draft: boolean) {
     setBusy(true);
     setError(null);
+    // Freeze autosave so a queued snapshot cannot clobber the saved record.
+    skipAutosave.current = true;
     try {
       if (post) {
         const res = await updateNewsPost({
@@ -391,6 +546,7 @@ function NewsForm({
             title,
             body,
             pinned,
+            is_draft: draft,
             remove_attachment_ids: [...removeIds],
             image: image ? { data_url: image.data_url, file_name: image.file_name } : undefined,
             files: files.map((d) => ({
@@ -399,20 +555,24 @@ function NewsForm({
             })),
           },
         });
-        onSaved(res.pruned);
+        clearDraft(post.id);
+        onSaved(res.pruned, res.is_draft);
       } else {
         const res = await createNewsPost({
           data: {
             title,
             body,
             pinned,
+            is_draft: draft,
             image: image ? { data_url: image.data_url, file_name: image.file_name } : undefined,
             files: files.map((d) => ({ data_url: d.data_url, file_name: d.file_name })),
           },
         });
-        onSaved(res.pruned);
+        clearDraft(undefined);
+        onSaved(res.pruned, res.is_draft);
       }
     } catch (err) {
+      skipAutosave.current = false;
       setError(
         err instanceof Error && err.message
           ? err.message
@@ -423,11 +583,43 @@ function NewsForm({
     }
   }
 
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    void save(false);
+  }
+
   const keptAttachments = (post?.attachments ?? []).filter((a) => !removeIds.has(a.id));
 
   return (
     <form onSubmit={submit} className="surface-card mt-6 p-5">
       <h2 className="font-display text-lg">{post ? "Edit news post" : "New news post"}</h2>
+      {post?.is_draft ? (
+        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Draft — not shown on the public page
+        </p>
+      ) : null}
+
+      {restoredAt ? (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-secondary/60 px-3 py-2 text-sm">
+          <span>Unsaved changes from your last visit were found.</span>
+          <span className="flex gap-2">
+            <button
+              type="button"
+              onClick={restoreDraft}
+              className="rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground"
+            >
+              Restore
+            </button>
+            <button
+              type="button"
+              onClick={dismissRestore}
+              className="rounded-md border border-border-strong px-3 py-1 text-xs font-semibold"
+            >
+              Discard
+            </button>
+          </span>
+        </div>
+      ) : null}
 
       {error ? (
         <p role="alert" className="mt-3 text-sm text-destructive">
@@ -576,7 +768,7 @@ function NewsForm({
         </ul>
       ) : null}
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-5 flex flex-wrap items-center gap-2">
         <button
           type="submit"
           disabled={busy}
@@ -587,12 +779,30 @@ function NewsForm({
         </button>
         <button
           type="button"
+          onClick={() => void save(true)}
+          disabled={busy}
+          className="inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-60"
+        >
+          <Save className="size-4" aria-hidden="true" /> Save as draft
+        </button>
+        <button
+          type="button"
           onClick={onCancel}
           disabled={busy}
           className="rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold disabled:opacity-60"
         >
           Cancel
         </button>
+        {autosavedAt ? (
+          <span className="ml-auto text-xs text-muted-foreground" aria-live="polite">
+            Draft saved locally at{" "}
+            {new Intl.DateTimeFormat("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: "Africa/Lagos",
+            }).format(new Date(autosavedAt))}
+          </span>
+        ) : null}
       </div>
     </form>
   );

@@ -63,13 +63,32 @@
   objects from `supabase/export/full-setup.sql`.
 - Only `admin` holds the `news.manage` permission, so only an administrator can
   publish; staff and the public read the posts without signing in.
-- The public Umutu page (`src/components/site/news-section.tsx`) shows exactly
+- The public Umutu page (`src/components/site/news-section.tsx`) renders the
+  posts in a horizontal snap-scroll **carousel** of equal-height cards — a card
+  shows a teaser (`line-clamp-4`) plus a "Read more" button when the body is long
+  or the post has attachments. "Read more" opens a modal reader
+  (`PostReader`) that holds the full text, the image gallery and the document
+  links; Escape or a backdrop click closes it. The carousel is bounded to
   `NEWS_VISIBLE_LIMIT` (4) posts: every pinned post first, then the newest
   unpinned ones. `selectPostsToPrune` in `src/lib/news.functions.ts` is the
   single source of truth for which post is dropped after a write — adding a
   fifth post removes the oldest *unpinned* post and its media, while a pinned
   post keeps its place and the just-saved post is never the one removed. It is
-  pure and unit-testable; keep it that way.
+  pure and unit-testable; keep it that way. **Drafts are excluded** from the
+  count: a draft never shows publicly, never fills a slot and is never pruned.
+- Posts can be **drafts**. `news_posts.is_draft` (migration
+  `20261008000000_news_drafts.sql`, plus `full-setup.sql`) keeps a work-in-progress
+  post off the public page; the `is_draft = false` RLS policy and the
+  `listNewsPosts` filter both enforce it. `createNewsPost`/`updateNewsPost`
+  take `is_draft` and echo it back so the admin page can word the confirmation.
+  The admin form also mirrors the title/body/pinned fields to
+  `localStorage` (`dsvec:news-draft:<id|new>`) as the user types (600 ms
+  debounce) and every 20 s, then offers to restore or discard them on remount.
+  Autosave is frozen (`skipAutosave` ref) while a save is in flight so a queued
+  snapshot cannot clobber the saved record; a successful save clears the local
+  copy. The local copy is only a convenience for a lost connection - the server
+  record (draft or published) remains the durable one, so tell the admin to use
+  "Save as draft" for anything they want to keep, not just rely on autosave.
 - Media is private. `news.functions.ts` signs short-lived URLs on the server and
   hands them to the client, so the public page previews/downloads documents
   without exposing the bucket. Images are re-encoded on the client before

@@ -413,18 +413,19 @@ CREATE TABLE public.news_posts (
   title text NOT NULL,
   body text NOT NULL DEFAULT '',
   pinned boolean NOT NULL DEFAULT false,
+  is_draft boolean NOT NULL DEFAULT false,
   author_email text,
   created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX news_posts_pinned_created_idx
-  ON public.news_posts (pinned DESC, created_at DESC);
+CREATE INDEX news_posts_draft_pinned_created_idx
+  ON public.news_posts (is_draft, pinned DESC, created_at DESC);
 GRANT SELECT ON public.news_posts TO anon, authenticated;
 GRANT ALL ON public.news_posts TO service_role;
 ALTER TABLE public.news_posts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "public reads news" ON public.news_posts
-  FOR SELECT TO anon, authenticated USING (true);
+  FOR SELECT TO anon, authenticated USING (is_draft = false);
 CREATE TRIGGER news_posts_updated_at BEFORE UPDATE ON public.news_posts
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 

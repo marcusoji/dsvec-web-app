@@ -43,6 +43,7 @@ export type NewsPost = {
   title: string;
   body: string;
   pinned: boolean;
+  is_draft: boolean;
   author_email: string | null;
   created_at: string;
   updated_at: string;
@@ -60,7 +61,7 @@ type AttachmentRow = {
 };
 
 const POST_COLUMNS =
-  "id, title, body, pinned, author_email, created_at, updated_at, news_attachments(id, kind, bucket, storage_path, file_name, mime_type, size_bytes)";
+  "id, title, body, pinned, is_draft, author_email, created_at, updated_at, news_attachments(id, kind, bucket, storage_path, file_name, mime_type, size_bytes)";
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
@@ -87,6 +88,7 @@ type RawPostRow = {
   title: string;
   body: string;
   pinned: boolean;
+  is_draft: boolean;
   author_email: string | null;
   created_at: string;
   updated_at: string;
@@ -101,6 +103,7 @@ async function mapPosts(rows: RawPostRow[]): Promise<NewsPost[]> {
       title: row.title,
       body: row.body,
       pinned: row.pinned,
+      is_draft: row.is_draft,
       author_email: row.author_email,
       created_at: row.created_at,
       updated_at: row.updated_at,
@@ -111,14 +114,16 @@ async function mapPosts(rows: RawPostRow[]): Promise<NewsPost[]> {
 }
 
 /**
- * The posts shown on the public page: every pinned post, then the newest
- * unpinned posts until {@link NEWS_VISIBLE_LIMIT} is reached.
+ * The posts shown on the public page: every published pinned post, then the
+ * newest published unpinned posts until {@link NEWS_VISIBLE_LIMIT} is reached.
+ * Drafts are excluded both here and by the `is_draft = false` RLS policy.
  */
 export const listNewsPosts = createServerFn({ method: "GET" }).handler(
   async (): Promise<NewsPost[]> => {
     const { data, error } = await supabaseAdmin
       .from("news_posts")
       .select(POST_COLUMNS)
+      .eq("is_draft", false)
       .order("pinned", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(NEWS_VISIBLE_LIMIT);
@@ -150,6 +155,7 @@ const mediaSchema = z.object({
   title: z.string().trim().min(3).max(160),
   body: z.string().trim().min(1).max(8000),
   pinned: z.boolean().default(false),
+  is_draft: z.boolean().default(false),
   image: z
     .object({
       data_url: z.string().min(1),
@@ -248,26 +254,28 @@ async function uploadMedia(
   return prepared;
 }
 
-export type PrunablePost = { id: string; pinned: boolean; created_at: string };
+export type PrunablePost = { id: string; pinned: boolean; created_at: string; is_draft: boolean };
 
 /**
- * Chooses which posts to drop so the public page never exceeds
+ * Chooses which published posts to drop so the public page never exceeds
  * {@link NEWS_VISIBLE_LIMIT}: every pinned post is kept, then the newest
- * unpinned posts fill the remaining slots, and the rest are doomed. `keepId`
- * (the post just created or updated) is always retained, so a freshly published
- * post is never dropped when every slot is already taken. Pure, so the rolling
- * window can be reasoned about and tested without a database.
+ * unpinned posts fill the remaining slots, and the rest are doomed. Drafts are
+ * ignored entirely (never shown, never pruned). `keepId` (the post just created
+ * or updated) is always retained, so a freshly published post is never dropped
+ * when every slot is already taken. Pure, so the rolling window can be reasoned
+ * about and tested without a database.
  */
 export function selectPostsToPrune(rows: PrunablePost[], keepId?: string): string[] {
-  const pinned = rows.filter((r) => r.pinned);
-  const unpinned = rows.filter((r) => !r.pinned);
+  const live = rows.filter((r) => !r.is_draft);
+  const pinned = live.filter((r) => r.pinned);
+  const unpinned = live.filter((r) => !r.pinned);
   const roomForUnpinned = Math.max(0, NEWS_VISIBLE_LIMIT - pinned.length);
   const kept = new Set<string>([
     ...pinned.map((r) => r.id),
     ...unpinned.slice(0, roomForUnpinned).map((r) => r.id),
   ]);
   if (keepId) kept.add(keepId);
-  return rows.filter((r) => !kept.has(r.id)).map((r) => r.id);
+  return live.filter((r) => !kept.has(r.id)).map((r) => r.id);
 }
 
 /**
@@ -278,7 +286,7 @@ export function selectPostsToPrune(rows: PrunablePost[], keepId?: string): strin
 async function pruneNewsPosts(keepId?: string): Promise<number> {
   const { data, error } = await supabaseAdmin
     .from("news_posts")
-    .select("id, pinned, created_at")
+    .select("id, pinned, created_at, is_draft")
     .order("pinned", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw new Error("Could not tidy older news posts");
@@ -306,50 +314,55 @@ async function pruneNewsPosts(keepId?: string): Promise<number> {
 export const createNewsPost = createServerFn({ method: "POST" })
   .middleware([requirePermission("news.manage")])
   .validator(mediaSchema)
-  .handler(async ({ data, context }): Promise<{ id: string; pruned: number }> => {
-    const admin = (context as AdminAuthContext).admin;
-    const { data: post, error } = await supabaseAdmin
-      .from("news_posts")
-      .insert({
-        title: data.title,
-        body: data.body,
-        pinned: data.pinned,
-        author_email: admin.email,
-        created_by: admin.userId,
-      })
-      .select("id")
-      .single();
-    if (error || !post) throw new Error("Could not publish the news post");
+  .handler(
+    async ({ data, context }): Promise<{ id: string; pruned: number; is_draft: boolean }> => {
+      const admin = (context as AdminAuthContext).admin;
+      const { data: post, error } = await supabaseAdmin
+        .from("news_posts")
+        .insert({
+          title: data.title,
+          body: data.body,
+          pinned: data.pinned,
+          is_draft: data.is_draft,
+          author_email: admin.email,
+          created_by: admin.userId,
+        })
+        .select("id")
+        .single();
+      if (error || !post) throw new Error("Could not publish the news post");
 
-    let uploaded: PreparedAttachment[] = [];
-    try {
-      uploaded = await uploadMedia(post.id, data.image, data.files);
-      if (uploaded.length) {
-        const { error: attachError } = await supabaseAdmin.from("news_attachments").insert(
-          uploaded.map((p) => ({
-            post_id: post.id,
-            kind: p.kind,
-            bucket: p.bucket,
-            storage_path: p.storage_path,
-            file_name: p.file_name,
-            mime_type: p.mime_type,
-            size_bytes: p.size_bytes,
-          })),
-        );
-        if (attachError) throw new Error("Could not save the news attachments");
+      let uploaded: PreparedAttachment[] = [];
+      try {
+        uploaded = await uploadMedia(post.id, data.image, data.files);
+        if (uploaded.length) {
+          const { error: attachError } = await supabaseAdmin.from("news_attachments").insert(
+            uploaded.map((p) => ({
+              post_id: post.id,
+              kind: p.kind,
+              bucket: p.bucket,
+              storage_path: p.storage_path,
+              file_name: p.file_name,
+              mime_type: p.mime_type,
+              size_bytes: p.size_bytes,
+            })),
+          );
+          if (attachError) throw new Error("Could not save the news attachments");
+        }
+      } catch (err) {
+        // Never leave a half-published post (or its files) behind.
+        if (uploaded.length) {
+          await supabaseAdmin.storage
+            .from("news-media")
+            .remove(uploaded.map((p) => p.storage_path));
+        }
+        await supabaseAdmin.from("news_posts").delete().eq("id", post.id);
+        throw err;
       }
-    } catch (err) {
-      // Never leave a half-published post (or its files) behind.
-      if (uploaded.length) {
-        await supabaseAdmin.storage.from("news-media").remove(uploaded.map((p) => p.storage_path));
-      }
-      await supabaseAdmin.from("news_posts").delete().eq("id", post.id);
-      throw err;
-    }
 
-    const pruned = await pruneNewsPosts(post.id);
-    return { id: post.id, pruned };
-  });
+      const pruned = await pruneNewsPosts(post.id);
+      return { id: post.id, pruned, is_draft: data.is_draft };
+    },
+  );
 
 export const updateNewsPost = createServerFn({ method: "POST" })
   .middleware([requirePermission("news.manage")])
@@ -359,6 +372,7 @@ export const updateNewsPost = createServerFn({ method: "POST" })
       title: z.string().trim().min(3).max(160),
       body: z.string().trim().min(1).max(8000),
       pinned: z.boolean(),
+      is_draft: z.boolean(),
       remove_attachment_ids: z.array(z.string().uuid()).max(50).default([]),
       image: z
         .object({ data_url: z.string().min(1), file_name: z.string().trim().min(1).max(200) })
@@ -371,10 +385,10 @@ export const updateNewsPost = createServerFn({ method: "POST" })
         .default([]),
     }),
   )
-  .handler(async ({ data }): Promise<{ pruned: number }> => {
+  .handler(async ({ data }): Promise<{ pruned: number; is_draft: boolean }> => {
     const { error } = await supabaseAdmin
       .from("news_posts")
-      .update({ title: data.title, body: data.body, pinned: data.pinned })
+      .update({ title: data.title, body: data.body, pinned: data.pinned, is_draft: data.is_draft })
       .eq("id", data.id);
     if (error) throw new Error("Could not save the news post");
 
@@ -419,7 +433,7 @@ export const updateNewsPost = createServerFn({ method: "POST" })
     }
 
     const pruned = await pruneNewsPosts(data.id);
-    return { pruned };
+    return { pruned, is_draft: data.is_draft };
   });
 
 export const deleteNewsPost = createServerFn({ method: "POST" })
