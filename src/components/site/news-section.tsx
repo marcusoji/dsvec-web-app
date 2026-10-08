@@ -38,6 +38,9 @@ const CLAMP_CHARS = 220;
 const needsReadMore = (post: NewsPost, images: NewsAttachment[], documents: NewsAttachment[]) =>
   post.body.length > CLAMP_CHARS || images.length > 0 || documents.length > 0;
 
+/** How long each card stays before the carousel advances on its own. */
+const AUTOPLAY_MS = 5000;
+
 function AttachmentActions({ attachment }: { attachment: NewsAttachment }) {
   if (!attachment.url) return null;
   return (
@@ -269,6 +272,7 @@ export function NewsSection() {
   const [reading, setReading] = useState<NewsPost | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [edge, setEdge] = useState({ start: true, end: false });
+  const [paused, setPaused] = useState(false);
 
   function updateEdges() {
     const el = trackRef.current;
@@ -290,12 +294,37 @@ export function NewsSection() {
     el.scrollBy({ left: direction * Math.round(el.clientWidth * 0.9), behavior: "smooth" });
   }
 
+  // Auto-advance while the visitor is idle. Move a page at a time and loop back
+  // to the start once the end is reached; pause on hover, on keyboard focus,
+  // while a reader/lightbox is open, and when the visitor prefers reduced motion.
+  useEffect(() => {
+    if (posts.length < 2 || paused || reading || lightbox) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = setInterval(() => {
+      const el = trackRef.current;
+      if (!el) return;
+      const step = Math.min(el.scrollWidth - el.clientWidth, el.clientWidth * 0.9);
+      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 4) {
+        el.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        el.scrollBy({ left: step, behavior: "smooth" });
+      }
+    }, AUTOPLAY_MS);
+    return () => clearInterval(timer);
+  }, [posts.length, paused, reading, lightbox]);
+
   if (isLoading || !posts.length) return null;
 
   const anyMedia = posts.some((p) => p.attachments.some(isImage));
 
   return (
-    <section className="border-t border-border bg-secondary/40">
+    <section
+      className="border-t border-border bg-secondary/40"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
       <div className="container-page py-16 md:py-20">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="rule-accent">
