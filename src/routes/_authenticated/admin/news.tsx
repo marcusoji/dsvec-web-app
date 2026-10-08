@@ -156,10 +156,20 @@ function NewsAdmin() {
   const [composing, setComposing] = useState(false);
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
+  const formAnchorRef = useRef<HTMLDivElement>(null);
 
   function refresh() {
     void qc.invalidateQueries({ queryKey: ["news"] });
   }
+
+  // Both the New and Edit forms render above the list. Without this the click
+  // appears to do nothing when the user is scrolled down at the post's own Edit
+  // button, because the form is off-screen at the top of the page.
+  useEffect(() => {
+    if (composing || editing) {
+      formAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [composing, editing]);
 
   async function remove(post: NewsPost) {
     if (!window.confirm(`Delete "${post.title}" and its attachments? This cannot be undone.`)) {
@@ -217,6 +227,8 @@ function NewsAdmin() {
       </div>
 
       {message ? <p className="mt-3 text-sm text-muted-foreground">{message}</p> : null}
+
+      <div ref={formAnchorRef} aria-hidden="true" className="scroll-mt-24" />
 
       {composing ? (
         <NewsForm

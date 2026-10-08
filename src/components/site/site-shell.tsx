@@ -201,7 +201,6 @@ function SiteFooter() {
             Staff portal — authorized personnel only
           </Link>
         </div>
-
       </div>
     </footer>
   );

@@ -15,16 +15,26 @@ export const requestPasswordReset = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Light abuse guard: one open request per email.
-    const { data: existing } = await supabaseAdmin
+    const { data: existing, error: readError } = await supabaseAdmin
       .from("password_reset_requests")
       .select("id")
       .eq("email", data.email)
       .eq("status", "open")
       .limit(1);
+    if (readError) {
+      console.error("[password-reset] request lookup failed", readError.message);
+      throw new Error("Could not record your request");
+    }
     if (!existing?.length) {
-      await supabaseAdmin
+      const { error: insertError } = await supabaseAdmin
         .from("password_reset_requests")
         .insert({ email: data.email, note: data.note || null });
+      // Do not report success when the request was never stored, or the staff
+      // member would wait for an administrator who never sees it.
+      if (insertError) {
+        console.error("[password-reset] request insert failed", insertError.message);
+        throw new Error("Could not record your request");
+      }
     }
     return { ok: true as const };
   });

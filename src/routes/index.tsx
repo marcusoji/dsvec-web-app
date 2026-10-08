@@ -67,7 +67,6 @@ function BoardHome() {
         </div>
       </header>
 
-
       <section className="border-b border-border bg-secondary/50 grid-paper">
         <div className="container-page grid gap-10 py-16 md:grid-cols-[1.1fr_0.9fr] md:items-center md:py-24">
           <div>
@@ -140,7 +139,6 @@ function BoardHome() {
             </article>
           ))}
         </div>
-
       </section>
 
       <footer className="border-t border-border bg-ink text-ink-muted">

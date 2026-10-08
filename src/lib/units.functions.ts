@@ -23,7 +23,6 @@ export type PublicUnit = {
 const UNIT_COLUMNS =
   "id, slug, name, summary, description, skills, careers, requirements, duration, image_url, icon, coordinator_name, contact_phone, contact_email, office_location";
 
-
 function publicClient() {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
   return createClient<Database>(process.env["SUPABASE_URL"]!, key, {

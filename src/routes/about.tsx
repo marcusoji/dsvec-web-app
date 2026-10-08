@@ -13,7 +13,6 @@ import electricalImg from "@/assets/about-gallery/img-20260907-wa0133.jpg";
 import hairDressingImg from "@/assets/about-gallery/img-20260907-wa0134.jpg";
 import decorationImg from "@/assets/about-gallery/img-20260907-wa0135.jpg";
 
-
 const DESCRIPTION =
   "About the DSTVEB Umutu Branch: mission, vision, campus facilities and the leadership team behind Delta State's technical and vocational training annex at Umutu.";
 
@@ -64,17 +63,44 @@ const FACILITIES = [
 ];
 
 const UNIT_IMAGES = [
-  { src: campusImg, alt: "Side view of the Umutu vocational education centre", caption: "Umutu vocational education centre" },
+  {
+    src: campusImg,
+    alt: "Side view of the Umutu vocational education centre",
+    caption: "Umutu vocational education centre",
+  },
   { src: ictImg, alt: "ICT laboratory with computers and workstations", caption: "ICT" },
   { src: cateringImg, alt: "Catering and bakery kitchen with equipment", caption: "Catering" },
-  { src: monogramImg, alt: "Decorative monogram embroidery being made with a sewing machine", caption: "Monogram" },
-  { src: fashionStudioImg, alt: "Fashion and Design workshop with sewing machines and work tables", caption: "Fashion and Design studio" },
-  { src: barbingImg, alt: "Barbing training room with mirrors, chairs and workstations", caption: "Barbing" },
-  { src: electricalImg, alt: "Electrical Installation workshop with training boards and equipment", caption: "Electrical Installation" },
-  { src: hairDressingImg, alt: "Hair Dressing training room with salon chairs and mirrors", caption: "Hair Dressing" },
-  { src: decorationImg, alt: "Event Decoration training room with draped fabric", caption: "Event Management and Decoration" },
+  {
+    src: monogramImg,
+    alt: "Decorative monogram embroidery being made with a sewing machine",
+    caption: "Monogram",
+  },
+  {
+    src: fashionStudioImg,
+    alt: "Fashion and Design workshop with sewing machines and work tables",
+    caption: "Fashion and Design studio",
+  },
+  {
+    src: barbingImg,
+    alt: "Barbing training room with mirrors, chairs and workstations",
+    caption: "Barbing",
+  },
+  {
+    src: electricalImg,
+    alt: "Electrical Installation workshop with training boards and equipment",
+    caption: "Electrical Installation",
+  },
+  {
+    src: hairDressingImg,
+    alt: "Hair Dressing training room with salon chairs and mirrors",
+    caption: "Hair Dressing",
+  },
+  {
+    src: decorationImg,
+    alt: "Event Decoration training room with draped fabric",
+    caption: "Event Management and Decoration",
+  },
 ];
-
 
 function About() {
   return (
@@ -144,7 +170,6 @@ function About() {
           ))}
         </div>
       </section>
-
     </SiteShell>
   );
 }

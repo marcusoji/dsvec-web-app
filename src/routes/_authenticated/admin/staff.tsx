@@ -153,12 +153,15 @@ function StaffPage() {
             <KeyRound className="size-4" aria-hidden="true" /> Password reset requests
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Find the account below, click Password to set a temporary one, share it with the
-            person, then mark the request done.
+            Find the account below, click Password to set a temporary one, share it with the person,
+            then mark the request done.
           </p>
           <ul className="mt-3 divide-y divide-border">
             {(resetRequests ?? []).map((r) => (
-              <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+              <li
+                key={r.id}
+                className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
+              >
                 <span>
                   <strong>{r.email}</strong>
                   {r.note ? <span className="text-muted-foreground"> — {r.note}</span> : null}
@@ -366,7 +369,12 @@ function StaffRow({
   }
 
   async function remove() {
-    if (!window.confirm(`Delete the account for ${member.email ?? "this staff member"}? They will no longer be able to sign in. This cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        `Delete the account for ${member.email ?? "this staff member"}? They will no longer be able to sign in. This cannot be undone.`,
+      )
+    )
+      return;
     setBusy(true);
     setError(null);
     try {
