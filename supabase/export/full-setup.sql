@@ -73,6 +73,7 @@ CREATE TABLE public.units (
   is_active boolean NOT NULL DEFAULT true,
   sort_order integer NOT NULL DEFAULT 0,
   subject_count smallint NOT NULL DEFAULT 2,
+  subject_names text[] NOT NULL DEFAULT '{}',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );

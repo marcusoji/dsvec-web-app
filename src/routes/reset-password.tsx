@@ -27,16 +27,19 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 /** Supabase appends its recovery tokens to the URL fragment, which the router's
- * search parser cannot see; read both the query string and the fragment. */
+ * search parser cannot see; read both the query string and the fragment, for
+ * tokens and for the `error`/`error_description` an expired link carries. */
 function readTokens() {
   if (typeof window === "undefined") return {};
   const fromHash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  const pick = (key: string) => fromHash.get(key);
+  const pick = (key: string) => fromHash.get(key) ?? undefined;
   return {
-    access_token: pick("access_token") ?? undefined,
-    refresh_token: pick("refresh_token") ?? undefined,
-    code: pick("code") ?? undefined,
-    token_hash: pick("token_hash") ?? undefined,
+    access_token: pick("access_token"),
+    refresh_token: pick("refresh_token"),
+    code: pick("code"),
+    token_hash: pick("token_hash"),
+    error: pick("error"),
+    error_description: pick("error_description"),
   };
 }
 
@@ -56,17 +59,19 @@ function ResetPasswordPage() {
     let cancelled = false;
 
     async function establish() {
-      if (search.error || search.error_description) {
+      const frag = readTokens();
+      const errorCode = search.error ?? frag.error;
+      const errorDescription = search.error_description ?? frag.error_description;
+
+      if (errorCode || errorDescription) {
         if (!cancelled) {
           setLinkError(
-            search.error_description ??
-              "This reset link is invalid or has expired. Ask for a new one.",
+            errorDescription ?? "This reset link is invalid or has expired. Ask for a new one.",
           );
         }
         return;
       }
 
-      const frag = readTokens();
       const code = search.code ?? frag.code;
       const tokenHash = search.token_hash ?? frag.token_hash;
       const accessToken = frag.access_token;

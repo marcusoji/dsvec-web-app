@@ -1,5 +1,5 @@
 import type { StudentRow } from "@/lib/school.functions";
-import { splitMarks } from "@/lib/subjects";
+import { resolveSubjectNames, splitMarks } from "@/lib/subjects";
 import { PrintLogo } from "@/components/site/print-logo";
 import { printedOn, type SheetKind } from "@/lib/print-sheets";
 import { SITE } from "@/lib/site";
@@ -87,13 +87,17 @@ export function StudentContactSheet({ rows, heading }: { rows: StudentRow[]; hea
 
 export function StudentScoreSheet({ rows, heading }: { rows: StudentRow[]; heading: string }) {
   // A roster can span several units when an administrator prints "all
-  // departments"; each unit is assessed on its own number of subjects, so each
-  // gets its own table with its own column split.
-  const groups = new Map<string, { name: string; count: number; rows: StudentRow[] }>();
+  // departments"; each unit is assessed on its own subjects, so each gets its
+  // own table with its own column headings and split.
+  const groups = new Map<
+    string,
+    { name: string; count: number; names: string[]; rows: StudentRow[] }
+  >();
   for (const row of rows) {
     const group = groups.get(row.unit_id) ?? {
       name: row.unit_name,
       count: row.subject_count,
+      names: row.subject_names,
       rows: [],
     };
     group.rows.push(row);
@@ -112,6 +116,7 @@ export function StudentScoreSheet({ rows, heading }: { rows: StudentRow[]; headi
       </div>
       {[...groups.values()].map((group) => {
         const caps = splitMarks(group.count);
+        const names = resolveSubjectNames(group.names, group.count);
         return (
           <div key={group.name} className="px-6 py-5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -128,7 +133,7 @@ export function StudentScoreSheet({ rows, heading }: { rows: StudentRow[]; headi
                   <th className="py-2 pr-3 font-medium">Application number</th>
                   {caps.map((cap, index) => (
                     <th key={index} className="py-2 pr-3 font-medium">
-                      S{index + 1} (/{cap})
+                      {names[index]} (/{cap})
                     </th>
                   ))}
                   <th className="py-2 font-medium">Total (/100)</th>

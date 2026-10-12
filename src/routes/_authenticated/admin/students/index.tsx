@@ -206,7 +206,7 @@ function StudentsPage() {
                     <td className="px-4 py-3 font-mono text-xs">{r.application_number}</td>
                     <td className="px-4 py-3 text-muted-foreground">{r.phone || "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {r.subject_count} · {splitMarks(r.subject_count).join("/")}
+                      {r.subject_names.join(", ")} · {splitMarks(r.subject_count).join("/")}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link

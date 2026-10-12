@@ -167,8 +167,10 @@
 - `/reset-password` (`src/routes/reset-password.tsx`) exchanges the recovery
   token for a session — tokens normally arrive in the URL *fragment*, so it
   reads both the query string and the fragment, and tolerates the `code` (PKCE),
-  `token_hash`, and implicit `access_token`/`refresh_token` shapes. Keep that in
-  sync with the Supabase Auth flow setting.
+  `token_hash`, and implicit `access_token`/`refresh_token` shapes. Supabase
+  reports an expired or already-used link as `error`/`error_description` in the
+  fragment too, so those are read from both places before treating the link as
+  usable. Keep that in sync with the Supabase Auth flow setting.
 - The admin reset does **not** clear `staff_profiles.must_change_password`, so a
   seeded administrator still clears it from `/admin/account` after signing in.
 
@@ -180,23 +182,35 @@
   a scoresheet has. The 100-point total is split evenly and the remainder is
   carried by the **last** slots, so the parts always sum to 100:
   `splitMarks(2) → [50, 50]`, `3 → [33, 33, 34]`, `4 → [25, 25, 25, 25]`.
-- `splitMarks`/`splitLabel` live in `src/lib/subjects.ts`, deliberately free of
-  React and Supabase imports so the server validator (`saveScores`) and the
-  printable sheets share one definition. Never re-derive the split inline.
+- Instructors name those subjects instead of seeing "Subject 1/2". The labels
+  live in `units.subject_names text[]` (`20261010000000_unit_subject_names.sql`
+  and `full-setup.sql`), written by `setUnitSubjects`; their length is the
+  authoritative subject count and `subject_count` is kept in step for older
+  readers. Units that have not been named fall back to
+  `unnamedSubjects(count)` → `["Subject 1", …]`, so an un-named unit never
+  breaks and nothing is persisted until an instructor saves real names.
+- `splitMarks`/`resolveSubjectNames`/`unnamedSubjects`/`validateSubjectNames`
+  live in `src/lib/subjects.ts`, deliberately free of React and Supabase imports
+  so the server validator (`setUnitSubjects`, `saveScores`) and the printable
+  sheets share one definition. Never re-derive the split inline.
 - Marks are stored one value per subject in `applicant_scores.subjects`
   (`numeric[]`). The legacy `test_score` (/40) and `exam_score` (/60) columns
   stay for rows recorded before per-subject entry and for the archive export;
   new writes go to `subjects` only. `saveScores` re-reads each applicant's unit
   and validates every slot against that unit's split, never the client's.
 - `listStudents`/`getStudent` tolerate a database where the migration has not
-  run yet: they retry without the `subjects` column and log a "has the
-  unit-subjects migration run?" warning rather than failing the roster.
-- A department-scoped caller changes only their own unit's subject count;
-  `setUnitSubjectCount` resolves the unit from `admin.unitId` (or an explicit
+  run yet: they retry without the `subjects`/`subject_names` columns and log a
+  "has the … migration run?" warning rather than failing the roster.
+- A department-scoped caller changes only their own unit's subjects;
+  `setUnitSubjects` resolves the unit from `admin.unitId` (or an explicit
   `unit_id` for administrators) — same least-privilege rule as `saveScores`.
 - The roster's blank scoresheet (`StudentScoreSheet`) groups rows by unit and
   prints one table per unit, because an administrator printing "all departments"
-  can span units with different subject counts.
+  can span units with different subjects. Column headings use each unit's
+  resolved names.
+- The scoresheet editor holds un-saved names locally and disables "Save scores"
+  until the names are persisted, so recorded marks always line up with the
+  columns.
 - Bulk status changes use `bulkUpdateApplicationStatus`
   (`applicants.status.update`, admin + registrar) and write a single summary
   audit row. The applicants list shows the multi-select only to callers holding
@@ -205,5 +219,8 @@
   a preview dialog that is `no-print`; the copy that actually prints is the
   page's `<div className="print-only hidden">`, which must stay **outside** any
   `no-print` ancestor or it stays hidden when printing. It is dated on the day
-  it is printed; no admission date is stored, so do not invent one.
+  it is printed; no admission date is stored, so do not invent one. The
+  "report on or before" date is derived as the issue date plus two weeks, and
+  the admission details are rendered as a bordered two-column panel rather than
+  loose text so the label/value pairs stay aligned.
 

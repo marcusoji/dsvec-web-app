@@ -406,6 +406,7 @@ export type Database = {
           slug: string
           sort_order: number
           subject_count: number
+          subject_names: string[]
           summary: string
           updated_at: string
         }
@@ -428,6 +429,7 @@ export type Database = {
           slug: string
           sort_order?: number
           subject_count?: number
+          subject_names?: string[]
           summary?: string
           updated_at?: string
         }
@@ -450,6 +452,7 @@ export type Database = {
           slug?: string
           sort_order?: number
           subject_count?: number
+          subject_names?: string[]
           summary?: string
           updated_at?: string
         }

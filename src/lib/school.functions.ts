@@ -5,11 +5,24 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { readStaffProfiles } from "./admin.functions";
 import { requirePermission, type AdminAuthContext } from "./admin-auth";
 import { ROLE_LABELS, requiresUnit, type StaffRole } from "./permissions";
-import { MAX_SUBJECTS, MIN_SUBJECTS, splitMarks } from "./subjects";
+import {
+  DEFAULT_SUBJECTS,
+  MAX_SUBJECTS,
+  MIN_SUBJECTS,
+  normalizeSubjectNames,
+  resolveSubjectNames,
+  splitMarks,
+} from "./subjects";
 import { emailSchema } from "./validation";
 
-/** Subject count to fall back on when a unit row has not been given one. */
-const DEFAULT_SUBJECTS = 2;
+/** Unit subject configuration: the ordered names and the implied count. */
+export type UnitSubjects = { count: number; names: string[] };
+
+/** Names a unit has not set, but for which it still declares a subject count. */
+function unnamedSubjects(count: number): UnitSubjects {
+  const names = resolveSubjectNames(null, count);
+  return { count: names.length, names };
+}
 
 function adminOf(context: unknown): AdminAuthContext["admin"] {
   return (context as { admin: AdminAuthContext["admin"] }).admin;
@@ -51,26 +64,47 @@ async function audit(
 }
 
 /**
- * Subject counts per unit. A unit row without `subject_count` (migration not
- * run yet) falls back to the two-subject default so the portal degrades instead
- * of failing to render a scoresheet.
+ * Subject configuration per unit. A unit stores an ordered list of
+ * instructor-set names (`units.subject_names`); a unit that has not been named
+ * yet falls back to its `subject_count` unnamed slots, and a database without
+ * either column (migration not run) degrades to the two-subject default rather
+ * than failing to render a scoresheet.
  */
-async function readUnitSubjectCounts(unitIds?: string[]): Promise<Map<string, number>> {
-  let query = supabaseAdmin.from("units").select("id, subject_count");
+async function readUnitSubjects(unitIds?: string[]): Promise<Map<string, UnitSubjects>> {
+  let query = supabaseAdmin.from("units").select("id, subject_count, subject_names");
   if (unitIds && unitIds.length > 0) query = query.in("id", unitIds);
   const { data, error } = await query;
   if (error) {
     console.error(
-      "[students] unit subject counts unavailable (has the unit-subjects migration run?)",
+      "[students] unit subjects unavailable (has the unit-subjects migration run?)",
       error.message,
     );
     return new Map();
   }
-  const counts = new Map<string, number>();
-  for (const row of (data ?? []) as Array<{ id: string; subject_count?: number | null }>) {
-    counts.set(row.id, row.subject_count ?? DEFAULT_SUBJECTS);
+  const subjects = new Map<string, UnitSubjects>();
+  for (const row of (data ?? []) as Array<{
+    id: string;
+    subject_count?: number | null;
+    subject_names?: string[] | null;
+  }>) {
+    const names = (row.subject_names ?? []).filter(
+      (name) => typeof name === "string" && name.trim(),
+    );
+    if (names.length > 0) {
+      const resolved = resolveSubjectNames(names, names.length);
+      subjects.set(row.id, { count: resolved.length, names: resolved });
+    } else {
+      subjects.set(row.id, unnamedSubjects(row.subject_count ?? DEFAULT_SUBJECTS));
+    }
   }
-  return counts;
+  return subjects;
+}
+
+/** The subject configuration for a single unit, with the same fallbacks. */
+async function unitSubjectsFor(unitId: string | null | undefined): Promise<UnitSubjects> {
+  if (!unitId) return unnamedSubjects(DEFAULT_SUBJECTS);
+  const subjects = await readUnitSubjects([unitId]);
+  return subjects.get(unitId) ?? unnamedSubjects(DEFAULT_SUBJECTS);
 }
 
 // ---------------------------------------------------------------------------
@@ -291,6 +325,8 @@ export type StudentRow = {
   created_at: string;
   /** One mark per subject, in order; `null` until the assessor records them. */
   subjects: number[] | null;
+  /** The unit's ordered subject names, for scoresheet headings. */
+  subject_names: string[];
   subject_count: number;
   /** Sum of the recorded subject marks, or null when nothing is recorded. */
   total_score: number | null;
@@ -298,7 +334,7 @@ export type StudentRow = {
 
 export type StudentsResult = {
   rows: StudentRow[];
-  unit: { id: string; name: string; subjectCount: number } | null;
+  unit: { id: string; name: string; subjectCount: number; subjectNames: string[] } | null;
   units: Array<{ id: string; name: string }>;
   isAdmin: boolean;
 };
@@ -315,13 +351,13 @@ export const listStudents = createServerFn({ method: "POST" })
     const admin = adminOf(context);
     const scope = scopedUnitId(admin, data.unit_id ?? null);
 
-    const [unitsResult, subjectCounts] = await Promise.all([
+    const [unitsResult, unitSubjects] = await Promise.all([
       supabaseAdmin
         .from("units")
         .select("id, name")
         .eq("is_active", true)
         .order("name", { ascending: true }),
-      readUnitSubjectCounts(),
+      readUnitSubjects(),
     ]);
     const units = unitsResult.data;
 
@@ -400,7 +436,7 @@ export const listStudents = createServerFn({ method: "POST" })
     const mapped: StudentRow[] = (rows ?? []).map((r) => {
       const raw = r as unknown as Raw;
       const subjects = raw.applicant_scores?.subjects ?? null;
-      const subject_count = subjectCounts.get(raw.unit_id) ?? DEFAULT_SUBJECTS;
+      const unit = unitSubjects.get(raw.unit_id) ?? unnamedSubjects(DEFAULT_SUBJECTS);
       return {
         id: raw.id,
         application_number: raw.application_number,
@@ -413,7 +449,8 @@ export const listStudents = createServerFn({ method: "POST" })
         status: raw.status,
         created_at: raw.created_at,
         subjects,
-        subject_count,
+        subject_names: unit.names,
+        subject_count: unit.count,
         total_score:
           subjects && subjects.length > 0
             ? subjects.reduce((sum, value) => sum + Number(value ?? 0), 0)
@@ -422,6 +459,9 @@ export const listStudents = createServerFn({ method: "POST" })
     });
 
     const selected = scope ? ((units ?? []).find((u) => u.id === scope) ?? null) : null;
+    const selectedSubjects = selected
+      ? (unitSubjects.get(selected.id) ?? unnamedSubjects(DEFAULT_SUBJECTS))
+      : unnamedSubjects(DEFAULT_SUBJECTS);
 
     return {
       rows: mapped,
@@ -429,7 +469,8 @@ export const listStudents = createServerFn({ method: "POST" })
         ? {
             id: selected.id,
             name: selected.name,
-            subjectCount: subjectCounts.get(selected.id) ?? DEFAULT_SUBJECTS,
+            subjectCount: selectedSubjects.count,
+            subjectNames: selectedSubjects.names,
           }
         : null,
       units: units ?? [],
@@ -454,6 +495,8 @@ export type StudentDetail = {
   stream: string;
   created_at: string;
   subjects: number[] | null;
+  /** The unit's ordered subject names, for scoresheet headings. */
+  subject_names: string[];
   subject_count: number;
   total_score: number | null;
   updated_at: string | null;
@@ -519,8 +562,7 @@ export const getStudent = createServerFn({ method: "POST" })
     };
     const raw = row as unknown as Raw;
     const subjects = raw.applicant_scores?.subjects ?? null;
-    const subjectCounts = await readUnitSubjectCounts([raw.unit_id]);
-    const subject_count = subjectCounts.get(raw.unit_id) ?? DEFAULT_SUBJECTS;
+    const unit = await unitSubjectsFor(raw.unit_id);
 
     return {
       id: raw.id,
@@ -535,7 +577,8 @@ export const getStudent = createServerFn({ method: "POST" })
       stream: raw.stream ?? "1",
       created_at: raw.created_at,
       subjects,
-      subject_count,
+      subject_names: unit.names,
+      subject_count: unit.count,
       total_score:
         subjects && subjects.length > 0
           ? subjects.reduce((sum, value) => sum + Number(value ?? 0), 0)
@@ -583,11 +626,13 @@ export const saveScores = createServerFn({ method: "POST" })
 
     // The slot maxima come from each student's own unit, never the client.
     const unitByApplicant = new Map((allowed ?? []).map((a) => [a.id, a.unit_id]));
-    const subjectCounts = await readUnitSubjectCounts([...new Set(unitByApplicant.values())]);
+    const subjectsByUnit = await readUnitSubjects([...new Set(unitByApplicant.values())]);
 
     for (const entry of data.entries) {
       const unitId = unitByApplicant.get(entry.applicant_id);
-      const count = (unitId ? subjectCounts.get(unitId) : undefined) ?? DEFAULT_SUBJECTS;
+      const unit = unitId ? subjectsByUnit.get(unitId) : undefined;
+      const count = unit?.count ?? DEFAULT_SUBJECTS;
+      const names = unit?.names ?? unnamedSubjects(DEFAULT_SUBJECTS).names;
       if (entry.subjects.length > count) {
         throw new Error(`A student's unit is assessed on ${count} subject(s)`);
       }
@@ -595,7 +640,9 @@ export const saveScores = createServerFn({ method: "POST" })
       entry.subjects.forEach((value, index) => {
         if (value === null) return;
         if (value < 0 || value > (caps[index] ?? 0)) {
-          throw new Error(`Subject ${index + 1} must be between 0 and ${caps[index] ?? 0}`);
+          throw new Error(
+            `${names[index] ?? `Subject ${index + 1}`} must be between 0 and ${caps[index] ?? 0}`,
+          );
         }
       });
     }
@@ -620,16 +667,19 @@ export const saveScores = createServerFn({ method: "POST" })
   });
 
 /**
- * Sets how many subjects a unit is assessed on. The 100-point total is then
- * split evenly across them. A department-scoped caller may only change their
- * own unit; an administrator passes an explicit `unit_id`.
+ * Names the subjects a unit is assessed on. The ordered list of names is the
+ * number of subjects; the 100-point total is then split evenly across them.
+ * `subject_count` is written alongside so older readers keep working.
+ *
+ * A department-scoped caller may only change their own unit; an administrator
+ * passes an explicit `unit_id`.
  */
-export const setUnitSubjectCount = createServerFn({ method: "POST" })
+export const setUnitSubjects = createServerFn({ method: "POST" })
   .middleware([requirePermission("scores.write")])
   .validator(
     z.object({
       unit_id: z.string().uuid().optional(),
-      subject_count: z.number().int().min(MIN_SUBJECTS).max(MAX_SUBJECTS),
+      subject_names: z.array(z.string()).min(MIN_SUBJECTS).max(MAX_SUBJECTS),
     }),
   )
   .handler(async ({ data, context }) => {
@@ -637,19 +687,23 @@ export const setUnitSubjectCount = createServerFn({ method: "POST" })
     const scope = scopedUnitId(admin, data.unit_id ?? null);
     if (!scope) throw new Error("Choose a department before setting its subjects");
 
+    const normalized = normalizeSubjectNames(data.subject_names);
+    if ("error" in normalized) throw new Error(normalized.error);
+    const names = normalized.names;
+
     const { error } = await supabaseAdmin
       .from("units")
-      .update({ subject_count: data.subject_count })
+      .update({ subject_names: names, subject_count: names.length })
       .eq("id", scope);
-    if (error) throw new Error("Could not update the subject count");
+    if (error) throw new Error("Could not update the subjects");
 
     await audit(
       admin,
       "unit_subjects_updated",
-      `Unit subjects set to ${data.subject_count} (split ${splitMarks(data.subject_count).join("/")})`,
+      `Unit subjects set to ${names.join(", ")} (split ${splitMarks(names.length).join("/")})`,
     );
 
-    return { ok: true as const, subject_count: data.subject_count };
+    return { ok: true as const, subject_names: names, subject_count: names.length };
   });
 
 // ---------------------------------------------------------------------------

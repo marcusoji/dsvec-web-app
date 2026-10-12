@@ -1,14 +1,29 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Printer, Save, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  Plus,
+  Printer,
+  Save,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 
 import {
   getStudent,
   saveScores,
-  setUnitSubjectCount,
+  setUnitSubjects,
   type StudentDetail,
 } from "@/lib/school.functions";
-import { MAX_SUBJECTS, MIN_SUBJECTS, splitMarks, TOTAL_MARKS } from "@/lib/subjects";
+import {
+  MAX_SUBJECTS,
+  MIN_SUBJECTS,
+  normalizeSubjectNames,
+  splitMarks,
+  TOTAL_MARKS,
+} from "@/lib/subjects";
 import { PrintLogo } from "@/components/site/print-logo";
 import { SITE } from "@/lib/site";
 import { useAdminUser } from "@/lib/use-admin-user";
@@ -75,61 +90,91 @@ function resize(values: string[], count: number): string[] {
   return Array.from({ length: count }, (_, i) => values[i] ?? "");
 }
 
+function sameNames(a: string[], b: string[]) {
+  return a.length === b.length && a.every((name, i) => name === b[i]);
+}
+
 function ScoresheetPage() {
   const student = Route.useLoaderData() as StudentDetail;
   const router = useRouter();
   const { hasPermission } = useAdminUser();
   const canWrite = hasPermission("scores.write");
 
-  const [subjectCount, setSubjectCount] = useState(student.subject_count);
+  const savedNames = student.subject_names;
+  const [names, setNames] = useState<string[]>(savedNames);
   const [subjects, setSubjects] = useState<string[]>(() =>
     resize(
       (student.subjects ?? []).map((s) => (s === null ? "" : String(s))),
-      student.subject_count,
+      savedNames.length,
     ),
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(student.updated_at);
-  const [countBusy, setCountBusy] = useState(false);
-  const [countSaved, setCountSaved] = useState(false);
+  const [namesBusy, setNamesBusy] = useState(false);
+  const [namesSaved, setNamesSaved] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-hide-badge", "");
     return () => document.documentElement.removeAttribute("data-hide-badge");
   }, []);
 
-  const caps = useMemo(() => splitMarks(subjectCount), [subjectCount]);
+  const count = names.length;
+  const caps = useMemo(() => splitMarks(count), [count]);
+  const namesCheck = useMemo(() => normalizeSubjectNames(names), [names]);
+  const namesError = "error" in namesCheck ? namesCheck.error : null;
+  const namesChanged = !sameNames(names, savedNames);
+
   const results = subjects.map((raw, i) => parseScore(raw, caps[i] ?? 0));
   const validationError = results.find((r) => r.error)?.error ?? null;
   const values = results.map((r) => (r.error ? null : r.value));
   const anyValue = values.some((v) => v !== null);
   const total = anyValue ? values.reduce<number>((sum, v) => sum + Number(v ?? 0), 0) : null;
 
-  function changeSubjectCount(next: number) {
-    setSubjectCount(next);
-    setSubjects((prev) => resize(prev, next));
+  function renameSubject(index: number, value: string) {
+    setNames((prev) => prev.map((name, i) => (i === index ? value : name)));
+    setNamesSaved(false);
   }
 
-  async function applySubjectCount() {
-    setCountBusy(true);
+  function addSubject() {
+    setNames((prev) =>
+      prev.length >= MAX_SUBJECTS ? prev : [...prev, `Subject ${prev.length + 1}`],
+    );
+    setSubjects((prev) => resize(prev, Math.min(MAX_SUBJECTS, prev.length + 1)));
+    setNamesSaved(false);
+  }
+
+  function removeSubject(index: number) {
+    setNames((prev) => (prev.length <= MIN_SUBJECTS ? prev : prev.filter((_, i) => i !== index)));
+    setSubjects((prev) => prev.filter((_, i) => i !== index));
+    setNamesSaved(false);
+  }
+
+  async function applySubjectNames() {
+    if (namesError) {
+      setError(namesError);
+      return;
+    }
+    setNamesBusy(true);
     setError(null);
     try {
-      await setUnitSubjectCount({
-        data: { unit_id: student.unit_id, subject_count: subjectCount },
-      });
-      setCountSaved(true);
-      setTimeout(() => setCountSaved(false), 2500);
+      await setUnitSubjects({ data: { unit_id: student.unit_id, subject_names: names } });
+      setNamesSaved(true);
+      setTimeout(() => setNamesSaved(false), 2500);
       await router.invalidate();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not update the subject count.");
+      setError(e instanceof Error ? e.message : "Could not update the subjects.");
     } finally {
-      setCountBusy(false);
+      setNamesBusy(false);
     }
   }
 
   async function save() {
+    if (namesError) {
+      setError(namesError);
+      return;
+    }
     if (validationError) {
       setError(validationError);
       return;
@@ -164,8 +209,8 @@ function ScoresheetPage() {
           <div>
             <h1 className="text-2xl font-display">Scoresheet</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Enter a mark for each of the {subjectCount} subject(s) this unit assesses, then print
-              or save the sheet as a PDF.
+              Enter a mark for each of the {count} subject(s) this unit assesses, then print or save
+              the sheet as a PDF.
             </p>
           </div>
           <button
@@ -188,42 +233,71 @@ function ScoresheetPage() {
               </p>
             ) : null}
 
-            <div className="flex flex-wrap items-end gap-3 border-b border-border pb-5">
-              <label htmlFor="subject-count" className="text-sm font-medium">
-                Subjects this unit assesses
-                <select
-                  id="subject-count"
-                  value={subjectCount}
-                  onChange={(e) => changeSubjectCount(Number(e.target.value))}
-                  className="mt-1.5 block h-10 w-40 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            <div className="border-b border-border pb-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold">Subjects this unit assesses</h2>
+                <p className="text-xs text-muted-foreground">
+                  {TOTAL_MARKS} marks divided evenly: {caps.join(" / ")}
+                </p>
+              </div>
+
+              <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {names.map((name, index) => (
+                  <li key={index} className="flex items-end gap-2">
+                    <label htmlFor={`subject-name-${index}`} className="flex-1 text-sm font-medium">
+                      Subject {index + 1} (max {caps[index]})
+                      <input
+                        id={`subject-name-${index}`}
+                        value={name}
+                        maxLength={60}
+                        onChange={(e) => renameSubject(index, e.target.value)}
+                        placeholder={`e.g. ${index === 0 ? "Electrical Theory" : "Wiring Practical"}`}
+                        className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => removeSubject(index)}
+                      disabled={count <= MIN_SUBJECTS}
+                      aria-label={`Remove subject ${index + 1}`}
+                      title="Remove subject"
+                      className="inline-flex size-10 items-center justify-center rounded-md border border-border text-muted-foreground disabled:opacity-40"
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={addSubject}
+                  disabled={count >= MAX_SUBJECTS}
+                  className="inline-flex h-10 items-center gap-2 rounded-md border border-border-strong bg-paper px-4 text-sm font-semibold disabled:opacity-60"
                 >
-                  {Array.from(
-                    { length: MAX_SUBJECTS - MIN_SUBJECTS + 1 },
-                    (_, i) => MIN_SUBJECTS + i,
-                  ).map((n) => (
-                    <option key={n} value={n}>
-                      {n} subject{n === 1 ? "" : "s"}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                onClick={applySubjectCount}
-                disabled={countBusy || subjectCount === student.subject_count}
-                className="inline-flex h-10 items-center gap-2 rounded-md border border-border-strong bg-paper px-4 text-sm font-semibold disabled:opacity-60"
-              >
-                {countBusy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
-                Save subject count
-              </button>
-              {countSaved ? (
-                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
-                  <CheckCircle2 className="size-4" aria-hidden="true" /> Unit updated
-                </span>
-              ) : null}
-              <p className="text-xs text-muted-foreground">
-                {TOTAL_MARKS} marks are divided evenly: {caps.join(" / ")}.
-              </p>
+                  <Plus className="size-4" aria-hidden="true" /> Add subject
+                </button>
+                <button
+                  type="button"
+                  onClick={applySubjectNames}
+                  disabled={namesBusy || !namesChanged || Boolean(namesError)}
+                  className="inline-flex h-10 items-center gap-2 rounded-md border border-border-strong bg-paper px-4 text-sm font-semibold disabled:opacity-60"
+                >
+                  {namesBusy ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Save className="size-4" aria-hidden="true" />
+                  )}
+                  Save subjects
+                </button>
+                {namesSaved ? (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                    <CheckCircle2 className="size-4" aria-hidden="true" /> Unit updated
+                  </span>
+                ) : null}
+                {namesError ? <span className="text-sm text-destructive">{namesError}</span> : null}
+              </div>
             </div>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -231,7 +305,7 @@ function ScoresheetPage() {
                 <ScoreInput
                   key={index}
                   id={`subject-${index}`}
-                  label={`Subject ${index + 1} (max ${cap})`}
+                  label={`${names[index] || `Subject ${index + 1}`} (max ${cap})`}
                   value={subjects[index] ?? ""}
                   onChange={(value) =>
                     setSubjects((prev) => prev.map((v, i) => (i === index ? value : v)))
@@ -248,11 +322,11 @@ function ScoresheetPage() {
               </div>
             </div>
 
-            <div className="mt-5 flex items-center gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={save}
-                disabled={busy || Boolean(validationError)}
+                disabled={busy || Boolean(validationError) || Boolean(namesError) || namesChanged}
                 className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
               >
                 {busy ? (
@@ -265,6 +339,11 @@ function ScoresheetPage() {
               {saved ? (
                 <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
                   <CheckCircle2 className="size-4" aria-hidden="true" /> Scores saved
+                </span>
+              ) : null}
+              {namesChanged && !namesError ? (
+                <span className="text-sm text-muted-foreground">
+                  Save the subject names before recording scores.
                 </span>
               ) : null}
             </div>
@@ -317,8 +396,8 @@ function ScoresheetPage() {
 
         <div className="px-6 py-5">
           <p className="mb-2 text-xs text-muted-foreground">
-            {subjectCount} subject{subjectCount === 1 ? "" : "s"}, {TOTAL_MARKS} marks in total —
-            divided {caps.join(" / ")}. Write the marks in the blank boxes.
+            {count} subject{count === 1 ? "" : "s"}, {TOTAL_MARKS} marks in total — divided{" "}
+            {caps.join(" / ")}. Write the marks in the blank boxes.
           </p>
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -331,7 +410,9 @@ function ScoresheetPage() {
             <tbody className="divide-y divide-border">
               {caps.map((cap, index) => (
                 <tr key={index}>
-                  <td className="py-3 pr-4 font-medium">Subject {index + 1}</td>
+                  <td className="py-3 pr-4 font-medium">
+                    {names[index] || `Subject ${index + 1}`}
+                  </td>
                   <td className="py-3 pr-4">{cap}</td>
                   <td className="py-3">
                     <span className="score-box block w-24" aria-hidden="true" />
@@ -350,8 +431,10 @@ function ScoresheetPage() {
           {total !== null ? (
             <p className="mt-3 text-xs text-muted-foreground">
               Recorded in the portal:{" "}
-              {values.map((v, i) => `S${i + 1} ${v ?? "—"}/${caps[i]}`).join(", ")} — total {total}{" "}
-              — {gradeFor(total)}.
+              {values
+                .map((v, i) => `${names[i] || `Subject ${i + 1}`} ${v ?? "—"}/${caps[i]}`)
+                .join(", ")}{" "}
+              — total {total} — {gradeFor(total)}.
             </p>
           ) : null}
         </div>
