@@ -72,9 +72,13 @@ CREATE TABLE public.units (
   icon text,
   is_active boolean NOT NULL DEFAULT true,
   sort_order integer NOT NULL DEFAULT 0,
+  subject_count smallint NOT NULL DEFAULT 2,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE public.units DROP CONSTRAINT IF EXISTS units_subject_count_check;
+ALTER TABLE public.units
+  ADD CONSTRAINT units_subject_count_check CHECK (subject_count BETWEEN 2 AND 6);
 CREATE INDEX units_active_sort_idx ON public.units (is_active, sort_order);
 GRANT SELECT ON public.units TO anon, authenticated;
 GRANT INSERT, UPDATE ON public.units TO authenticated;
@@ -367,12 +371,16 @@ RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
 $$;
 
 -- ============ scores ============
--- One assessment row per applicant. Test is scored out of 40 and the exam out
--- of 60 so the combined total lands on a 100-point scale.
+-- One assessment row per applicant. Marks are held one value per subject in
+-- `subjects`, split evenly across the unit's subject_count to a 100-point total
+-- (2 subjects → 50/50, 3 → 33/33/34, 4 → 25/25/25/25). The legacy test_score
+-- (/40) and exam_score (/60) columns are retained for rows recorded before
+-- per-subject entry.
 CREATE TABLE IF NOT EXISTS public.applicant_scores (
   applicant_id uuid PRIMARY KEY REFERENCES public.applicants(id) ON DELETE CASCADE,
   test_score numeric(5, 2) CHECK (test_score >= 0 AND test_score <= 40),
   exam_score numeric(5, 2) CHECK (exam_score >= 0 AND exam_score <= 60),
+  subjects numeric(5, 2)[],
   recorded_by uuid,
   recorded_by_email text,
   created_at timestamptz NOT NULL DEFAULT now(),

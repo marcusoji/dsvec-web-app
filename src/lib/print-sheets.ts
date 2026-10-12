@@ -1,5 +1,5 @@
-/** The two official printouts the branch issues to a trade unit. */
-export type SheetKind = "contact" | "scores";
+/** The official printouts the branch issues. */
+export type SheetKind = "contact" | "scores" | "admission";
 
 export function printedOn(iso = new Date().toISOString()) {
   return new Intl.DateTimeFormat("en-GB", {

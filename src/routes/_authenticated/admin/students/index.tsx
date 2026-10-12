@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
@@ -14,6 +14,7 @@ import {
 import { StudentContactSheet, StudentScoreSheet } from "@/components/site/student-print-sheets";
 import { printSheet } from "@/lib/print-sheets";
 import { listStudents, type StudentRow } from "@/lib/school.functions";
+import { splitMarks } from "@/lib/subjects";
 import { useAdminUser } from "@/lib/use-admin-user";
 
 const DESCRIPTION =
@@ -191,6 +192,10 @@ function StudentsPage() {
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="px-4 py-3 font-medium">Application #</th>
                   <th className="px-4 py-3 font-medium">Phone number</th>
+                  <th className="px-4 py-3 font-medium">Subjects</th>
+                  <th className="px-4 py-3 font-medium">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -200,6 +205,18 @@ function StudentsPage() {
                     <td className="px-4 py-3 font-medium">{r.full_name}</td>
                     <td className="px-4 py-3 font-mono text-xs">{r.application_number}</td>
                     <td className="px-4 py-3 text-muted-foreground">{r.phone || "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {r.subject_count} · {splitMarks(r.subject_count).join("/")}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        to="/admin/students/$id/scoresheet"
+                        params={{ id: r.id }}
+                        className="inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-4"
+                      >
+                        <ClipboardList className="size-3.5" aria-hidden="true" /> Scoresheet
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -212,8 +229,8 @@ function StudentsPage() {
         <FileText className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
         Showing {rows.length} admitted student{rows.length === 1 ? "" : "s"}. The contact list
         carries the name, application number and phone number; the scoresheet carries the name,
-        application number and blank C.A. (/40) and examination (/60) boxes for handwritten marks.
-        Applicants appear here only after their status is set to{" "}
+        application number and blank subject boxes, split evenly over the subjects each unit
+        assesses. Applicants appear here only after their status is set to{" "}
         <strong className="font-semibold">admitted</strong>.
       </p>
 

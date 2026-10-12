@@ -8,6 +8,7 @@ import {
   updateApplicationStatus,
   type ApplicationStatus,
 } from "@/lib/admin.functions";
+import { AdmissionLetter, AdmissionLetterDialog } from "@/components/site/admission-letter";
 
 export const Route = createFileRoute("/_authenticated/admin/applicants/$id")({
   loader: async ({ params }) => {
@@ -63,6 +64,14 @@ function ApplicantDetail() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const letterData = {
+    fullName: detail.full_name,
+    applicationNumber: detail.application_number,
+    unitName: detail.unit_name,
+    stream: detail.stream,
+    address: detail.address,
+  };
+
   async function save() {
     setSaving(true);
     try {
@@ -80,12 +89,12 @@ function ApplicantDetail() {
     <section>
       <Link
         to="/admin/applicants"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground underline underline-offset-4"
+        className="no-print inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground underline underline-offset-4"
       >
         <ArrowLeft className="size-4" aria-hidden="true" /> Back to applicants
       </Link>
 
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <div className="no-print mt-4 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="grid h-24 w-20 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-secondary">
             {detail.photo_url ? (
@@ -112,19 +121,22 @@ function ApplicantDetail() {
           <span className="inline-flex rounded-full border border-border bg-accent/40 px-3 py-1 text-sm capitalize">
             {detail.status.replace(/_/g, " ")}
           </span>
-          {detail.access_token ? (
-            <Link
-              to="/application/$token"
-              params={{ token: detail.access_token }}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold underline underline-offset-4"
-            >
-              <FileText className="size-4" aria-hidden="true" /> View printable form
-            </Link>
-          ) : null}
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            {detail.access_token ? (
+              <Link
+                to="/application/$token"
+                params={{ token: detail.access_token }}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold underline underline-offset-4"
+              >
+                <FileText className="size-4" aria-hidden="true" /> View printable form
+              </Link>
+            ) : null}
+            {detail.status === "admitted" ? <AdmissionLetterDialog data={letterData} /> : null}
+          </div>
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="no-print mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <section className="surface-card p-6">
           <h2 className="font-display text-base">Personal &amp; contact</h2>
           <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
@@ -186,6 +198,15 @@ function ApplicantDetail() {
           </button>
         </section>
       </div>
+
+      {/* Admission letters live here, outside the `no-print` content above, so
+          the page's print CSS can drop the portal chrome and print only the
+          letter. Kept mounted so `window.print()` is synchronous. */}
+      {detail.status === "admitted" ? (
+        <div className="print-only hidden">
+          <AdmissionLetter data={letterData} />
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -530,6 +530,7 @@ export type ApplicantDetail = {
   admin_notes: string | null;
   created_at: string;
   unit_name: string;
+  stream: string;
   photo_url: string | null;
   access_token: string | null;
 };
@@ -541,7 +542,7 @@ export const getApplicantDetail = createServerFn({ method: "GET" })
     const { data: row } = await supabaseAdmin
       .from("applicants")
       .select(
-        "id, application_number, first_name, middle_name, last_name, email, phone, date_of_birth, gender, nationality, state, local_government, address, status, admin_notes, created_at, access_token, units(name)",
+        "id, application_number, first_name, middle_name, last_name, email, phone, date_of_birth, gender, nationality, state, local_government, address, status, admin_notes, created_at, access_token, stream, units(name)",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -580,6 +581,7 @@ export const getApplicantDetail = createServerFn({ method: "GET" })
       admin_notes: row.admin_notes,
       created_at: row.created_at,
       unit_name: unit?.name ?? "—",
+      stream: row.stream ?? "1",
       photo_url,
       access_token: row.access_token ?? null,
     };
@@ -629,6 +631,46 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
     );
 
     return { ok: true as const, status: data.status };
+  });
+
+/**
+ * Applies one status to many applicants at once, for the list's multi-select.
+ * Mirrors `updateApplicationStatus` but summarises the change in a single audit
+ * entry so a bulk shortlist does not flood the trail.
+ */
+export const bulkUpdateApplicationStatus = createServerFn({ method: "POST" })
+  .middleware([requirePermission("applicants.status.update")])
+  .validator(
+    z.object({
+      ids: z.array(z.string().uuid()).min(1).max(200),
+      status: z.enum(STATUSES),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const admin = adminOf(context);
+
+    const { data: existing, error: readError } = await supabaseAdmin
+      .from("applicants")
+      .select("id")
+      .in("id", data.ids);
+    if (readError) throw new Error("Could not load the selected applications");
+    const foundIds = (existing ?? []).map((r) => r.id);
+    if (foundIds.length === 0) throw new Error("No matching applications were found");
+
+    // Notes are left untouched by a bulk change: only the status moves.
+    const { error } = await supabaseAdmin
+      .from("applicants")
+      .update({ status: data.status })
+      .in("id", foundIds);
+    if (error) throw new Error("Could not update the selected applications");
+
+    await audit(
+      admin,
+      "status_updated",
+      `Bulk status set to ${data.status} for ${foundIds.length} applicant(s)`,
+    );
+
+    return { ok: true as const, updated: foundIds.length };
   });
 
 // ---------------------------------------------------------------------------

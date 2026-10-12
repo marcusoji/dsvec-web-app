@@ -109,6 +109,7 @@ export type Database = {
           exam_score: number | null
           recorded_by: string | null
           recorded_by_email: string | null
+          subjects: (number | null)[] | null
           test_score: number | null
           updated_at: string
         }
@@ -118,6 +119,7 @@ export type Database = {
           exam_score?: number | null
           recorded_by?: string | null
           recorded_by_email?: string | null
+          subjects?: (number | null)[] | null
           test_score?: number | null
           updated_at?: string
         }
@@ -127,6 +129,7 @@ export type Database = {
           exam_score?: number | null
           recorded_by?: string | null
           recorded_by_email?: string | null
+          subjects?: (number | null)[] | null
           test_score?: number | null
           updated_at?: string
         }
@@ -402,6 +405,7 @@ export type Database = {
           skills: string[]
           slug: string
           sort_order: number
+          subject_count: number
           summary: string
           updated_at: string
         }
@@ -423,6 +427,7 @@ export type Database = {
           skills?: string[]
           slug: string
           sort_order?: number
+          subject_count?: number
           summary?: string
           updated_at?: string
         }
@@ -444,6 +449,7 @@ export type Database = {
           skills?: string[]
           slug?: string
           sort_order?: number
+          subject_count?: number
           summary?: string
           updated_at?: string
         }

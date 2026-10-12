@@ -171,3 +171,39 @@
   sync with the Supabase Auth flow setting.
 - The admin reset does **not** clear `staff_profiles.must_change_password`, so a
   seeded administrator still clears it from `/admin/account` after signing in.
+
+## Subject-based scoresheets and bulk applicant actions
+
+- A trade unit assesses the subjects it teaches. `units.subject_count` (2–6,
+  added by `supabase/migrations/20261009000000_unit_subjects.sql` and to
+  `supabase/export/full-setup.sql` for fresh databases) drives how many columns
+  a scoresheet has. The 100-point total is split evenly and the remainder is
+  carried by the **last** slots, so the parts always sum to 100:
+  `splitMarks(2) → [50, 50]`, `3 → [33, 33, 34]`, `4 → [25, 25, 25, 25]`.
+- `splitMarks`/`splitLabel` live in `src/lib/subjects.ts`, deliberately free of
+  React and Supabase imports so the server validator (`saveScores`) and the
+  printable sheets share one definition. Never re-derive the split inline.
+- Marks are stored one value per subject in `applicant_scores.subjects`
+  (`numeric[]`). The legacy `test_score` (/40) and `exam_score` (/60) columns
+  stay for rows recorded before per-subject entry and for the archive export;
+  new writes go to `subjects` only. `saveScores` re-reads each applicant's unit
+  and validates every slot against that unit's split, never the client's.
+- `listStudents`/`getStudent` tolerate a database where the migration has not
+  run yet: they retry without the `subjects` column and log a "has the
+  unit-subjects migration run?" warning rather than failing the roster.
+- A department-scoped caller changes only their own unit's subject count;
+  `setUnitSubjectCount` resolves the unit from `admin.unitId` (or an explicit
+  `unit_id` for administrators) — same least-privilege rule as `saveScores`.
+- The roster's blank scoresheet (`StudentScoreSheet`) groups rows by unit and
+  prints one table per unit, because an administrator printing "all departments"
+  can span units with different subject counts.
+- Bulk status changes use `bulkUpdateApplicationStatus`
+  (`applicants.status.update`, admin + registrar) and write a single summary
+  audit row. The applicants list shows the multi-select only to callers holding
+  that permission.
+- The admission letter (`src/components/site/admission-letter.tsx`) is shown in
+  a preview dialog that is `no-print`; the copy that actually prints is the
+  page's `<div className="print-only hidden">`, which must stay **outside** any
+  `no-print` ancestor or it stays hidden when printing. It is dated on the day
+  it is printed; no admission date is stored, so do not invent one.
+

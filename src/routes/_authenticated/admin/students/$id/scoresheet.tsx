@@ -1,14 +1,14 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, CheckCircle2, Loader2, Printer, Save, ShieldCheck } from "lucide-react";
 
 import {
-  EXAM_MAX,
   getStudent,
   saveScores,
-  TEST_MAX,
+  setUnitSubjectCount,
   type StudentDetail,
 } from "@/lib/school.functions";
+import { MAX_SUBJECTS, MIN_SUBJECTS, splitMarks, TOTAL_MARKS } from "@/lib/subjects";
 import { PrintLogo } from "@/components/site/print-logo";
 import { SITE } from "@/lib/site";
 import { useAdminUser } from "@/lib/use-admin-user";
@@ -70,32 +70,64 @@ function parseScore(raw: string, max: number): { value: number | null; error: st
   return { value: parsed, error: null };
 }
 
+/** Grows or shrinks the marks array while keeping what has been typed so far. */
+function resize(values: string[], count: number): string[] {
+  return Array.from({ length: count }, (_, i) => values[i] ?? "");
+}
+
 function ScoresheetPage() {
   const student = Route.useLoaderData() as StudentDetail;
+  const router = useRouter();
   const { hasPermission } = useAdminUser();
   const canWrite = hasPermission("scores.write");
 
-  const [test, setTest] = useState(student.test_score === null ? "" : String(student.test_score));
-  const [exam, setExam] = useState(student.exam_score === null ? "" : String(student.exam_score));
+  const [subjectCount, setSubjectCount] = useState(student.subject_count);
+  const [subjects, setSubjects] = useState<string[]>(() =>
+    resize(
+      (student.subjects ?? []).map((s) => (s === null ? "" : String(s))),
+      student.subject_count,
+    ),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(student.updated_at);
+  const [countBusy, setCountBusy] = useState(false);
+  const [countSaved, setCountSaved] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-hide-badge", "");
     return () => document.documentElement.removeAttribute("data-hide-badge");
   }, []);
 
-  const testResult = parseScore(test, TEST_MAX);
-  const examResult = parseScore(exam, EXAM_MAX);
-  const validationError = testResult.error ?? examResult.error;
-  const testValue = testResult.error ? null : testResult.value;
-  const examValue = examResult.error ? null : examResult.value;
-  const total =
-    testValue === null && examValue === null
-      ? null
-      : Number(testValue ?? 0) + Number(examValue ?? 0);
+  const caps = useMemo(() => splitMarks(subjectCount), [subjectCount]);
+  const results = subjects.map((raw, i) => parseScore(raw, caps[i] ?? 0));
+  const validationError = results.find((r) => r.error)?.error ?? null;
+  const values = results.map((r) => (r.error ? null : r.value));
+  const anyValue = values.some((v) => v !== null);
+  const total = anyValue ? values.reduce<number>((sum, v) => sum + Number(v ?? 0), 0) : null;
+
+  function changeSubjectCount(next: number) {
+    setSubjectCount(next);
+    setSubjects((prev) => resize(prev, next));
+  }
+
+  async function applySubjectCount() {
+    setCountBusy(true);
+    setError(null);
+    try {
+      await setUnitSubjectCount({
+        data: { unit_id: student.unit_id, subject_count: subjectCount },
+      });
+      setCountSaved(true);
+      setTimeout(() => setCountSaved(false), 2500);
+      await router.invalidate();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not update the subject count.");
+    } finally {
+      setCountBusy(false);
+    }
+  }
 
   async function save() {
     if (validationError) {
@@ -106,15 +138,7 @@ function ScoresheetPage() {
     setError(null);
     try {
       await saveScores({
-        data: {
-          entries: [
-            {
-              applicant_id: student.id,
-              test_score: testValue,
-              exam_score: examValue,
-            },
-          ],
-        },
+        data: { entries: [{ applicant_id: student.id, subjects: values }] },
       });
       setSaved(true);
       setSavedAt(new Date().toISOString());
@@ -140,7 +164,8 @@ function ScoresheetPage() {
           <div>
             <h1 className="text-2xl font-display">Scoresheet</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Enter the test and exam marks, then print or save the sheet as a PDF.
+              Enter a mark for each of the {subjectCount} subject(s) this unit assesses, then print
+              or save the sheet as a PDF.
             </p>
           </div>
           <button
@@ -162,30 +187,67 @@ function ScoresheetPage() {
                 {error}
               </p>
             ) : null}
-            <div className="grid gap-4 sm:grid-cols-3">
-              <ScoreInput
-                id="test-score"
-                label={`Test score (max ${TEST_MAX})`}
-                value={test}
-                onChange={setTest}
-                max={TEST_MAX}
-                error={testResult.error}
-              />
-              <ScoreInput
-                id="exam-score"
-                label={`Exam score (max ${EXAM_MAX})`}
-                value={exam}
-                onChange={setExam}
-                max={EXAM_MAX}
-                error={examResult.error}
-              />
+
+            <div className="flex flex-wrap items-end gap-3 border-b border-border pb-5">
+              <label htmlFor="subject-count" className="text-sm font-medium">
+                Subjects this unit assesses
+                <select
+                  id="subject-count"
+                  value={subjectCount}
+                  onChange={(e) => changeSubjectCount(Number(e.target.value))}
+                  className="mt-1.5 block h-10 w-40 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {Array.from(
+                    { length: MAX_SUBJECTS - MIN_SUBJECTS + 1 },
+                    (_, i) => MIN_SUBJECTS + i,
+                  ).map((n) => (
+                    <option key={n} value={n}>
+                      {n} subject{n === 1 ? "" : "s"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={applySubjectCount}
+                disabled={countBusy || subjectCount === student.subject_count}
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-border-strong bg-paper px-4 text-sm font-semibold disabled:opacity-60"
+              >
+                {countBusy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+                Save subject count
+              </button>
+              {countSaved ? (
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                  <CheckCircle2 className="size-4" aria-hidden="true" /> Unit updated
+                </span>
+              ) : null}
+              <p className="text-xs text-muted-foreground">
+                {TOTAL_MARKS} marks are divided evenly: {caps.join(" / ")}.
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {caps.map((cap, index) => (
+                <ScoreInput
+                  key={index}
+                  id={`subject-${index}`}
+                  label={`Subject ${index + 1} (max ${cap})`}
+                  value={subjects[index] ?? ""}
+                  onChange={(value) =>
+                    setSubjects((prev) => prev.map((v, i) => (i === index ? value : v)))
+                  }
+                  max={cap}
+                  error={results[index]?.error ?? null}
+                />
+              ))}
               <div className="text-sm font-medium">
                 Total
                 <p className="mt-1.5 flex h-10 items-center rounded-md border border-input bg-secondary/50 px-3 text-base font-bold">
-                  {total === null ? "—" : total}
+                  {total === null ? "—" : total} / {TOTAL_MARKS}
                 </p>
               </div>
             </div>
+
             <div className="mt-5 flex items-center gap-3">
               <button
                 type="button"
@@ -255,51 +317,41 @@ function ScoresheetPage() {
 
         <div className="px-6 py-5">
           <p className="mb-2 text-xs text-muted-foreground">
-            Write the marks in the blank boxes — C.A. out of {TEST_MAX}, examination out of{" "}
-            {EXAM_MAX}.
+            {subjectCount} subject{subjectCount === 1 ? "" : "s"}, {TOTAL_MARKS} marks in total —
+            divided {caps.join(" / ")}. Write the marks in the blank boxes.
           </p>
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="py-2 pr-4 font-medium">Assessment</th>
+                <th className="py-2 pr-4 font-medium">Subject</th>
                 <th className="py-2 pr-4 font-medium">Maximum</th>
-                <th className="py-2 pr-4 font-medium">Score obtained</th>
-                <th className="py-2 font-medium">Weight</th>
+                <th className="py-2 font-medium">Score obtained</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              <tr>
-                <td className="py-3 pr-4 font-medium">Continuous assessment test</td>
-                <td className="py-3 pr-4">{TEST_MAX}</td>
-                <td className="py-3 pr-4">
-                  <span className="score-box block w-24" aria-hidden="true" />
-                </td>
-                <td className="py-3">40%</td>
-              </tr>
-              <tr>
-                <td className="py-3 pr-4 font-medium">Examination</td>
-                <td className="py-3 pr-4">{EXAM_MAX}</td>
-                <td className="py-3 pr-4">
-                  <span className="score-box block w-24" aria-hidden="true" />
-                </td>
-                <td className="py-3">60%</td>
-              </tr>
+              {caps.map((cap, index) => (
+                <tr key={index}>
+                  <td className="py-3 pr-4 font-medium">Subject {index + 1}</td>
+                  <td className="py-3 pr-4">{cap}</td>
+                  <td className="py-3">
+                    <span className="score-box block w-24" aria-hidden="true" />
+                  </td>
+                </tr>
+              ))}
               <tr>
                 <td className="py-3 pr-4 font-bold">Total</td>
-                <td className="py-3 pr-4 font-bold">100</td>
-                <td className="py-3 pr-4">
-                  <span className="score-box block w-24" aria-hidden="true" />
-                </td>
+                <td className="py-3 pr-4 font-bold">{TOTAL_MARKS}</td>
                 <td className="py-3">
-                  <span className="score-box block w-28" aria-hidden="true" />
+                  <span className="score-box block w-24" aria-hidden="true" />
                 </td>
               </tr>
             </tbody>
           </table>
           {total !== null ? (
             <p className="mt-3 text-xs text-muted-foreground">
-              Recorded in the portal: C.A. {testValue ?? "—"} / {TEST_MAX}, examination{" "}
-              {examValue ?? "—"} / {EXAM_MAX}, total {total} — {gradeFor(total)}.
+              Recorded in the portal:{" "}
+              {values.map((v, i) => `S${i + 1} ${v ?? "—"}/${caps[i]}`).join(", ")} — total {total}{" "}
+              — {gradeFor(total)}.
             </p>
           ) : null}
         </div>
@@ -322,6 +374,7 @@ function ScoresheetPage() {
             </div>
           </div>
           <div className="mt-10 flex justify-between gap-8 text-xs text-muted-foreground">
+            <span className="border-t border-border pt-1">Assessor's signature</span>
             <span className="border-t border-border pt-1">Coordinator's signature</span>
             <span className="border-t border-border pt-1">Centre stamp / date</span>
           </div>

@@ -1,8 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowDownAZ, ArrowUpAZ, Download, FileDown, FileText, Search, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowDownAZ,
+  ArrowUpAZ,
+  Download,
+  FileDown,
+  FileText,
+  Loader2,
+  Search,
+  Users,
+} from "lucide-react";
 
 import {
+  bulkUpdateApplicationStatus,
   exportApplicantsCsv,
   listApplicants,
   STATUSES,
@@ -10,6 +20,7 @@ import {
   type ApplicationStatus,
 } from "@/lib/admin.functions";
 import { StaleApplicantsPrompt } from "@/components/site/stale-applicants-prompt";
+import { useAdminUser } from "@/lib/use-admin-user";
 
 const DESCRIPTION = "Browse, search, filter and export applications at the DSTVEB Umutu Branch.";
 
@@ -44,6 +55,15 @@ function Applicants() {
   const [data, setData] = useState<Awaited<ReturnType<typeof listApplicants>> | null>(null);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<(typeof STATUSES)[number]>("under_review");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState("");
+  const { hasPermission } = useAdminUser();
+  const canBulk = hasPermission("applicants.status.update");
+
+  const pageIds = useMemo(() => (data?.rows ?? []).map((r) => r.id), [data]);
+  const allSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
 
   useEffect(() => {
     void run({ page: 1 });
@@ -152,6 +172,52 @@ function Applicants() {
     }
   }
 
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setBulkMessage("");
+  }
+
+  function toggleAll() {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allSelected) pageIds.forEach((id) => next.delete(id));
+      else pageIds.forEach((id) => next.add(id));
+      return next;
+    });
+    setBulkMessage("");
+  }
+
+  async function applyBulkStatus() {
+    if (selected.size === 0) return;
+    const label = bulkStatus.replace(/_/g, " ");
+    if (
+      !window.confirm(
+        `Set ${selected.size} selected application(s) to "${label}"?\n\n` +
+          `This replaces the current status of every selected record.`,
+      )
+    )
+      return;
+    setBulkBusy(true);
+    setBulkMessage("");
+    try {
+      const res = await bulkUpdateApplicationStatus({
+        data: { ids: [...selected], status: bulkStatus },
+      });
+      setBulkMessage(`Updated ${res.updated} application(s) to ${label}.`);
+      setSelected(new Set());
+      await run();
+    } catch (e) {
+      setBulkMessage(e instanceof Error ? e.message : "Could not update the applications.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   return (
     <section>
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -193,6 +259,42 @@ function Applicants() {
       </div>
 
       <StaleApplicantsPrompt onDeleted={() => void run()} />
+
+      {canBulk ? (
+        <div className="surface-card mt-4 flex flex-wrap items-center gap-3 p-4">
+          <p className="text-sm text-muted-foreground">
+            <strong className="font-semibold text-foreground">{selected.size}</strong> selected on
+            this page
+          </p>
+          <label className="ml-auto flex items-center gap-2 text-sm font-medium">
+            Set status to
+            <select
+              aria-label="Bulk status"
+              value={bulkStatus}
+              onChange={(e) => setBulkStatus(e.target.value as (typeof STATUSES)[number])}
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s.replace(/_/g, " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            onClick={applyBulkStatus}
+            disabled={bulkBusy || selected.size === 0}
+            className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            {bulkBusy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+            {bulkBusy ? "Updating…" : "Apply to selected"}
+          </button>
+          {bulkMessage ? (
+            <p className="w-full text-sm text-muted-foreground">{bulkMessage}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="surface-card mt-6 p-4">
         <div className="grid gap-3 lg:grid-cols-[1fr_12rem_12rem_8rem_auto]">
@@ -286,6 +388,17 @@ function Applicants() {
             <table className="w-full min-w-[52rem] text-left text-sm">
               <thead className="border-b border-border bg-secondary/60">
                 <tr className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {canBulk ? (
+                    <th className="px-4 py-3 font-medium">
+                      <input
+                        type="checkbox"
+                        aria-label="Select all applications on this page"
+                        checked={allSelected}
+                        onChange={toggleAll}
+                        className="size-4 align-middle"
+                      />
+                    </th>
+                  ) : null}
                   <th className="px-4 py-3 font-medium">Application #</th>
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="px-4 py-3 font-medium">Email</th>
@@ -302,6 +415,17 @@ function Applicants() {
               <tbody className="divide-y divide-border">
                 {data?.rows.map((r) => (
                   <tr key={r.id} className={loading ? "opacity-60" : undefined}>
+                    {canBulk ? (
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${r.full_name}`}
+                          checked={selected.has(r.id)}
+                          onChange={() => toggleOne(r.id)}
+                          className="size-4 align-middle"
+                        />
+                      </td>
+                    ) : null}
                     <td className="px-4 py-3 font-mono text-xs">{r.application_number}</td>
                     <td className="px-4 py-3 font-medium">{r.full_name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
