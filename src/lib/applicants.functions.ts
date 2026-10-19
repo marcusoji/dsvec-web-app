@@ -42,6 +42,28 @@ function maskPhone(phone: string) {
   return `${phone.slice(0, 6)}****${phone.slice(-2)}`;
 }
 
+/**
+ * Writes the duplicate-attempt audit row. The applicant is told the registration
+ * was rejected, but the audit must still record it: the in-form check blocks a
+ * duplicate before submission, so this is often the only signal. Never throws.
+ */
+async function recordDuplicateAttempt(
+  applicationNumber: string | null,
+  email: string,
+  phone: string,
+  detail: string,
+) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.from("activity_log").insert({
+    event_type: "duplicate_attempt",
+    application_number: applicationNumber,
+    email_masked: maskEmail(email),
+    phone_masked: maskPhone(phone),
+    detail,
+  });
+  if (error) console.error("[applicants] duplicate attempt not recorded", error.message);
+}
+
 export const checkExistingApplication = createServerFn({ method: "POST" })
   .inputValidator((data: { email?: string; phone?: string }) =>
     z
@@ -66,11 +88,20 @@ export const checkExistingApplication = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (!row) return { found: false as const };
+    const matchedEmail = row.email === email;
+    await recordDuplicateAttempt(
+      row.application_number,
+      email ?? row.email ?? "",
+      phone ?? row.phone ?? "",
+      `Duplicate registration blocked at the contact step (matched ${
+        matchedEmail ? "email" : "phone"
+      })`,
+    );
     return {
       found: true as const,
       application_number: row.application_number,
       status: row.status as string,
-      matched: row.email === email ? ("email" as const) : ("phone" as const),
+      matched: matchedEmail ? ("email" as const) : ("phone" as const),
     };
   });
 
@@ -89,13 +120,12 @@ export const submitApplication = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (existing) {
-      await supabaseAdmin.from("activity_log").insert({
-        event_type: "duplicate_attempt",
-        application_number: existing.application_number,
-        email_masked: maskEmail(email),
-        phone_masked: maskPhone(phone),
-        detail: "Registration blocked: email or phone already registered",
-      });
+      await recordDuplicateAttempt(
+        existing.application_number,
+        email,
+        phone,
+        "Registration blocked: email or phone already registered",
+      );
       return {
         ok: false,
         error:
