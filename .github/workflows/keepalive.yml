@@ -1,5 +1,9 @@
 # Pings the site twice a week (Mon & Thu) so the free database never sits idle long enough to pause.
-# Set the repository variable SITE_URL (e.g. https://your-site.vercel.app) in GitHub > Settings > Variables.
+#
+# The URL comes from the repository variable SITE_URL (Settings -> Secrets and
+# variables -> Actions -> Variables). When it is not set the job falls back to
+# the production alias, so a missing variable can no longer fail the run with
+# "No host part in the URL".
 name: Keep database awake
 on:
   schedule:
@@ -8,5 +12,19 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
+    env:
+      SITE_URL: ${{ vars.SITE_URL || 'https://dsvec.vercel.app' }}
     steps:
-      - run: curl -fsS "${{ vars.SITE_URL }}/api/public/keepalive"
+      - name: Ping keepalive endpoint
+        run: |
+          base="${SITE_URL%/}"
+          url="$base/api/public/keepalive"
+          case "$url" in
+            http://*|https://*) ;;
+            *)
+              echo "::error::SITE_URL is not a full URL: '$SITE_URL'"
+              exit 1
+              ;;
+          esac
+          echo "Pinging $url"
+          curl -fsS --retry 3 --retry-delay 5 --max-time 30 "$url"
