@@ -162,7 +162,7 @@ function StaffPage() {
                 key={r.id}
                 className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
               >
-                <span>
+                <span className="min-w-0 break-words">
                   <strong>{r.email}</strong>
                   {r.note ? <span className="text-muted-foreground"> — {r.note}</span> : null}
                   <span className="ml-2 text-xs text-muted-foreground">{stamp(r.createdAt)}</span>
@@ -280,7 +280,7 @@ function StaffPage() {
         </button>
       </form>
 
-      <div className="surface-card mt-6 overflow-hidden">
+      <div className="surface-card mt-6 overflow-x-auto">
         <table className="w-full min-w-[46rem] text-left text-sm">
           <thead className="border-b border-border bg-secondary/60">
             <tr className="text-xs uppercase tracking-wide text-muted-foreground">

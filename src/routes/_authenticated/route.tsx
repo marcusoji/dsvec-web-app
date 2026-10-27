@@ -176,13 +176,17 @@ function AuthenticatedLayout() {
             <span className="hidden sm:inline">Sign out</span>
           </button>
         </div>
-        {/* Mobile nav */}
-        <nav aria-label="Admin (mobile)" className="flex border-t border-sidebar-border md:hidden">
+        {/* Mobile nav: one scrollable row so every destination stays reachable
+            on narrow screens instead of being clipped off the edge. */}
+        <nav
+          aria-label="Admin (mobile)"
+          className="flex overflow-x-auto border-t border-sidebar-border md:hidden"
+        >
           {[...navItems, { to: "/admin/account", label: "Account" }].map((l) => (
             <Link
               key={l.to}
               to={l.to}
-              className="flex-1 px-3 py-3 text-center text-sm font-medium text-ink-muted"
+              className="grow shrink-0 basis-auto whitespace-nowrap px-4 py-3 text-center text-sm font-medium text-ink-muted"
               activeProps={{ className: "text-primary" }}
               activeOptions={{ exact: l.to === "/admin" }}
             >
