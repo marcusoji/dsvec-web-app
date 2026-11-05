@@ -97,8 +97,13 @@
 - The admin page is `src/routes/_authenticated/admin/news.tsx` (nav entry gated
   by `news.manage`). Its Picture/Files pickers are real buttons driving a hidden
   `sr-only` file input (`imageInputRef`/`filesInputRef`), because a bare
-  `<input type="file">` does not read as clickable to non-technical admins; the
-  attachment Read/Download links are outlined buttons for the same reason.
+  `<input type="file">` does not read as clickable to non-technical admins.
+  Both pickers sit in a dashed dropzone and the buttons are **solid ink**
+  (`bg-ink` + `text-ink-foreground`), as are the attachment Read/Download
+  actions: an outlined `bg-paper` button is white on a near-white page
+  (`oklch(1 0 0)` on `oklch(0.982 …)`, a ~1.1 contrast ratio) and reads as plain
+  text, which is exactly how it was reported. Keep upload/download controls
+  filled, not outlined.
 - Sharing lives in `src/lib/share.ts` (pure URL builders) and
   `src/components/site/share-menu.tsx` (the dropdown). Posts share a
   `/umutu#news-<id>` deep link; each public card carries that `id` with

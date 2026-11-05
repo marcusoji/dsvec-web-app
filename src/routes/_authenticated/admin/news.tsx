@@ -359,14 +359,14 @@ function NewsAdmin() {
                               href={a.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-paper px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+                              className="inline-flex items-center gap-1.5 rounded-md bg-ink px-3 py-1.5 text-xs font-semibold text-ink-foreground shadow-sm transition-colors hover:bg-ink/90"
                             >
                               <Eye className="size-3.5" aria-hidden="true" /> Read
                             </a>
                             <a
                               href={a.url}
                               download={a.file_name}
-                              className="inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-paper px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+                              className="inline-flex items-center gap-1.5 rounded-md bg-ink px-3 py-1.5 text-xs font-semibold text-ink-foreground shadow-sm transition-colors hover:bg-ink/90"
                             >
                               <Download className="size-3.5" aria-hidden="true" /> Download
                             </a>
@@ -685,8 +685,8 @@ function NewsForm({
       </label>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-lg border border-border bg-background p-4">
-          <p className="text-sm font-medium text-foreground">Picture (optional)</p>
+        <div className="rounded-lg border-2 border-dashed border-border-strong bg-secondary/40 p-4">
+          <p className="text-sm font-semibold text-foreground">Picture (optional)</p>
           <p className="mt-1 text-xs text-muted-foreground">
             One photo to lead the post on the public page. JPG, PNG, WebP or GIF.
           </p>
@@ -701,7 +701,7 @@ function NewsForm({
           <button
             type="button"
             onClick={() => imageInputRef.current?.click()}
-            className="mt-3 inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-2.5 text-sm font-semibold text-ink-foreground shadow-sm transition-colors hover:bg-ink/90"
           >
             <ImagePlus className="size-4" aria-hidden="true" />
             {image ? "Choose a different picture" : "Choose a picture"}
@@ -722,8 +722,8 @@ function NewsForm({
           ) : null}
         </div>
 
-        <div className="rounded-lg border border-border bg-background p-4">
-          <p className="text-sm font-medium text-foreground">Files (optional, up to 10)</p>
+        <div className="rounded-lg border-2 border-dashed border-border-strong bg-secondary/40 p-4">
+          <p className="text-sm font-semibold text-foreground">Files (optional, up to 10)</p>
           <p className="mt-1 text-xs text-muted-foreground">
             Images, PDF, Word or Excel — shown as downloads on the public page.
           </p>
@@ -739,7 +739,7 @@ function NewsForm({
           <button
             type="button"
             onClick={() => filesInputRef.current?.click()}
-            className="mt-3 inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-2.5 text-sm font-semibold text-ink-foreground shadow-sm transition-colors hover:bg-ink/90"
           >
             <FileUp className="size-4" aria-hidden="true" />
             {files.length ? "Add more files" : "Choose files"}
