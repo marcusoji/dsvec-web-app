@@ -52,6 +52,7 @@ export function ShareMenu({
   input: ShareInput;
   label?: string;
   align?: "start" | "center" | "end";
+  /** Applied to the dropdown content — raise the z-index above a modal host. */
   className?: string;
   triggerClassName?: string;
 }) {

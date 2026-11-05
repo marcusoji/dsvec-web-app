@@ -102,7 +102,13 @@
 - Sharing lives in `src/lib/share.ts` (pure URL builders) and
   `src/components/site/share-menu.tsx` (the dropdown). Posts share a
   `/umutu#news-<id>` deep link; each public card carries that `id` with
-  `scroll-mt-24` so the link lands on the right card.
+  `scroll-mt-24` so the link lands on the right card. `NewsSection` reads that
+  hash after the list loads and opens the matching post in the reader — both on
+  a fresh load and on `hashchange` (pasting the link while already on the page) —
+  and scrolls the window to the card first so closing the reader leaves the
+  visitor at the right post. The reader is `z-[100]`, so the reader's own share
+  menu is passed `className="z-[120]"`; without that the `z-50` dropdown renders
+  *behind* the modal and its items cannot be clicked.
 - The New/Edit form renders *above* the list, so opening it scrolls the form
   anchor (`formAnchorRef`, `scroll-mt-24`) into view — otherwise clicking a
   post's own Edit button appears to do nothing when the user is scrolled down.

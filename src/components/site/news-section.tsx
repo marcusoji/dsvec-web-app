@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
@@ -36,14 +36,13 @@ const canPreviewInline = (a: NewsAttachment) =>
   a.mime_type === "text/plain";
 
 /** Deep link to a single post on the Umutu page, for sharing. */
-const shareInput = (post: NewsPost): ShareInput => {
-  const path = `/umutu#news-${post.id}`;
-  return {
-    title: post.title,
-    text: post.body.replace(/\s+/g, " ").trim().slice(0, 180),
-    url: typeof window === "undefined" ? path : `${window.location.origin}${path}`,
-  };
-};
+const NEWS_HASH_PREFIX = "#news-";
+
+const shareInput = (post: NewsPost, baseUrl: string): ShareInput => ({
+  title: post.title,
+  text: post.body.replace(/\s+/g, " ").trim().slice(0, 180),
+  url: `${baseUrl}${NEWS_HASH_PREFIX}${post.id}`,
+});
 
 /** A card shows a short teaser; anything longer opens in the reader. */
 const CLAMP_CHARS = 220;
@@ -80,10 +79,12 @@ function AttachmentActions({ attachment }: { attachment: NewsAttachment }) {
 
 function PostReader({
   post,
+  baseUrl,
   onClose,
   onPreviewImage,
 }: {
   post: NewsPost;
+  baseUrl: string;
   onClose: () => void;
   onPreviewImage: (url: string) => void;
 }) {
@@ -195,7 +196,8 @@ function PostReader({
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4">
           <span className="text-xs text-muted-foreground">Share this update</span>
-          <ShareMenu input={shareInput(post)} />
+          {/* z-[120] lifts the menu above this z-[100] reader. */}
+          <ShareMenu input={shareInput(post, baseUrl)} className="z-[120]" />
         </div>
       </div>
     </div>
@@ -205,10 +207,12 @@ function PostReader({
 function NewsCard({
   post,
   showMedia,
+  baseUrl,
   onRead,
 }: {
   post: NewsPost;
   showMedia: boolean;
+  baseUrl: string;
   onRead: (post: NewsPost) => void;
 }) {
   const images = post.attachments.filter(isImage);
@@ -279,10 +283,10 @@ function NewsCard({
               >
                 Read more
               </button>
-              <ShareMenu input={shareInput(post)} triggerClassName="px-3.5 py-2" />
+              <ShareMenu input={shareInput(post, baseUrl)} triggerClassName="px-3.5 py-2" />
             </div>
           ) : (
-            <ShareMenu input={shareInput(post)} triggerClassName="px-3.5 py-2" />
+            <ShareMenu input={shareInput(post, baseUrl)} triggerClassName="px-3.5 py-2" />
           )}
         </div>
       </div>
@@ -292,12 +296,47 @@ function NewsCard({
 
 export function NewsSection() {
   const { data, isLoading } = useQuery(newsQuery);
-  const posts = data ?? [];
+  const posts = useMemo(() => data ?? [], [data]);
   const trackRef = useRef<HTMLDivElement>(null);
   const [reading, setReading] = useState<NewsPost | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [edge, setEdge] = useState({ start: true, end: false });
   const [paused, setPaused] = useState(false);
+  // Absolute base for share links. Set after mount (SSR has no origin) and kept
+  // stable so the reader's copy-link never re-renders on a re-render.
+  const [baseUrl, setBaseUrl] = useState("/umutu");
+  useEffect(() => {
+    setBaseUrl(`${window.location.origin}/umutu`);
+  }, []);
+
+  // A shared /umutu#news-<id> link should open that post already expanded, both
+  // on a fresh page load and when the hash changes in place (someone pasting the
+  // link while already on the page). The list arrives after mount, so wait for
+  // the posts and match by id; unknown or stale ids are ignored and the visitor
+  // just lands on the page. The mount run is guarded so a background refetch
+  // cannot reopen a reader the visitor has closed.
+  const deepLinkDone = useRef(false);
+  useEffect(() => {
+    if (!posts.length) return;
+    const openFromHash = () => {
+      const id = window.location.hash.slice(NEWS_HASH_PREFIX.length);
+      if (!id) return;
+      const match = posts.find((p) => p.id === id);
+      if (!match) return;
+      // Move the page onto the card first (synchronously, before the reader locks
+      // scrolling) so closing the reader leaves the visitor at the right post.
+      document
+        .getElementById(`news-${id}`)
+        ?.scrollIntoView({ block: "start", behavior: "instant" });
+      setReading(match);
+    };
+    if (!deepLinkDone.current) {
+      deepLinkDone.current = true;
+      openFromHash();
+    }
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
+  }, [posts]);
 
   function updateEdges() {
     const el = trackRef.current;
@@ -393,14 +432,19 @@ export function NewsSection() {
               key={post.id}
               className="w-[85%] shrink-0 snap-start sm:w-[calc(50%-0.625rem)] lg:w-[calc(33.333%-0.834rem)]"
             >
-              <NewsCard post={post} showMedia={anyMedia} onRead={setReading} />
+              <NewsCard post={post} showMedia={anyMedia} baseUrl={baseUrl} onRead={setReading} />
             </div>
           ))}
         </div>
       </div>
 
       {reading ? (
-        <PostReader post={reading} onClose={() => setReading(null)} onPreviewImage={setLightbox} />
+        <PostReader
+          post={reading}
+          baseUrl={baseUrl}
+          onClose={() => setReading(null)}
+          onPreviewImage={setLightbox}
+        />
       ) : null}
 
       {lightbox ? (
