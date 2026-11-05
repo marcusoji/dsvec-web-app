@@ -95,7 +95,14 @@
   upload; documents are sent as data URLs and re-validated server-side
   (`NEWS_IMAGE_MAX_BYTES`, `NEWS_DOC_MAX_BYTES`, mime allow-lists).
 - The admin page is `src/routes/_authenticated/admin/news.tsx` (nav entry gated
-  by `news.manage`).
+  by `news.manage`). Its Picture/Files pickers are real buttons driving a hidden
+  `sr-only` file input (`imageInputRef`/`filesInputRef`), because a bare
+  `<input type="file">` does not read as clickable to non-technical admins; the
+  attachment Read/Download links are outlined buttons for the same reason.
+- Sharing lives in `src/lib/share.ts` (pure URL builders) and
+  `src/components/site/share-menu.tsx` (the dropdown). Posts share a
+  `/umutu#news-<id>` deep link; each public card carries that `id` with
+  `scroll-mt-24` so the link lands on the right card.
 - The New/Edit form renders *above* the list, so opening it scrolls the form
   anchor (`formAnchorRef`, `scroll-mt-24`) into view — otherwise clicking a
   post's own Edit button appears to do nothing when the user is scrolled down.

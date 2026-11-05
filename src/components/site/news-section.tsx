@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 
 import { listNewsPosts, type NewsAttachment, type NewsPost } from "@/lib/news.functions";
+import { ShareMenu } from "@/components/site/share-menu";
+import type { ShareInput } from "@/lib/share";
 
 const newsQuery = {
   queryKey: ["news", "public"],
@@ -32,6 +34,16 @@ const canPreviewInline = (a: NewsAttachment) =>
   a.mime_type === "application/pdf" ||
   a.mime_type.startsWith("image/") ||
   a.mime_type === "text/plain";
+
+/** Deep link to a single post on the Umutu page, for sharing. */
+const shareInput = (post: NewsPost): ShareInput => {
+  const path = `/umutu#news-${post.id}`;
+  return {
+    title: post.title,
+    text: post.body.replace(/\s+/g, " ").trim().slice(0, 180),
+    url: typeof window === "undefined" ? path : `${window.location.origin}${path}`,
+  };
+};
 
 /** A card shows a short teaser; anything longer opens in the reader. */
 const CLAMP_CHARS = 220;
@@ -180,6 +192,11 @@ function PostReader({
             </ul>
           ) : null}
         </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4">
+          <span className="text-xs text-muted-foreground">Share this update</span>
+          <ShareMenu input={shareInput(post)} />
+        </div>
       </div>
     </div>
   );
@@ -200,7 +217,10 @@ function NewsCard({
   const showReadMore = needsReadMore(post, images, documents);
 
   return (
-    <article className="surface-card flex h-full flex-col overflow-hidden">
+    <article
+      id={`news-${post.id}`}
+      className="surface-card flex h-full scroll-mt-24 flex-col overflow-hidden"
+    >
       {showMedia ? (
         lead ? (
           <button
@@ -251,14 +271,19 @@ function NewsCard({
             </p>
           ) : null}
           {showReadMore ? (
-            <button
-              type="button"
-              onClick={() => onRead(post)}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground"
-            >
-              Read more
-            </button>
-          ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onRead(post)}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground"
+              >
+                Read more
+              </button>
+              <ShareMenu input={shareInput(post)} triggerClassName="px-3.5 py-2" />
+            </div>
+          ) : (
+            <ShareMenu input={shareInput(post)} triggerClassName="px-3.5 py-2" />
+          )}
         </div>
       </div>
     </article>

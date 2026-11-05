@@ -5,7 +5,9 @@ import {
   Download,
   Eye,
   FileText,
+  FileUp,
   Image as ImageIcon,
+  ImagePlus,
   Loader2,
   Newspaper,
   Pencil,
@@ -357,16 +359,16 @@ function NewsAdmin() {
                               href={a.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-xs font-semibold text-foreground underline underline-offset-4"
+                              className="inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-paper px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
                             >
-                              <Eye className="size-3" aria-hidden="true" /> Read
+                              <Eye className="size-3.5" aria-hidden="true" /> Read
                             </a>
                             <a
                               href={a.url}
                               download={a.file_name}
-                              className="inline-flex items-center gap-1 text-xs font-semibold text-foreground underline underline-offset-4"
+                              className="inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-paper px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
                             >
-                              <Download className="size-3" aria-hidden="true" /> Download
+                              <Download className="size-3.5" aria-hidden="true" /> Download
                             </a>
                           </div>
                         ) : null}
@@ -397,6 +399,8 @@ function NewsForm({
   const [pinned, setPinned] = useState(post?.pinned ?? false);
   const [image, setImage] = useState<PickedFile | null>(null);
   const [files, setFiles] = useState<PickedFile[]>([]);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const filesInputRef = useRef<HTMLInputElement>(null);
   const [removeIds, setRemoveIds] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -681,17 +685,27 @@ function NewsForm({
       </label>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="news-image" className="block text-sm font-medium text-foreground">
-            Picture (optional)
-          </label>
+        <div className="rounded-lg border border-border bg-background p-4">
+          <p className="text-sm font-medium text-foreground">Picture (optional)</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            One photo to lead the post on the public page. JPG, PNG, WebP or GIF.
+          </p>
           <input
+            ref={imageInputRef}
             id="news-image"
             type="file"
             accept="image/*"
             onChange={onImageChange}
-            className="mt-1.5 block w-full text-sm"
+            className="sr-only"
           />
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            className="mt-3 inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            <ImagePlus className="size-4" aria-hidden="true" />
+            {image ? "Choose a different picture" : "Choose a picture"}
+          </button>
           {image ? (
             <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1 text-xs">
               <ImageIcon className="size-3.5 text-primary" aria-hidden="true" />
@@ -708,18 +722,28 @@ function NewsForm({
           ) : null}
         </div>
 
-        <div>
-          <label htmlFor="news-docs" className="block text-sm font-medium text-foreground">
-            Files (optional, up to 10 — images, PDF or Excel)
-          </label>
+        <div className="rounded-lg border border-border bg-background p-4">
+          <p className="text-sm font-medium text-foreground">Files (optional, up to 10)</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Images, PDF, Word or Excel — shown as downloads on the public page.
+          </p>
           <input
+            ref={filesInputRef}
             id="news-docs"
             type="file"
             multiple
             accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
             onChange={onFilesChange}
-            className="mt-1.5 block w-full text-sm"
+            className="sr-only"
           />
+          <button
+            type="button"
+            onClick={() => filesInputRef.current?.click()}
+            className="mt-3 inline-flex items-center gap-2 rounded-md border border-border-strong bg-paper px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            <FileUp className="size-4" aria-hidden="true" />
+            {files.length ? "Add more files" : "Choose files"}
+          </button>
         </div>
       </div>
 
